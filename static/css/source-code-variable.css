@@ -1,0 +1,25 @@
+@font-face{
+  font-family: "Source Code Variable";
+  font-weight: 200 900;
+  font-style: normal;
+  font-stretch: normal;
+  src: url("../fonts/Source Code Pro/WOFF2/VAR/SourceCodeVariable-Roman.ttf.woff2") format("woff2"),
+       url("../fonts/Source Code Pro/WOFF2/VAR/SourceCodeVariable-Roman.otf.woff2") format("woff2"),
+       url("../fonts/Source Code Pro/WOFF/VAR/SourceCodeVariable-Roman.ttf.woff") format("woff"),
+       url("../fonts/Source Code Pro/WOFF/VAR/SourceCodeVariable-Roman.otf.woff") format("woff"),
+       url("../fonts/Source Code Pro/VAR/SourceCodeVariable-Roman.ttf") format("truetype"),
+       url("../fonts/Source Code Pro/VAR/SourceCodeVariable-Roman.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Code Variable";
+  font-weight: 200 900;
+  font-style: italic;
+  font-stretch: normal;
+  src: url("../fonts/Source Code Pro/WOFF2/VAR/SourceCodeVariable-Italic.ttf.woff2") format("woff2"),
+       url("../fonts/Source Code Pro/WOFF2/VAR/SourceCodeVariable-Italic.otf.woff2") format("woff2"),
+       url("../fonts/Source Code Pro/WOFF/VAR/SourceCodeVariable-Italic.ttf.woff") format("woff"),
+       url("../fonts/Source Code Pro/WOFF/VAR/SourceCodeVariable-Italic.otf.woff") format("woff"),
+       url("../fonts/Source Code Pro/VAR/SourceCodeVariable-Italic.ttf") format("truetype"),
+       url("../fonts/Source Code Pro/VAR/SourceCodeVariable-Italic.otf") format("opentype");
+}

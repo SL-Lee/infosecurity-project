@@ -1,0 +1,167 @@
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 200;
+  font-display: swap;
+  font-style: normal;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-ExtraLight.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-ExtraLight.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-ExtraLight.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-ExtraLight.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-ExtraLight.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-ExtraLight.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 200;
+  font-display: swap;
+  font-style: italic;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-ExtraLightIt.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-ExtraLightIt.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-ExtraLightIt.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-ExtraLightIt.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-ExtraLightIt.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-ExtraLightIt.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 300;
+  font-display: swap;
+  font-style: normal;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-Light.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-Light.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-Light.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-Light.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-Light.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-Light.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 300;
+  font-display: swap;
+  font-style: italic;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-LightIt.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-LightIt.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-LightIt.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-LightIt.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-LightIt.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-LightIt.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-Regular.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-Regular.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-Regular.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-Regular.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-Regular.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-Regular.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 400;
+  font-display: swap;
+  font-style: italic;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-It.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-It.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-It.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-It.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-It.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-It.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 600;
+  font-display: swap;
+  font-style: normal;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-Semibold.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-Semibold.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-Semibold.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-Semibold.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-Semibold.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-Semibold.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 600;
+  font-display: swap;
+  font-style: italic;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-SemiboldIt.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-SemiboldIt.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-SemiboldIt.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-SemiboldIt.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-SemiboldIt.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-SemiboldIt.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-Bold.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-Bold.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-Bold.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-Bold.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-Bold.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-Bold.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 700;
+  font-display: swap;
+  font-style: italic;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-BoldIt.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-BoldIt.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-BoldIt.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-BoldIt.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-BoldIt.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-BoldIt.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 900;
+  font-display: swap;
+  font-style: normal;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-Black.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-Black.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-Black.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-Black.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-Black.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-Black.otf") format("opentype");
+}
+
+@font-face{
+  font-family: "Source Serif Pro";
+  font-weight: 900;
+  font-display: swap;
+  font-style: italic;
+  font-stretch: normal;
+  src: url("../fonts/Source Serif Pro/WOFF2/TTF/SourceSerifPro-BlackIt.ttf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF2/OTF/SourceSerifPro-BlackIt.otf.woff2") format("woff2"),
+       url("../fonts/Source Serif Pro/WOFF/TTF/SourceSerifPro-BlackIt.ttf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/WOFF/OTF/SourceSerifPro-BlackIt.otf.woff") format("woff"),
+       url("../fonts/Source Serif Pro/TTF/SourceSerifPro-BlackIt.ttf") format("truetype"),
+       url("../fonts/Source Serif Pro/OTF/SourceSerifPro-BlackIt.otf") format("opentype");
+}
