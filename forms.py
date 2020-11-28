@@ -1,3 +1,4 @@
+from flask_wtf import FlaskForm
 from wtforms import (
     BooleanField,
     DateTimeField,
@@ -11,7 +12,6 @@ from wtforms import (
     SubmitField
 )
 from wtforms.validators import InputRequired, Email, Length, Optional
-from flask_wtf import FlaskForm
 
 
 class BackupFirstForm(FlaskForm):
