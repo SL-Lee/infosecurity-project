@@ -24,12 +24,14 @@ from flask_login import (
 )
 from flask_restx import Api, reqparse, Resource
 from helper_functions import deserialize, serialize
-from sqlalchemy import exc
+import binascii
 import datetime
 import forms
 import json
 import os
+import pickle
 import shutil
+import sqlalchemy
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -140,6 +142,40 @@ def backup():
 
 
 # API routes
+@api.route("/add")
+class Add(Resource):
+    parser = reqparse.RequestParser()
+    parser.add_argument("object", required=True, type=str, location="form")
+
+    @api.expect(parser)
+    @api.response(200, "Success")
+    @api.response(400, "Invalid Request")
+    def post(self):
+        args = self.parser.parse_args()
+
+        try:
+            obj = deserialize(args["object"])
+            client_db.session.add(obj)
+            client_db.session.commit()
+            status, status_msg, status_code = "OK", "OK", 200
+        except (binascii.Error, pickle.UnpicklingError):
+            status, status_msg, status_code = (
+                "ERROR",
+                "error while deserializing object",
+                400,
+            )
+        except sqlalchemy.orm.exc.UnmappedInstanceError:
+            status, status_msg, status_code = "ERROR", "unmapped object", 400
+        except:
+            status, status_msg, status_code = (
+                "ERROR",
+                "an unknown error occurred",
+                400,
+            )
+
+        return {"status": status, "status_msg": status_msg}, status_code
+
+
 @api.route("/query")
 class Query(Resource):
     parser = reqparse.RequestParser()
@@ -165,7 +201,7 @@ class Query(Resource):
                 "error while parsing filter object",
                 400,
             )
-        except (exc.InvalidRequestError, NameError, SyntaxError):
+        except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             query_results = None
             status, status_msg, status_code = "ERROR", "invalid request", 400
         except:
@@ -211,15 +247,14 @@ class Update(Resource):
             else:
                 status, status_msg, status_code = "ERROR", "no match found", 400
         except json.decoder.JSONDecodeError:
-            query_results = None
             status, status_msg, status_code = (
                 "ERROR",
                 "error while parsing filter object",
                 400,
             )
         except (
-            exc.InvalidRequestError,
-            exc.StatementError,
+            sqlalchemy.exc.InvalidRequestError,
+            sqlalchemy.exc.StatementError,
             NameError,
             SyntaxError,
         ):
@@ -259,13 +294,12 @@ class Delete(Resource):
             else:
                 status, status_msg, status_code = "ERROR", "no match found", 400
         except json.decoder.JSONDecodeError:
-            query_results = None
             status, status_msg, status_code = (
                 "ERROR",
                 "error while parsing filter object",
                 400,
             )
-        except (exc.InvalidRequestError, NameError, SyntaxError):
+        except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             status, status_msg, status_code = "ERROR", "invalid request", 400
         except:
             status, status_msg, status_code = (
