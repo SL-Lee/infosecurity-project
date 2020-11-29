@@ -33,6 +33,7 @@ import pickle
 import shutil
 import sqlalchemy
 
+
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -142,16 +143,54 @@ def backup():
 
 
 # API routes
-@api.route("/add")
-class Add(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument("object", required=True, type=str, location="form")
+@api.route("/database")
+class Database(Resource):
+    # Parser for POST requests
+    post_parser = reqparse.RequestParser(bundle_errors=True)
+    post_parser.add_argument("object", required=True, type=str, location="form")
 
-    @api.expect(parser)
+    # Parser for GET requests
+    get_parser = reqparse.RequestParser(bundle_errors=True)
+    get_parser.add_argument("model", required=True, type=str, location="args")
+    get_parser.add_argument(
+        "filter",
+        required=True,
+        type=json.loads,
+        location="args",
+    )
+
+    # Parser for PATCH requests
+    patch_parser = reqparse.RequestParser(bundle_errors=True)
+    patch_parser.add_argument("model", required=True, type=str, location="form")
+    patch_parser.add_argument(
+        "filter",
+        required=True,
+        type=json.loads,
+        location="form",
+    )
+    patch_parser.add_argument("field", required=True, type=str, location="form")
+    patch_parser.add_argument("value", required=True, location="form")
+
+    # Parser for DELETE requests
+    delete_parser = reqparse.RequestParser(bundle_errors=True)
+    delete_parser.add_argument(
+        "model",
+        required=True,
+        type=str,
+        location="form",
+    )
+    delete_parser.add_argument(
+        "filter",
+        required=True,
+        type=json.loads,
+        location="form",
+    )
+
+    @api.expect(post_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
     def post(self):
-        args = self.parser.parse_args()
+        args = self.post_parser.parse_args()
 
         try:
             obj = deserialize(args["object"])
@@ -175,32 +214,17 @@ class Add(Resource):
 
         return {"status": status, "status_msg": status_msg}, status_code
 
-
-@api.route("/query")
-class Query(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument("model", required=True, type=str, location="form")
-    parser.add_argument("filter", required=True, type=str, location="form")
-
-    @api.expect(parser)
+    @api.expect(get_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
-    def post(self):
-        args = self.parser.parse_args()
+    def get(self):
+        args = self.get_parser.parse_args()
 
         try:
-            args["filter"] = json.loads(args["filter"])
             query_results = client_db.session.query(eval(args["model"]))\
                 .filter_by(**args["filter"])\
                 .all()
             status, status_msg, status_code = "OK", "OK", 200
-        except json.decoder.JSONDecodeError:
-            query_results = None
-            status, status_msg, status_code = (
-                "ERROR",
-                "error while parsing filter object",
-                400,
-            )
         except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             query_results = None
             status, status_msg, status_code = "ERROR", "invalid request", 400
@@ -219,23 +243,13 @@ class Query(Resource):
         },\
         status_code
 
-
-@api.route("/update")
-class Update(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument("model", required=True, type=str, location="form")
-    parser.add_argument("filter", required=True, type=str, location="form")
-    parser.add_argument("field", required=True, type=str, location="form")
-    parser.add_argument("value", required=True, location="form")
-
-    @api.expect(parser)
+    @api.expect(patch_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
-    def post(self):
-        args = self.parser.parse_args()
+    def patch(self):
+        args = self.patch_parser.parse_args()
 
         try:
-            args["filter"] = json.loads(args["filter"])
             query_result = client_db.session.query(eval(args["model"]))\
                 .filter_by(**args["filter"])\
                 .first()
@@ -246,12 +260,6 @@ class Update(Resource):
                 status, status_msg, status_code = "OK", "OK", 200
             else:
                 status, status_msg, status_code = "ERROR", "no match found", 400
-        except json.decoder.JSONDecodeError:
-            status, status_msg, status_code = (
-                "ERROR",
-                "error while parsing filter object",
-                400,
-            )
         except (
             sqlalchemy.exc.InvalidRequestError,
             sqlalchemy.exc.StatementError,
@@ -268,21 +276,13 @@ class Update(Resource):
 
         return {"status": status, "status_msg": status_msg}, status_code
 
-
-@api.route("/delete")
-class Delete(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument("model", required=True, type=str, location="form")
-    parser.add_argument("filter", required=True, type=str, location="form")
-
-    @api.expect(parser)
+    @api.expect(delete_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
-    def post(self):
-        args = self.parser.parse_args()
+    def delete(self):
+        args = self.delete_parser.parse_args()
 
         try:
-            args["filter"] = json.loads(args["filter"])
             query_result = client_db.session.query(eval(args["model"]))\
                 .filter_by(**args["filter"])\
                 .first()
@@ -293,12 +293,6 @@ class Delete(Resource):
                 status, status_msg, status_code = "OK", "OK", 200
             else:
                 status, status_msg, status_code = "ERROR", "no match found", 400
-        except json.decoder.JSONDecodeError:
-            status, status_msg, status_code = (
-                "ERROR",
-                "error while parsing filter object",
-                400,
-            )
         except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             status, status_msg, status_code = "ERROR", "invalid request", 400
         except:
