@@ -12,28 +12,53 @@
         <div class="row justify-content-center">
             <div class="col-sm-5">
                 <form class="form" method="POST">
-                    {{ form.csrf_token }}
-                    <div class="form-group">
-                        {{ render_field(form.source, class="form-control") }}
-                    </div>
-                    <div>
-                        {{ render_field(form.interval_type.label) }}
-                        <div>
-                            {% for field in form.interval_type %}
-                                <div class="form-check form-check-inline">
-                                    {{ field(class="form-check-input") }}
-                                    {{ field.label(class="form-check-label") }}
-                                </div>
-                            {% endfor %}
+                    {% if form1 %}
+                        {{ form1.csrf_token }}
+                        <div class="form-group">
+                            {{ render_field(form1.source, class="form-control") }}
                         </div>
-                    </div>
-                    <div class="form-group">
-                        {{ render_field(form.interval, class="form-control") }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.manual(class="btn btn-warning btn-lg btn-block")  }}
-                        {{ form.update(class="btn btn-success btn-lg btn-block") }}
-                    </div>
+                        <div>
+                            {{ render_field(form1.interval_type.label) }}
+                            <div>
+                                {% for field in form1.interval_type %}
+                                    <div class="form-check form-check-inline">
+                                        {{ field(class="form-check-input") }}
+                                        {{ field.label(class="form-check-label") }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ render_field(form1.interval, class="form-control") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form1.submit(class="btn btn-success btn-lg btn-block")  }}
+                        </div>
+
+                    {% else %}
+                        {{ form2.csrf_token }}
+                        <div class="form-group">
+                            {{ render_field(form2.source, class="form-control") }}
+                        </div>
+                        <div>
+                            {{ render_field(form2.interval_type.label) }}
+                            <div>
+                                {% for field in form2.interval_type %}
+                                    <div class="form-check form-check-inline">
+                                        {{ field(class="form-check-input") }}
+                                        {{ field.label(class="form-check-label") }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ render_field(form2.interval, class="form-control") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form2.manual(class="btn btn-warning btn-lg btn-block")  }}
+                            {{ form2.update(class="btn btn-success btn-lg btn-block") }}
+                        </div>
+                    {% endif %}
                 </form>
             </div>
         </div>

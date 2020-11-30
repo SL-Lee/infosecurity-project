@@ -105,6 +105,8 @@ def backup():
             shutil.copy2(db_location, file_backup_path)
 
             return redirect(url_for("index"))
+        return render_template("backup.html", form1=form)
+
     else:
         form = forms.BackupForm(request.form)
 
@@ -138,8 +140,7 @@ def backup():
                 print("something else happened")
 
             return redirect(url_for("index"))
-
-    return render_template("backup.html", form=form)
+        return render_template("backup.html", form2=form)
 
 
 # API routes
