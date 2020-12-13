@@ -1,8 +1,11 @@
 from client_models import (
     client_db,
     Product,
+    ProductSchema,
     Review,
+    ReviewSchema,
     User,
+    UserSchema,
 )
 from flask import (
     abort,
@@ -23,13 +26,11 @@ from flask_login import (
     logout_user,
 )
 from flask_restx import Api, reqparse, Resource
-from helper_functions import deserialize, serialize
-import binascii
 import datetime
 import forms
 import json
+import marshmallow
 import os
-import pickle
 import shutil
 import sqlalchemy
 
@@ -106,7 +107,6 @@ def backup():
 
             return redirect(url_for("index"))
         return render_template("backup.html", form1=form)
-
     else:
         form = forms.BackupForm(request.form)
 
@@ -148,7 +148,13 @@ def backup():
 class Database(Resource):
     # Parser for POST requests
     post_parser = reqparse.RequestParser(bundle_errors=True)
-    post_parser.add_argument("object", required=True, type=str, location="form")
+    post_parser.add_argument("model", required=True, type=str, location="form")
+    post_parser.add_argument(
+        "object",
+        required=True,
+        type=json.loads,
+        location="form",
+    )
 
     # Parser for GET requests
     get_parser = reqparse.RequestParser(bundle_errors=True)
@@ -194,17 +200,17 @@ class Database(Resource):
         args = self.post_parser.parse_args()
 
         try:
-            obj = deserialize(args["object"])
-            client_db.session.add(obj)
+            schema = eval(f"{args['model']}Schema()")
+            client_db.session.add(schema.load(args["object"]))
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
-        except (binascii.Error, pickle.UnpicklingError):
+        except marshmallow.exceptions.ValidationError:
             status, status_msg, status_code = (
                 "ERROR",
                 "error while deserializing object",
                 400,
             )
-        except sqlalchemy.orm.exc.UnmappedInstanceError:
+        except (NameError, sqlalchemy.orm.exc.UnmappedInstanceError):
             status, status_msg, status_code = "ERROR", "unmapped object", 400
         except:
             status, status_msg, status_code = (
@@ -222,9 +228,12 @@ class Database(Resource):
         args = self.get_parser.parse_args()
 
         try:
-            query_results = client_db.session.query(eval(args["model"]))\
-                .filter_by(**args["filter"])\
-                .all()
+            schema = eval(f"{args['model']}Schema(many=True)")
+            query_results = schema.dump(
+                client_db.session.query(eval(args["model"]))\
+                    .filter_by(**args["filter"])\
+                    .all()
+            )
             status, status_msg, status_code = "OK", "OK", 200
         except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             query_results = None
@@ -240,7 +249,7 @@ class Database(Resource):
         return {
             "status": status,
             "status_msg": status_msg,
-            "query_results": serialize(query_results),
+            "query_results": query_results,
         },\
         status_code
 
@@ -262,9 +271,9 @@ class Database(Resource):
             else:
                 status, status_msg, status_code = "ERROR", "no match found", 400
         except (
+            NameError,
             sqlalchemy.exc.InvalidRequestError,
             sqlalchemy.exc.StatementError,
-            NameError,
             SyntaxError,
         ):
             status, status_msg, status_code = "ERROR", "invalid request", 400
@@ -294,7 +303,7 @@ class Database(Resource):
                 status, status_msg, status_code = "OK", "OK", 200
             else:
                 status, status_msg, status_code = "ERROR", "no match found", 400
-        except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
+        except (NameError, sqlalchemy.exc.InvalidRequestError, SyntaxError):
             status, status_msg, status_code = "ERROR", "invalid request", 400
         except:
             status, status_msg, status_code = (

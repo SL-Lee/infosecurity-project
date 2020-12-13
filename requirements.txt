@@ -14,7 +14,9 @@ Jinja2==2.11.2
 jsonschema==3.2.0
 lazy-object-proxy==1.4.3
 MarkupSafe==1.1.1
+marshmallow==3.9.1
 mccabe==0.6.1
+pycryptodome==3.9.9
 pylint==2.6.0
 pylint-flask==0.6
 pylint-plugin-utils==0.6
