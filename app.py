@@ -210,8 +210,14 @@ class Database(Resource):
                 "error while deserializing object",
                 400,
             )
-        except (NameError, sqlalchemy.orm.exc.UnmappedInstanceError):
-            status, status_msg, status_code = "ERROR", "unmapped object", 400
+        except (NameError, SyntaxError):
+            status, status_msg, status_code = "ERROR", "invalid request", 400
+        except sqlalchemy.exc.IntegrityError:
+            status, status_msg, status_code = (
+                "ERROR",
+                "database integrity error",
+                400,
+            )
         except:
             status, status_msg, status_code = (
                 "ERROR",

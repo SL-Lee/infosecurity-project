@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
-from marshmallow import fields, post_load, Schema
+from marshmallow import fields, post_load, pre_load, Schema
 
 
 client_db = SQLAlchemy()
@@ -41,35 +41,49 @@ class Review(client_db.Model):
 
 
 # Schemas
-class ProductSchema(Schema):
+class BaseSchema(Schema):
+    __fields_to_skip_none__ = ()
+    __model__ = None
+
+    @pre_load
+    def remove_null_fields(self, data, **kwargs):
+        if type(data) == dict:
+            for i in self.__fields_to_skip_none__:
+                if i in data and data[i] == None:
+                    del data[i]
+
+        return data
+
+    @post_load
+    def make_model(self, data, **kwargs):
+        return self.__model__(**data) if self.__model__ is not None else None
+
+    class Meta:
+        ordered = True
+
+
+class ProductSchema(BaseSchema):
+    __fields_to_skip_none__ = ("id",)
+    __model__ = Product
     id = fields.Integer()
     name = fields.Str(required=True)
     description = fields.Str(required=True)
     price = fields.Float(required=True)
     quantity = fields.Str(required=True)
 
-    @post_load
-    def make_product(self, data, **kwargs):
-        return Product(**data)
 
-
-class ReviewSchema(Schema):
+class ReviewSchema(BaseSchema):
+    __model__ = Review
     user_id = fields.Integer(required=True)
     product_id = fields.Integer(required=True)
     rating = fields.Integer(required=True)
     product = fields.Nested(ProductSchema())
 
-    @post_load
-    def make_review(self, data, **kwargs):
-        return Review(**data)
 
-
-class UserSchema(Schema):
+class UserSchema(BaseSchema):
+    __fields_to_skip_none__ = ("id",)
+    __model__ = User
     id = fields.Integer()
     username = fields.Str(required=True)
     password = fields.Str(required=True)
     reviews = fields.List(fields.Nested(ReviewSchema()))
-
-    @post_load
-    def make_user(self, data, **kwargs):
-        return User(**data)
