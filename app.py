@@ -12,6 +12,7 @@ from flask import (
     Blueprint,
     flash,
     Flask,
+    jsonify,
     make_response,
     redirect,
     render_template,
@@ -26,13 +27,21 @@ from flask_login import (
     logout_user,
 )
 from flask_restx import Api, reqparse, Resource
+from flask_wtf.csrf import CSRFProtect
+from helper_functions import (
+    get_config_value,
+    set_config_value,
+    validate_api_key,
+)
 import datetime
 import forms
+import hashlib
 import json
 import marshmallow
 import os
 import shutil
 import sqlalchemy
+import uuid
 
 
 app = Flask(__name__)
@@ -45,6 +54,8 @@ api = Api(blueprint, doc="/doc/")
 app.register_blueprint(blueprint)
 
 client_db.init_app(app)
+
+csrf = CSRFProtect(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -143,12 +154,63 @@ def backup():
         return render_template("backup.html", form2=form)
 
 
+@app.route("/api/key-management")
+def api_key_management():
+    return render_template(
+        "api-key-management.html",
+        api_key=get_config_value("api-key"),
+    )
+
+
+@app.route("/api/key-management/revoke", methods=["POST"])
+def api_key_revoke():
+    set_config_value("api-key", None)
+    return jsonify({"status": "OK"})
+
+
+@app.route("/api/key-management/generate", methods=["POST"])
+def api_key_generate():
+    api_key = uuid.uuid4()
+    api_key_hash = hashlib.sha3_512(api_key.bytes).hexdigest()
+    api_key_timestamp = datetime\
+        .datetime\
+        .now()\
+        .strftime("%Y-%m-%dT%H:%M:%S+08:00")
+    set_config_value(
+        "api-key",
+        {
+            "hash": api_key_hash,
+            "timestamp": api_key_timestamp,
+        },
+    )
+    return jsonify({
+        "status": "OK",
+        "new_api_key_hash": api_key.hex,
+        "new_api_key_timestamp": api_key_timestamp,
+    })
+
+
 # API routes
 @api.route("/database")
 class Database(Resource):
+    base_parser = reqparse.RequestParser(bundle_errors=True)
+    base_parser.add_argument(
+        "X-API-KEY",
+        required=True,
+        type=validate_api_key,
+        location="headers",
+    )
+    base_parser.add_argument("model", required=True, type=str, location="form")
+    base_parser.add_argument(
+        "filter",
+        required=True,
+        type=json.loads,
+        location="form",
+    )
+
     # Parser for POST requests
-    post_parser = reqparse.RequestParser(bundle_errors=True)
-    post_parser.add_argument("model", required=True, type=str, location="form")
+    post_parser = base_parser.copy()
+    post_parser.remove_argument("filter")
     post_parser.add_argument(
         "object",
         required=True,
@@ -157,9 +219,14 @@ class Database(Resource):
     )
 
     # Parser for GET requests
-    get_parser = reqparse.RequestParser(bundle_errors=True)
-    get_parser.add_argument("model", required=True, type=str, location="args")
-    get_parser.add_argument(
+    get_parser = base_parser.copy()
+    get_parser.replace_argument(
+        "model",
+        required=True,
+        type=str,
+        location="args",
+    )
+    get_parser.replace_argument(
         "filter",
         required=True,
         type=json.loads,
@@ -167,31 +234,12 @@ class Database(Resource):
     )
 
     # Parser for PATCH requests
-    patch_parser = reqparse.RequestParser(bundle_errors=True)
-    patch_parser.add_argument("model", required=True, type=str, location="form")
-    patch_parser.add_argument(
-        "filter",
-        required=True,
-        type=json.loads,
-        location="form",
-    )
+    patch_parser = base_parser.copy()
     patch_parser.add_argument("field", required=True, type=str, location="form")
     patch_parser.add_argument("value", required=True, location="form")
 
     # Parser for DELETE requests
-    delete_parser = reqparse.RequestParser(bundle_errors=True)
-    delete_parser.add_argument(
-        "model",
-        required=True,
-        type=str,
-        location="form",
-    )
-    delete_parser.add_argument(
-        "filter",
-        required=True,
-        type=json.loads,
-        location="form",
-    )
+    delete_parser = base_parser.copy()
 
     @api.expect(post_parser)
     @api.response(200, "Success")
