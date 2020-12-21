@@ -118,7 +118,7 @@
         <code id="new-api-key-hash"></code>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="location.reload();">OK</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
       </div>
     </div>
   </div>
@@ -164,6 +164,9 @@
           $(".modal").modal("hide");
           $("#new-api-key-hash").text(json["new_api_key_hash"]);
           $("#api-key-generation-success-modal").modal();
+          $("#api-key-generation-success-modal").on("hidden.bs.modal", e => {
+            location.reload();
+          });
         },
         error => {
           $(".modal").modal("hide");
