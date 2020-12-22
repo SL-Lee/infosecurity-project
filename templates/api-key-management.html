@@ -87,8 +87,7 @@
             return Promise.reject("Error while revoking API key");
           }
         })
-        .then(
-          () => {},
+        .catch(
           error => {
             $(".modal").modal("hide");
             $("#api-key-revocation-failure-modal").modal();
