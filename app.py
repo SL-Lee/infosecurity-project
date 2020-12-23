@@ -231,8 +231,12 @@ class Database(Resource):
 
     # Parser for PATCH requests
     patch_parser = base_parser.copy()
-    patch_parser.add_argument("field", required=True, type=str, location="form")
-    patch_parser.add_argument("value", required=True, location="form")
+    patch_parser.add_argument(
+        "values",
+        required=True,
+        type=json.loads,
+        location="form",
+    )
 
     # Parser for DELETE requests
     delete_parser = base_parser.copy()
@@ -312,14 +316,9 @@ class Database(Resource):
         try:
             query_result = client_db.session.query(eval(args["model"]))\
                 .filter(eval(args["filter"]))\
-                .first()
-
-            if query_result is not None:
-                setattr(query_result, args["field"], args["value"])
-                client_db.session.commit()
-                status, status_msg, status_code = "OK", "OK", 200
-            else:
-                status, status_msg, status_code = "ERROR", "no match found", 400
+                .update(args["values"])
+            client_db.session.commit()
+            status, status_msg, status_code = "OK", "OK", 200
         except (
             NameError,
             sqlalchemy.exc.InvalidRequestError,
@@ -345,14 +344,9 @@ class Database(Resource):
         try:
             query_result = client_db.session.query(eval(args["model"]))\
                 .filter(eval(args["filter"]))\
-                .first()
-
-            if query_result is not None:
-                client_db.session.delete(query_result)
-                client_db.session.commit()
-                status, status_msg, status_code = "OK", "OK", 200
-            else:
-                status, status_msg, status_code = "ERROR", "no match found", 400
+                .delete()
+            client_db.session.commit()
+            status, status_msg, status_code = "OK", "OK", 200
         except (NameError, sqlalchemy.exc.InvalidRequestError, SyntaxError):
             status, status_msg, status_code = "ERROR", "invalid request", 400
         except:
