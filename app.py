@@ -201,12 +201,7 @@ class Database(Resource):
         location="headers",
     )
     base_parser.add_argument("model", required=True, type=str, location="form")
-    base_parser.add_argument(
-        "filter",
-        required=True,
-        type=json.loads,
-        location="form",
-    )
+    base_parser.add_argument("filter", required=True, type=str, location="form")
 
     # Parser for POST requests
     post_parser = base_parser.copy()
@@ -229,7 +224,7 @@ class Database(Resource):
     get_parser.replace_argument(
         "filter",
         required=True,
-        type=json.loads,
+        type=str,
         location="args",
     )
 
@@ -285,7 +280,7 @@ class Database(Resource):
             schema = eval(f"{args['model']}Schema(many=True)")
             query_results = schema.dump(
                 client_db.session.query(eval(args["model"]))\
-                    .filter_by(**args["filter"])\
+                    .filter(eval(args["filter"]))\
                     .all()
             )
             status, status_msg, status_code = "OK", "OK", 200
@@ -315,7 +310,7 @@ class Database(Resource):
 
         try:
             query_result = client_db.session.query(eval(args["model"]))\
-                .filter_by(**args["filter"])\
+                .filter(eval(args["filter"]))\
                 .first()
 
             if query_result is not None:
@@ -348,7 +343,7 @@ class Database(Resource):
 
         try:
             query_result = client_db.session.query(eval(args["model"]))\
-                .filter_by(**args["filter"])\
+                .filter(eval(args["filter"]))\
                 .first()
 
             if query_result is not None:
