@@ -48,14 +48,15 @@ app = Flask(__name__)
 app.secret_key = os.urandom(16)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///client_db.sqlite3"
+csrf = CSRFProtect(app)
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
 api = Api(blueprint, doc="/doc/")
 app.register_blueprint(blueprint)
 
-client_db.init_app(app)
+csrf.exempt(blueprint)
 
-csrf = CSRFProtect(app)
+client_db.init_app(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
