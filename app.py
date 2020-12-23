@@ -42,6 +42,7 @@ import os
 import shutil
 import sqlalchemy
 import uuid
+import configparser
 
 
 app = Flask(__name__)
@@ -71,6 +72,8 @@ if not os.path.isdir(os.path.join(dirname, "backup")):
     os.mkdir(os.path.join(dirname, "backup"))
 
 backup_path = os.path.join(dirname, "backup")
+if not os.path.isdir(os.path.join(backup_path, "client_db")):
+    os.mkdir(os.path.join(backup_path, "client_db"))
 backup_interval = ""
 
 
@@ -103,9 +106,29 @@ def logout():
 
 @app.route("/backup", methods=["GET", "POST"])
 def backup():
+    config = configparser.ConfigParser()
+    config.read("backup.ini")
+    return render_template("backup.html", files=config.sections())
+
+
+@app.route("/backup/<file>", methods=["GET", "POST"])
+def backupHistory(file):
+    config = configparser.ConfigParser()
+    config.read("backup.ini")
+
+    path = os.path.join(backup_path, file)
+    files = os.listdir(path)
+
+    return render_template("backupHistory.html", files=files)
+
+
+@app.route("/backupForm", methods=["GET", "POST"])
+def backupForm():
+    config = configparser.ConfigParser()
+    config.read("backup.ini")
     global db_location, backup_interval
 
-    if db_location == "":
+    if not config["client_db"]["path"]:
         form = forms.BackupFirstForm(request.form)
 
         if request.method == "POST" and form.validate():
@@ -118,7 +141,7 @@ def backup():
             shutil.copy2(db_location, file_backup_path)
 
             return redirect(url_for("index"))
-        return render_template("backup.html", form1=form)
+        return render_template("backupForm.html", form1=form)
     else:
         form = forms.BackupForm(request.form)
 
@@ -152,7 +175,7 @@ def backup():
                 print("something else happened")
 
             return redirect(url_for("index"))
-        return render_template("backup.html", form2=form)
+        return render_template("backupForm.html", form2=form)
 
 
 @app.route("/api/key-management")

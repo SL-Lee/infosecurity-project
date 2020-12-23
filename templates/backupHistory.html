@@ -6,17 +6,18 @@
     <div class="container-fluid content">
         <div class="row justify-content-center">
             <div class="col-sm-12">
-                <h4 class="text-center">Backup Files</h4>
+                <h4 class="text-center">Backup History</h4>
             </div>
         </div>
         <div class="row justify-content-center">
             <div class="col-sm-5">
+                {% if files | length != 0 %}
                 <table class="table table-hover">
                     <thead>
                         <tr>
                             <th scope="col">#</th>
-                            <th scope="col">Files</th>
-                            <th scope="col">Past Backups</th>
+                            <th scope="col">Timestamp</th>
+                            <th scope="col">Restore</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -24,11 +25,14 @@
                             <tr>
                                 <td>{{ loop.index }}</td>
                                 <td>{{ i }}</td>
-                                <td><button class="btn btn-success" onclick="location.href='/backup/{{ i }}'">View</button></td>
+                                <td><button class="btn btn-warning" onclick="location.href='/backup/restore/{{ i }}'">Restore</button></td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                {% else %}
+                    <h6 class="text-center text-muted">There are no backups of the file selected</h6>
+                {% endif %}
             </div>
         </div>
     </div>
