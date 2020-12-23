@@ -52,7 +52,19 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///client_db.sqlite3"
 csrf = CSRFProtect(app)
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
-api = Api(blueprint, doc="/doc/")
+authorizations = {
+    "api-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-KEY"
+    }
+}
+api = Api(
+    blueprint,
+    authorizations=authorizations,
+    security="api-key",
+    doc="/doc/",
+)
 app.register_blueprint(blueprint)
 
 csrf.exempt(blueprint)
