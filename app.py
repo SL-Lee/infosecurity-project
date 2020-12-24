@@ -17,8 +17,8 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     url_for,
-    send_file
 )
 from flask_login import (
     current_user,
@@ -34,7 +34,9 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
+from monitoring_models import monitoring_db, Request, Rule, Alert
 from werkzeug.utils import secure_filename
+import configparser
 import datetime
 import forms
 import hashlib
@@ -44,16 +46,18 @@ import os
 import shutil
 import sqlalchemy
 import uuid
-import configparser
 
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///client_db.sqlite3"
+app.config["SQLALCHEMY_BINDS"] = {
+    "monitoring": "sqlite:///monitoring_db.sqlite3"
+}
 csrf = CSRFProtect(app)
-UPLOAD_FOLDER = 'uploads/'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+UPLOAD_FOLDER = "uploads/"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
 authorizations = {
@@ -70,10 +74,14 @@ api = Api(
     doc="/doc/",
 )
 app.register_blueprint(blueprint)
-
 csrf.exempt(blueprint)
 
 client_db.init_app(app)
+monitoring_db.init_app(app)
+
+with app.app_context():
+    client_db.create_all()
+    monitoring_db.create_all(bind="monitoring")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -88,8 +96,10 @@ if not os.path.isdir(os.path.join(dirname, "backup")):
     os.mkdir(os.path.join(dirname, "backup"))
 
 backup_path = os.path.join(dirname, "backup")
+
 if not os.path.isdir(os.path.join(backup_path, "client_db")):
     os.mkdir(os.path.join(backup_path, "client_db"))
+
 backup_interval = ""
 
 
@@ -194,6 +204,41 @@ def backupForm():
         return render_template("backupForm.html", form2=form)
 
 
+# Upload API
+@app.route("/uploadfile", methods=["GET", "POST"])
+def upload_file():
+    if request.method == "POST":
+        # check if the post request has the file part
+        if "file" not in request.files:
+            print("no file")
+            return redirect(request.url)
+        file = request.files["file"]
+        # if user does not select file, browser also
+        # submit a empty part without filename
+        if file.filename == "":
+            print("no filename")
+            return redirect(request.url)
+        else:
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            print("saved file successfully")
+      # send file name as parameter to download
+            return redirect("/downloadfile/"+ filename)
+    return render_template("upload_file.html")
+
+
+# Download API
+@app.route("/downloadfile/<filename>", methods = ["GET"])
+def download_file(filename):
+    return render_template("download.html", value=filename)
+
+
+@app.route("/return-files/<filename>")
+def return_files_tut(filename):
+    file_path = UPLOAD_FOLDER + filename
+    return send_file(file_path, as_attachment=True, attachment_filename="")
+
+
 @app.route("/api/key-management")
 def api_key_management():
     return render_template(
@@ -211,22 +256,19 @@ def api_key_revoke():
 @app.route("/api/key-management/generate", methods=["POST"])
 def api_key_generate():
     api_key = uuid.uuid4()
-    api_key_hash = hashlib.sha3_512(api_key.bytes).hexdigest()
-    api_key_timestamp = datetime\
-        .datetime\
-        .now()\
-        .strftime("%Y-%m-%dT%H:%M:%S+08:00")
     set_config_value(
         "api-key",
         {
-            "hash": api_key_hash,
-            "timestamp": api_key_timestamp,
+            "hash": hashlib.sha3_512(api_key.bytes).hexdigest(),
+            "timestamp": datetime\
+                .datetime\
+                .now()\
+                .strftime("%Y-%m-%dT%H:%M:%S+08:00"),
         },
     )
     return jsonify({
         "status": "OK",
-        "new_api_key_hash": api_key.hex,
-        "new_api_key_timestamp": api_key_timestamp,
+        "new_api_key": api_key.hex,
     })
 
 
@@ -396,41 +438,6 @@ class Database(Resource):
             )
 
         return {"status": status, "status_msg": status_msg}, status_code
-
-
-# Upload API
-@app.route('/uploadfile', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            print('no file')
-            return redirect(request.url)
-        file = request.files['file']
-        # if user does not select file, browser also
-        # submit a empty part without filename
-        if file.filename == '':
-            print('no filename')
-            return redirect(request.url)
-        else:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            print("saved file successfully")
-      # send file name as parameter to download
-            return redirect('/downloadfile/'+ filename)
-    return render_template('upload_file.html')
-
-
-# Download API
-@app.route("/downloadfile/<filename>", methods = ['GET'])
-def download_file(filename):
-    return render_template('download.html', value=filename)
-
-
-@app.route('/return-files/<filename>')
-def return_files_tut(filename):
-    file_path = UPLOAD_FOLDER + filename
-    return send_file(file_path, as_attachment=True, attachment_filename='')
 
 
 if __name__ == "__main__":

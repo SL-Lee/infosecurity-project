@@ -161,7 +161,7 @@
       .then(
         json => {
           $(".modal").modal("hide");
-          $("#new-api-key-hash").text(json["new_api_key_hash"]);
+          $("#new-api-key-hash").text(json["new_api_key"]);
           $("#api-key-generation-success-modal").modal();
           $("#api-key-generation-success-modal").on("hidden.bs.modal", e => {
             location.reload();
