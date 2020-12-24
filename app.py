@@ -44,7 +44,6 @@ import os
 import shutil
 import sqlalchemy
 import uuid
-import configparser
 
 
 app = Flask(__name__)
@@ -81,7 +80,6 @@ login_manager.login_view = "login"
 login_manager.login_message_category = "danger"
 
 dirname = os.path.dirname(__file__)
-db_location = ""
 
 # only if backup folder does not exist
 if not os.path.isdir(os.path.join(dirname, "backup")):
@@ -90,7 +88,6 @@ if not os.path.isdir(os.path.join(dirname, "backup")):
 backup_path = os.path.join(dirname, "backup")
 if not os.path.isdir(os.path.join(backup_path, "client_db")):
     os.mkdir(os.path.join(backup_path, "client_db"))
-backup_interval = ""
 
 
 @login_manager.user_loader
@@ -120,78 +117,121 @@ def logout():
     return redirect(url_for("index"))
 
 
-@app.route("/backup", methods=["GET", "POST"])
+@app.route("/backup")
 def backup():
-    config = configparser.ConfigParser()
-    config.read("backup.ini")
-    return render_template("backup.html", files=config.sections())
+    backup_config = get_config_value("backup")
+    print("backup files:", backup_config)
+    files = list(backup_config.keys())
+    return render_template("backup.html", files=files)
+
+
+@app.route("/tempBackupSetDefault")
+def backupSetDefault():
+    path = ".\client_db.sqlite3"
+    interval = 1
+    interval_type = "min"
+    client_db = {"client_db": {"path": path, "interval": interval, "interval_type":interval_type}}
+    set_config_value("backup", client_db)
+    backup_config = get_config_value("backup")
+    print("backup files:", backup_config)
+    print(backup_config["client_db"]["path"])
+    print(os.path.isfile(backup_config["client_db"]["path"]))
+    return redirect(url_for("backup"))
 
 
 @app.route("/backup/<file>", methods=["GET", "POST"])
 def backupHistory(file):
-    config = configparser.ConfigParser()
-    config.read("backup.ini")
-
     path = os.path.join(backup_path, file)
     files = os.listdir(path)
 
     return render_template("backupHistory.html", files=files)
 
 
-@app.route("/backupForm", methods=["GET", "POST"])
-def backupForm():
-    config = configparser.ConfigParser()
-    config.read("backup.ini")
-    global db_location, backup_interval
+@app.route("/backup/add", methods=["GET", "POST"])
+def backupAdd():
+    backup_config = get_config_value("backup")
+    print("backup files:", backup_config)
 
-    if not config["client_db"]["path"]:
-        form = forms.BackupFirstForm(request.form)
+    # first form, when there are no settings for the file
+    form = forms.BackupFirstForm(request.form)
 
-        if request.method == "POST" and form.validate():
-            db_location = form.source.data
-            backup_datetime = datetime.datetime.now().strftime("Backup %d-%m-%Y %H-%M-%S")
-            os.mkdir(os.path.join(backup_path, backup_datetime))
-            file_backup_path = os.path.join(os.path.join(backup_path, backup_datetime), os.path.basename(db_location))
+    if request.method == "POST" and form.validate():
+        location = form.source.data
+        backup_datetime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        filename = os.path.join(backup_path, os.path.splitext(os.path.basename(location))[0])
+        if not os.path.exists(filename):
+            os.mkdir(filename)
+        backup_folder = os.path.join(filename, secure_filename(backup_datetime))
+        if not os.path.exists(backup_folder):
+            os.mkdir(backup_folder)
+        file_backup_path = os.path.join(backup_folder, os.path.basename(location))
 
-            backup_interval = {"type": form.interval_type.data, "interval": form.interval.data}
-            shutil.copy2(db_location, file_backup_path)
+        backup_config = {os.path.splitext(os.path.basename(location))[0]: {"path": location, "interval": form.interval.data, "interval_type": form.interval_type.data}}
+        print(backup_config)
+        set_config_value("backup", backup_config)
 
-            return redirect(url_for("index"))
-        return render_template("backupForm.html", form1=form)
-    else:
-        form = forms.BackupForm(request.form)
+        shutil.copy2(location, file_backup_path)
 
-        if request.method == "POST" and form.validate():
-            if form.manual.data:
-                # only update, nothing else happens, including changes to settings
-                print("manual backup")
+        return redirect(url_for("index"))
+    return render_template("backupForm.html", form1=form)
 
-                backup_datetime = datetime.datetime.now().strftime("Backup %d-%m-%Y %H-%M-%S")
-                print(backup_datetime)
-                os.mkdir(os.path.join(backup_path, backup_datetime))
-                file_backup_path = os.path.join(os.path.join(backup_path, backup_datetime), os.path.basename(db_location))
 
-                shutil.copy2(db_location, file_backup_path)
-            elif form.update.data:
-                # will perform a update, and update the settings
-                print("update settings")
+@app.route("/backup/<file>/update", methods=["GET", "POST"])
+def backupUpdate(file):
+    backup_config = get_config_value("backup")
+    print("backup files:", backup_config)
+    file_settings = backup_config[file]
 
-                if form.source.data != "" and os.path.isfile(form.source.data):     # if field is not empty and the file is valid
-                    db_location = form.source.data
-                if form.interval.data != "":                                        # if field is not empty
-                    backup_interval = {"type": form.interval_type.data, "interval": form.interval.data}
+    form = forms.BackupForm(request.form)
+    if request.method == "POST" and form.validate():
+        # only update, nothing else happens, including changes to settings
+        if form.manual.data:
+            print("manual backup")
 
-                backup_datetime = datetime.datetime.now().strftime("Backup %d-%m-%Y %H-%M-%S")
-                os.mkdir(os.path.join(backup_path, backup_datetime))
-                file_backup_path = os.path.join(os.path.join(backup_path, backup_datetime), os.path.basename(db_location))
+            backup_datetime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+            filename = os.path.join(backup_path, file)
+            if not os.path.exists(filename):
+                os.mkdir(filename)
 
-                shutil.copy2(db_location, file_backup_path)
-            else:
-                # still dk wat to do if this gets executed
-                print("something else happened")
+            backup_folder = os.path.join(filename, secure_filename(backup_datetime))
+            if not os.path.exists(backup_folder):
+                os.mkdir(backup_folder)
 
-            return redirect(url_for("index"))
-        return render_template("backupForm.html", form2=form)
+            file_backup_path = os.path.join(backup_folder, os.path.basename(file_settings["path"]))
+
+            shutil.copy2(file_settings["path"], file_backup_path)
+
+        # will perform a update, and update the settings
+        elif form.update.data:
+            print("update settings")
+
+            if form.source.data != file_settings["path"] and os.path.isfile(form.source.data) and form.source.data != "":   # if field different from settings and the file is valid and not empty
+                file_settings["path"] = form.source.data
+            if form.interval_type.data != file_settings["interval_type"] and form.interval_type.data != "":                 # if field different from settings and not empty
+                file_settings["interval_type"] = form.interval_type.data
+            if form.interval.data != file_settings["interval"] and form.interval.data != "":                                # if field different from settings and not empty
+                file_settings["interval"] = form.interval.data
+
+            # update settings for file
+            backup_config[file] = file_settings
+            set_config_value("backup", backup_config)   # cannot put file settings directly, else it would override the whole backup settings
+
+            # create folders to be used for saving
+            backup_datetime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+            filename = os.path.join(backup_path, file)
+            if not os.path.exists(filename):
+                os.mkdir(filename)
+
+            backup_folder = os.path.join(filename, secure_filename(backup_datetime))
+            if not os.path.exists(backup_folder):
+                os.mkdir(backup_folder)
+
+            file_backup_path = os.path.join(backup_folder, os.path.basename(file_settings["path"]))
+
+            shutil.copy2(file_settings["path"], file_backup_path)
+
+        return redirect(url_for("backup"))
+    return render_template("backupForm.html", form2=form)
 
 
 @app.route("/api/key-management")
