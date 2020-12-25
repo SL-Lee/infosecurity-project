@@ -27,3 +27,9 @@ IT2566 Infosecurity Project
 > 3. Run `venv\scripts\activate`.
 > 4. Run `pip freeze > requirements.txt`.
 > 5. Commit the changes to `requirements.txt` and push it to the remote repository.
+
+## Code Style
+
+This project is formatted using [Black](https://github.com/psf/black). Instructions for how to install black can be found [here](https://github.com/psf/black#installation-and-usage).
+
+Please remember to run `black --line-length=80 .` **before** committing your changes to any Python file(s) to ensure consistent formatting across all Python files in this project.
