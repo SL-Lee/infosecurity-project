@@ -1,21 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}{% endblock %}</title>
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}" />
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/source-code-pro.css') }}" />
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/source-sans-pro.css') }}" />
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/source-serif-pro.css') }}" />
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/icofont.min.css') }}" />
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}" />
+  <link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='css/styles.css') }}" />
+  <link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='css/source-code-pro.css') }}" />
+  <link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='css/source-sans-pro.css') }}" />
+  <link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='css/source-serif-pro.css') }}" />
+  <link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='css/icofont.min.css') }}" />
+  <link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
+  <link rel="icon" type="image/png"
+    href="{{ url_for('static', filename='images/favicon.png') }}" />
 </head>
+
 <body>
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark sticky-top">
     <a class="navbar-brand" href="/">Name</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-links">
+    <button class="navbar-toggler" type="button" data-toggle="collapse"
+      data-target="#navbar-links">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div id="navbar-links" class="collapse navbar-collapse">
@@ -43,10 +53,13 @@
     {% endblock %}
   </div>
   <footer class="border-top mt-3 pt-3 pb-3">
-    <p class="text-center text-secondary m-0">&#xa9; Copyright <span id="current-year"></span></p>
+    <p class="text-center text-secondary m-0">&#xa9; Copyright <span
+        id="current-year"></span></p>
   </footer>
-  <script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+  <script
+    src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}">
+  </script>
   <script>
     document.getElementById("content").style.minHeight = `calc(100vh - 56px - \
     16px - 73px)`;
@@ -55,4 +68,5 @@
       .toString();
   </script>
 </body>
+
 </html>

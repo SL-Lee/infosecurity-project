@@ -172,11 +172,15 @@ def backupAdd():
         filename = os.path.join(
             backup_path, os.path.splitext(os.path.basename(location))[0]
         )
+
         if not os.path.exists(filename):
             os.mkdir(filename)
+
         backup_folder = os.path.join(filename, secure_filename(backup_datetime))
+
         if not os.path.exists(backup_folder):
             os.mkdir(backup_folder)
+
         file_backup_path = os.path.join(
             backup_folder, os.path.basename(location)
         )
