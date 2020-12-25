@@ -60,11 +60,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
 authorizations = {
-    "api-key": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-API-KEY"
-    }
+    "api-key": {"type": "apiKey", "in": "header", "name": "X-API-KEY"}
 }
 api = Api(
     blueprint,
@@ -139,7 +135,13 @@ def backupSetDefault():
     path = ".\client_db.sqlite3"
     interval = 1
     interval_type = "min"
-    client_db = {"client_db": {"path": path, "interval": interval, "interval_type":interval_type}}
+    client_db = {
+        "client_db": {
+            "path": path,
+            "interval": interval,
+            "interval_type": interval_type,
+        }
+    }
     set_config_value("backup", client_db)
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -167,15 +169,25 @@ def backupAdd():
     if request.method == "POST" and form.validate():
         location = form.source.data
         backup_datetime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-        filename = os.path.join(backup_path, os.path.splitext(os.path.basename(location))[0])
+        filename = os.path.join(
+            backup_path, os.path.splitext(os.path.basename(location))[0]
+        )
         if not os.path.exists(filename):
             os.mkdir(filename)
         backup_folder = os.path.join(filename, secure_filename(backup_datetime))
         if not os.path.exists(backup_folder):
             os.mkdir(backup_folder)
-        file_backup_path = os.path.join(backup_folder, os.path.basename(location))
+        file_backup_path = os.path.join(
+            backup_folder, os.path.basename(location)
+        )
 
-        backup_config = {os.path.splitext(os.path.basename(location))[0]: {"path": location, "interval": form.interval.data, "interval_type": form.interval_type.data}}
+        backup_config = {
+            os.path.splitext(os.path.basename(location))[0]: {
+                "path": location,
+                "interval": form.interval.data,
+                "interval_type": form.interval_type.data,
+            }
+        }
         print(backup_config)
         set_config_value("backup", backup_config)
 
@@ -197,16 +209,24 @@ def backupUpdate(file):
         if form.manual.data:
             print("manual backup")
 
-            backup_datetime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+            backup_datetime = datetime.datetime.now().strftime(
+                "%d-%m-%Y %H:%M:%S"
+            )
             filename = os.path.join(backup_path, file)
+
             if not os.path.exists(filename):
                 os.mkdir(filename)
 
-            backup_folder = os.path.join(filename, secure_filename(backup_datetime))
+            backup_folder = os.path.join(
+                filename, secure_filename(backup_datetime)
+            )
+
             if not os.path.exists(backup_folder):
                 os.mkdir(backup_folder)
 
-            file_backup_path = os.path.join(backup_folder, os.path.basename(file_settings["path"]))
+            file_backup_path = os.path.join(
+                backup_folder, os.path.basename(file_settings["path"])
+            )
 
             shutil.copy2(file_settings["path"], file_backup_path)
 
@@ -214,28 +234,52 @@ def backupUpdate(file):
         elif form.update.data:
             print("update settings")
 
-            if form.source.data != file_settings["path"] and os.path.isfile(form.source.data) and form.source.data != "":   # if field different from settings and the file is valid and not empty
+            if (
+                form.source.data != file_settings["path"]
+                and os.path.isfile(form.source.data)
+                and form.source.data != ""
+            ):
+                # if field different from settings and the file is valid and not empty
                 file_settings["path"] = form.source.data
-            if form.interval_type.data != file_settings["interval_type"] and form.interval_type.data != "":                 # if field different from settings and not empty
+
+            if (
+                form.interval_type.data != file_settings["interval_type"]
+                and form.interval_type.data != ""
+            ):
+                # if field different from settings and not empty
                 file_settings["interval_type"] = form.interval_type.data
-            if form.interval.data != file_settings["interval"] and form.interval.data != "":                                # if field different from settings and not empty
+
+            if (
+                form.interval.data != file_settings["interval"]
+                and form.interval.data != ""
+            ):
+                # if field different from settings and not empty
                 file_settings["interval"] = form.interval.data
 
             # update settings for file
             backup_config[file] = file_settings
-            set_config_value("backup", backup_config)   # cannot put file settings directly, else it would override the whole backup settings
+            # cannot put file settings directly, else it would override the whole backup settings
+            set_config_value("backup", backup_config)
 
             # create folders to be used for saving
-            backup_datetime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+            backup_datetime = datetime.datetime.now().strftime(
+                "%d-%m-%Y %H:%M:%S"
+            )
             filename = os.path.join(backup_path, file)
+
             if not os.path.exists(filename):
                 os.mkdir(filename)
 
-            backup_folder = os.path.join(filename, secure_filename(backup_datetime))
+            backup_folder = os.path.join(
+                filename, secure_filename(backup_datetime)
+            )
+
             if not os.path.exists(backup_folder):
                 os.mkdir(backup_folder)
 
-            file_backup_path = os.path.join(backup_folder, os.path.basename(file_settings["path"]))
+            file_backup_path = os.path.join(
+                backup_folder, os.path.basename(file_settings["path"])
+            )
 
             shutil.copy2(file_settings["path"], file_backup_path)
 
@@ -251,7 +295,9 @@ def upload_file():
         if "file" not in request.files:
             print("no file")
             return redirect(request.url)
+
         file = request.files["file"]
+
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == "":
@@ -261,13 +307,14 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             print("saved file successfully")
-      # send file name as parameter to download
-            return redirect("/downloadfile/"+ filename)
+            # send file name as parameter to download
+            return redirect("/downloadfile/" + filename)
+
     return render_template("upload_file.html")
 
 
 # Download API
-@app.route("/downloadfile/<filename>", methods = ["GET"])
+@app.route("/downloadfile/<filename>", methods=["GET"])
 def download_file(filename):
     return render_template("download.html", value=filename)
 
@@ -299,16 +346,17 @@ def api_key_generate():
         "api-key",
         {
             "hash": hashlib.sha3_512(api_key.bytes).hexdigest(),
-            "timestamp": datetime\
-                .datetime\
-                .now()\
-                .strftime("%Y-%m-%dT%H:%M:%S+08:00"),
+            "timestamp": datetime.datetime.now().strftime(
+                "%Y-%m-%dT%H:%M:%S+08:00"
+            ),
         },
     )
-    return jsonify({
-        "status": "OK",
-        "new_api_key": api_key.hex,
-    })
+    return jsonify(
+        {
+            "status": "OK",
+            "new_api_key": api_key.hex,
+        }
+    )
 
 
 # API routes
@@ -404,9 +452,9 @@ class Database(Resource):
         try:
             schema = eval(f"{args['model']}Schema(many=True)")
             query_results = schema.dump(
-                client_db.session.query(eval(args["model"]))\
-                    .filter(eval(args["filter"]))\
-                    .all()
+                client_db.session.query(eval(args["model"]))
+                .filter(eval(args["filter"]))
+                .all()
             )
             status, status_msg, status_code = "OK", "OK", 200
         except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
@@ -424,8 +472,7 @@ class Database(Resource):
             "status": status,
             "status_msg": status_msg,
             "query_results": query_results,
-        },\
-        status_code
+        }, status_code
 
     @api.expect(patch_parser)
     @api.response(200, "Success")
@@ -434,9 +481,11 @@ class Database(Resource):
         args = self.patch_parser.parse_args()
 
         try:
-            query_result = client_db.session.query(eval(args["model"]))\
-                .filter(eval(args["filter"]))\
+            query_result = (
+                client_db.session.query(eval(args["model"]))
+                .filter(eval(args["filter"]))
                 .update(args["values"])
+            )
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
         except (
@@ -462,9 +511,11 @@ class Database(Resource):
         args = self.delete_parser.parse_args()
 
         try:
-            query_result = client_db.session.query(eval(args["model"]))\
-                .filter(eval(args["filter"]))\
+            query_result = (
+                client_db.session.query(eval(args["model"]))
+                .filter(eval(args["filter"]))
                 .delete()
+            )
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
         except (NameError, sqlalchemy.exc.InvalidRequestError, SyntaxError):
