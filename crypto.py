@@ -1,6 +1,7 @@
+import hashlib
+
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
-import hashlib
 
 key = get_random_bytes(32)  # Use a stored / generated key
 file_to_encrypt = "client_db.sqlite3"

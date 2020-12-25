@@ -1,6 +1,7 @@
-from errors import InvalidAPIKeyError
 import hashlib
 import shelve
+
+from errors import InvalidAPIKeyError
 
 
 def get_config_value(key):

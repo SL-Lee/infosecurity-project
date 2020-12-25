@@ -1,7 +1,6 @@
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
-from marshmallow import fields, post_load, pre_load, Schema
-
+from marshmallow import Schema, fields, post_load, pre_load
 
 client_db = SQLAlchemy()
 

@@ -1,51 +1,52 @@
-from client_models import (
-    client_db,
-    Product,
-    ProductSchema,
-    Review,
-    ReviewSchema,
-    User,
-    UserSchema,
-)
+import datetime
+import hashlib
+import json
+import os
+import shutil
+import uuid
+
+import marshmallow
+import sqlalchemy
 from flask import (
-    abort,
     Blueprint,
-    flash,
     Flask,
+    abort,
+    flash,
     jsonify,
     make_response,
     redirect,
     render_template,
     request,
     send_file,
-    url_for,
+    url_for
 )
 from flask_login import (
+    LoginManager,
     current_user,
     login_required,
     login_user,
-    LoginManager,
-    logout_user,
+    logout_user
 )
-from flask_restx import Api, reqparse, Resource
+from flask_restx import Api, Resource, reqparse
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.utils import secure_filename
+
+import forms
+from client_models import (
+    Product,
+    ProductSchema,
+    Review,
+    ReviewSchema,
+    User,
+    UserSchema,
+    client_db
+)
 from helper_functions import (
     get_config_value,
     set_config_value,
-    validate_api_key,
+    validate_api_key
 )
-from monitoring_models import monitoring_db, Request, Rule, Alert
-from werkzeug.utils import secure_filename
-import datetime
-import forms
-import hashlib
-import json
-import marshmallow
-import os
-import shutil
-import sqlalchemy
-import uuid
-
+from monitoring_models import Alert, Request, Rule, monitoring_db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -198,6 +199,7 @@ def backupAdd():
         shutil.copy2(location, file_backup_path)
 
         return redirect(url_for("index"))
+
     return render_template("backupForm.html", form1=form)
 
 
@@ -288,6 +290,7 @@ def backupUpdate(file):
             shutil.copy2(file_settings["path"], file_backup_path)
 
         return redirect(url_for("backup"))
+
     return render_template("backupForm.html", form2=form)
 
 

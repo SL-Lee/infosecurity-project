@@ -7,11 +7,11 @@ from wtforms import (
     RadioField,
     SelectField,
     StringField,
-    TextAreaField,
-    ValidationError,
     SubmitField,
+    TextAreaField,
+    ValidationError
 )
-from wtforms.validators import InputRequired, Email, Length, Optional
+from wtforms.validators import Email, InputRequired, Length, Optional
 
 
 class BackupFirstForm(FlaskForm):
