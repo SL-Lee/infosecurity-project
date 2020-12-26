@@ -123,6 +123,7 @@ def logout():
     return redirect(url_for("index"))
 
 
+# Backup functions
 @app.route("/backup")
 def backup():
     backup_config = get_config_value("backup")
@@ -149,14 +150,6 @@ def backupSetDefault():
     print(backup_config["client_db"]["path"])
     print(os.path.isfile(backup_config["client_db"]["path"]))
     return redirect(url_for("backup"))
-
-
-@app.route("/backup/<file>", methods=["GET", "POST"])
-def backupHistory(file):
-    path = os.path.join(backup_path, file)
-    files = os.listdir(path)
-
-    return render_template("backupHistory.html", files=files)
 
 
 @app.route("/backup/add", methods=["GET", "POST"])
@@ -203,6 +196,15 @@ def backupAdd():
     return render_template("backupForm.html", form1=form)
 
 
+@app.route("/backup/<file>", methods=["GET", "POST"])
+def backupHistory(file):
+    path = os.path.join(backup_path, file)
+    timestamp = os.listdir(path)
+    print(timestamp)
+
+    return render_template("backupHistory.html", file=file, timestamp=timestamp)
+
+
 @app.route("/backup/<file>/update", methods=["GET", "POST"])
 def backupUpdate(file):
     backup_config = get_config_value("backup")
@@ -219,14 +221,12 @@ def backupUpdate(file):
                 "%d-%m-%Y %H:%M:%S"
             )
             filename = os.path.join(backup_path, file)
-
             if not os.path.exists(filename):
                 os.mkdir(filename)
 
             backup_folder = os.path.join(
                 filename, secure_filename(backup_datetime)
             )
-
             if not os.path.exists(backup_folder):
                 os.mkdir(backup_folder)
 
@@ -240,26 +240,26 @@ def backupUpdate(file):
         elif form.update.data:
             print("update settings")
 
+            # if field different from settings and the file is valid and not empty
             if (
                 form.source.data != file_settings["path"]
                 and os.path.isfile(form.source.data)
                 and form.source.data != ""
             ):
-                # if field different from settings and the file is valid and not empty
                 file_settings["path"] = form.source.data
 
+            # if field different from settings and not empty
             if (
                 form.interval_type.data != file_settings["interval_type"]
                 and form.interval_type.data != ""
             ):
-                # if field different from settings and not empty
                 file_settings["interval_type"] = form.interval_type.data
 
+            # if field different from settings and not empty
             if (
                 form.interval.data != file_settings["interval"]
                 and form.interval.data != ""
             ):
-                # if field different from settings and not empty
                 file_settings["interval"] = form.interval.data
 
             # update settings for file
@@ -292,6 +292,29 @@ def backupUpdate(file):
         return redirect(url_for("backup"))
 
     return render_template("backupForm.html", form2=form)
+
+
+@app.route("/backup/<file>/<timestamp>/restore")
+def backupRestore(file, timestamp):
+    backup_config = get_config_value("backup")
+    print("backup files:", backup_config)
+    file_settings = backup_config[file]
+
+    # path to file dir
+    file_folder = os.path.join(backup_path, file)
+
+    # path to timestamp dir
+    timestamp_folder = os.path.join(file_folder, timestamp)
+
+    # path to backup file
+    restore = os.path.join(
+        timestamp_folder, os.path.basename(file_settings["path"])
+    )
+
+    # copy from timestamp to source path
+    shutil.copy2(restore, file_settings["path"])
+
+    return redirect(url_for("backup"))
 
 
 # Upload API
