@@ -18,14 +18,14 @@ from flask import (
     render_template,
     request,
     send_file,
-    url_for
+    url_for,
 )
 from flask_login import (
     LoginManager,
     current_user,
     login_required,
     login_user,
-    logout_user
+    logout_user,
 )
 from flask_restx import Api, Resource, reqparse
 from flask_wtf.csrf import CSRFProtect
@@ -39,12 +39,12 @@ from client_models import (
     ReviewSchema,
     User,
     UserSchema,
-    client_db
+    client_db,
 )
 from helper_functions import (
     get_config_value,
     set_config_value,
-    validate_api_key
+    validate_api_key,
 )
 from monitoring_models import Alert, Request, Rule, monitoring_db
 
