@@ -511,11 +511,9 @@ class Database(Resource):
         args = self.patch_parser.parse_args()
 
         try:
-            query_result = (
-                client_db.session.query(eval(args["model"]))
-                .filter(eval(args["filter"]))
-                .update(args["values"])
-            )
+            client_db.session.query(eval(args["model"])).filter(
+                eval(args["filter"])
+            ).update(args["values"])
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
         except (
@@ -541,11 +539,9 @@ class Database(Resource):
         args = self.delete_parser.parse_args()
 
         try:
-            query_result = (
-                client_db.session.query(eval(args["model"]))
-                .filter(eval(args["filter"]))
-                .delete()
-            )
+            client_db.session.query(eval(args["model"])).filter(
+                eval(args["filter"])
+            ).delete()
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
         except (NameError, sqlalchemy.exc.InvalidRequestError, SyntaxError):
