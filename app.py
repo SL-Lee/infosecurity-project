@@ -499,26 +499,38 @@ class Database(Resource):
             )
             status, status_msg, status_code = "OK", "OK", 200
 
-            request = Request(datetime=datetime.now(), request_params="Model: {}, Filter: {}".format(args["model"], args["filter"]), response=str(query_results))
+            request = Request(
+                datetime=datetime.now(),
+                request_params="Model: {}, Filter: {}".format(
+                    args["model"], args["filter"]
+                ),
+                response=str(query_results),
+            )
+
             pattern = "'password'"
             x = re.findall(pattern, str(query_results))
-            if len(x) > 1: # if more than 1 sensitive data
+
+            if len(x) > 1:  # if more than 1 sensitive data
                 try:
-                    alert = Alert(request=request, alertLevel="high")
+                    alert = Alert(request=request, alert_level="high")
                     monitoring_db.session.add(alert)
                 except:
                     print("error")
             else:
-                alert = Alert(request=request, alertLevel="low")
+                alert = Alert(request=request, alert_level="low")
                 monitoring_db.session.add(alert)
-
         except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             query_results = None
             status, status_msg, status_code = "ERROR", "invalid request", 400
-            request = Request(datetime=datetime.now(), request_params="Model: {}, Filter: {}".format(args["model"], args["filter"]), response=str(query_results))
-            alert = Alert(request=request, alertLevel="medium")
+            request = Request(
+                datetime=datetime.now(),
+                request_params="Model: {}, Filter: {}".format(
+                    args["model"], args["filter"]
+                ),
+                response=str(query_results),
+            )
+            alert = Alert(request=request, alert_level="medium")
             monitoring_db.session.add(alert)
-
         except:
             query_results = None
             status, status_msg, status_code = (
@@ -526,8 +538,14 @@ class Database(Resource):
                 "an unknown error occurred",
                 400,
             )
-            request = Request(datetime=datetime.now(), request_params="Model: {}, Filter: {}".format(args["model"], args["filter"]), response=str(query_results))
-            alert = Alert(request=request, alertLevel="medium")
+            request = Request(
+                datetime=datetime.now(),
+                request_params="Model: {}, Filter: {}".format(
+                    args["model"], args["filter"]
+                ),
+                response=str(query_results),
+            )
+            alert = Alert(request=request, alert_level="medium")
             monitoring_db.session.add(alert)
 
         monitoring_db.session.add(request)

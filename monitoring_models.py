@@ -19,6 +19,7 @@ class Rule(monitoring_db.Model):
     id = monitoring_db.Column(monitoring_db.Integer, primary_key=True)
     contents = monitoring_db.Column(monitoring_db.String(100), nullable=False)
 
+
 class Alert(monitoring_db.Model):
     __bind_key__ = "monitoring"
     request_id = monitoring_db.Column(
@@ -26,7 +27,5 @@ class Alert(monitoring_db.Model):
         monitoring_db.ForeignKey("request.id"),
         primary_key=True,
     )
-    alertLevel = monitoring_db.Column(monitoring_db.String(10), nullable=False)
-
+    alert_level = monitoring_db.Column(monitoring_db.String(10), nullable=False)
     request = monitoring_db.relationship("Request")
-
