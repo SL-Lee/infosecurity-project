@@ -1,6 +1,7 @@
-from errors import InvalidAPIKeyError
 import hashlib
 import shelve
+
+from errors import InvalidAPIKeyError
 
 
 def get_config_value(key):
@@ -23,8 +24,10 @@ def set_config_value(key, value):
 
 
 def validate_api_key(api_key):
-    if hashlib.sha3_512(bytes.fromhex(api_key)).hexdigest()\
-        == get_config_value("api-key")["hash"]:
+    if (
+        hashlib.sha3_512(bytes.fromhex(api_key)).hexdigest()
+        == get_config_value("api-key")["hash"]
+    ):
         return api_key
     else:
         raise InvalidAPIKeyError

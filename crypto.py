@@ -1,10 +1,11 @@
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
 import hashlib
 
-key = get_random_bytes(32) # Use a stored / generated key
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+
+key = get_random_bytes(32)  # Use a stored / generated key
 file_to_encrypt = "client_db.sqlite3"
-buffer_size = 65536 # 64kb
+buffer_size = 65536  # 64kb
 
 # === Encrypt ===
 
@@ -20,6 +21,7 @@ output_file.write(cipher_encrypt.iv)
 
 # Keep reading the file into the buffer, encrypting then writing to the new file
 buffer = input_file.read(buffer_size)
+
 while len(buffer) > 0:
     ciphered_bytes = cipher_encrypt.encrypt(buffer)
     output_file.write(ciphered_bytes)
@@ -43,6 +45,7 @@ cipher_encrypt = AES.new(key, AES.MODE_CFB, iv=iv)
 
 # Keep reading the file into the buffer, decrypting then writing to the new file
 buffer = input_file.read(buffer_size)
+
 while len(buffer) > 0:
     decrypted_bytes = cipher_encrypt.decrypt(buffer)
     output_file.write(decrypted_bytes)
@@ -58,12 +61,17 @@ output_file.close()
 def get_file_hash(file_path):
     block_size = 65536
     file_hash = hashlib.sha256()
+
     with open(file_path, "rb") as f:
         fb = f.read(block_size)
+
         while len(fb) > 0:
             file_hash.update(fb)
             fb = f.read(block_size)
+
     return file_hash.hexdigest()
 
 
-assert get_file_hash(file_to_encrypt) == get_file_hash(file_to_encrypt + ".decrypted"), "Files are not identical"
+assert get_file_hash(file_to_encrypt) == get_file_hash(
+    file_to_encrypt + ".decrypted"
+), "Files are not identical"
