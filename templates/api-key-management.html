@@ -84,29 +84,25 @@
 </div>
 
 <script>
-  var revokeApiKeyButton = document.getElementById("revoke-api-key-btn");
-
-  revokeApiKeyButton.addEventListener("click", e => {
-    fetch("{{ url_for('api_key_revoke') }}", {
-      "method": "POST",
-      "headers": {
-        "X-CSRFToken": "{{ csrf_token() }}",
-      },
-    })
-      .then(response => {
-        if (response.status == 200) {
-          location.reload();
-        } else {
-          return Promise.reject("Error while revoking API key");
-        }
+  document
+    .getElementById("revoke-api-key-btn")
+    .addEventListener("click", e => {
+      fetch("{{ url_for('api_key_revoke') }}", {
+        "method": "POST",
+        "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
       })
-      .catch(
-        error => {
-          $(".modal").modal("hide");
-          $("#api-key-revocation-failure-modal").modal();
-        },
-      );
-  });
+        .then(response => {
+          return response.status == 200
+            ? location.reload()
+            : Promise.reject("Error while revoking API key");
+        })
+        .catch(
+          error => {
+            $(".modal").modal("hide");
+            $("#api-key-revocation-failure-modal").modal();
+          },
+        );
+    });
 </script>
 {% else %}
 <ul class="list-group">
@@ -162,36 +158,32 @@
 </div>
 
 <script>
-  var generateApiKeyButton = document.getElementById("generate-api-key-btn");
-
-  generateApiKeyButton.addEventListener("click", e => {
-    fetch("{{ url_for('api_key_generate') }}", {
-      "method": "POST",
-      "headers": {
-        "X-CSRFToken": "{{ csrf_token() }}",
-      },
-    })
-      .then(response => {
-        if (response.status == 200) {
-          return response.json();
-        } else {
-          return Promise.reject("Error while generating API key");
-        }
+  document
+    .getElementById("generate-api-key-btn")
+    .addEventListener("click", e => {
+      fetch("{{ url_for('api_key_generate') }}", {
+        "method": "POST",
+        "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
       })
-      .then(
-        json => {
-          $(".modal").modal("hide");
-          $("#new-api-key-hash").text(json["new_api_key"]);
-          $("#api-key-generation-success-modal").modal();
-          $("#api-key-generation-success-modal").on("hidden.bs.modal", e => {
-            location.reload();
-          });
-        },
-        error => {
-          $(".modal").modal("hide");
-          $("#api-key-generation-failure-modal").modal();
-        },
-      );
-  });
+        .then(response => {
+          return response.status == 200
+            ? response.json()
+            : Promise.reject("Error while generating API key");
+        })
+        .then(
+          json => {
+            $(".modal").modal("hide");
+            $("#new-api-key-hash").text(json["new_api_key"]);
+            $("#api-key-generation-success-modal").modal();
+            $("#api-key-generation-success-modal").on("hidden.bs.modal", e => {
+              location.reload();
+            });
+          },
+          error => {
+            $(".modal").modal("hide");
+            $("#api-key-generation-failure-modal").modal();
+          },
+        );
+    });
 </script>
 {% endblock %}

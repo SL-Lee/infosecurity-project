@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{% endblock %}
+{% block content %}
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <div class="display-4">Onboarding</div>
+    <p class="lead">Welcome to SecureDB. This onboarding process will guide you
+      through the configuration of some basic settings to get you started.</p>
+    <hr class="my-4" />
+    <div class="btn-group d-flex" role="group">
+      <a class="btn btn-outline-primary disabled" id="api-config-page-btn"
+        href="#" role="button">API Configuration</a>
+      <a class="btn btn-outline-primary disabled" id="backup-config-page-btn"
+        href="#" role="button">Backup Configuration</a>
+      <a class="btn btn-outline-primary disabled" id="review-settings-page-btn"
+        href="#" role="button">Review Settings</a>
+    </div>
+    {% block onboarding_content %}
+    {% endblock %}
+  </div>
+</div>
+<script>
+  document
+    .getElementById(`${location.pathname.split("/")[2]}-page-btn`)
+    .classList.replace("disabled", "active");
+</script>
+{% endblock%}

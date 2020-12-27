@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 import shutil
 import uuid
 
@@ -46,18 +47,7 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import monitoring_db, Request, Alert
-from werkzeug.utils import secure_filename
-from datetime import datetime
-import re
-import forms
-import hashlib
-import json
-import marshmallow
-import os
-import shutil
-import sqlalchemy
-import uuid
+from monitoring_models import Alert, Request, monitoring_db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -251,7 +241,8 @@ def backupUpdate(file):
         elif form.update.data:
             print("update settings")
 
-            # if field different from settings and the file is valid and not empty
+            # if field different from settings and the file is valid and not
+            # empty
             if (
                 form.source.data != file_settings["path"]
                 and os.path.isfile(form.source.data)
@@ -275,7 +266,8 @@ def backupUpdate(file):
 
             # update settings for file
             backup_config[file] = file_settings
-            # cannot put file settings directly, else it would override the whole backup settings
+            # cannot put file settings directly, else it would override the
+            # whole backup settings
             set_config_value("backup", backup_config)
 
             # create folders to be used for saving
@@ -366,6 +358,28 @@ def return_files_tut(filename):
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
 
+# Onboarding routes
+@app.route("/onboarding")
+def onboarding():
+    return redirect(url_for("onboarding_api_config"))
+
+
+@app.route("/onboarding/api-config")
+def onboarding_api_config():
+    return render_template("onboarding-api-config.html")
+
+
+@app.route("/onboarding/backup-config")
+def onboarding_backup_config():
+    return render_template("onboarding-backup-config.html")
+
+
+@app.route("/onboarding/review-settings")
+def onboarding_review_settings():
+    return render_template("onboarding-review-settings.html")
+
+
+# API key management routes
 @app.route("/api/key-management")
 def api_key_management():
     return render_template(
@@ -500,7 +514,7 @@ class Database(Resource):
             status, status_msg, status_code = "OK", "OK", 200
 
             request = Request(
-                datetime=datetime.now(),
+                datetime=datetime.datetime.now(),
                 request_params="Model: {}, Filter: {}".format(
                     args["model"], args["filter"]
                 ),
