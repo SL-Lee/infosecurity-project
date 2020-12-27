@@ -34,9 +34,10 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import monitoring_db, Request, Rule, Alert
+from monitoring_models import monitoring_db, Request, Alert
 from werkzeug.utils import secure_filename
-import datetime
+from datetime import datetime
+import re
 import forms
 import hashlib
 import json
@@ -409,9 +410,27 @@ class Database(Resource):
                     .all()
             )
             status, status_msg, status_code = "OK", "OK", 200
+
+            request = Request(datetime=datetime.now(), request_params="Model: {}, Filter: {}".format(args["model"], args["filter"]), response=str(query_results))
+            pattern = "'password'"
+            x = re.findall(pattern, str(query_results))
+            if len(x) > 1: # if more than 1 sensitive data
+                try:
+                    alert = Alert(request=request, alertLevel="high")
+                    monitoring_db.session.add(alert)
+                except:
+                    print("error")
+            else:
+                alert = Alert(request=request, alertLevel="low")
+                monitoring_db.session.add(alert)
+
         except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             query_results = None
             status, status_msg, status_code = "ERROR", "invalid request", 400
+            request = Request(datetime=datetime.now(), request_params="Model: {}, Filter: {}".format(args["model"], args["filter"]), response=str(query_results))
+            alert = Alert(request=request, alertLevel="medium")
+            monitoring_db.session.add(alert)
+
         except:
             query_results = None
             status, status_msg, status_code = (
@@ -419,6 +438,12 @@ class Database(Resource):
                 "an unknown error occurred",
                 400,
             )
+            request = Request(datetime=datetime.now(), request_params="Model: {}, Filter: {}".format(args["model"], args["filter"]), response=str(query_results))
+            alert = Alert(request=request, alertLevel="medium")
+            monitoring_db.session.add(alert)
+
+        monitoring_db.session.add(request)
+        monitoring_db.session.commit()
 
         return {
             "status": status,

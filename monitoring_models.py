@@ -19,11 +19,6 @@ class Rule(monitoring_db.Model):
     __bind_key__ = "monitoring"
     id = monitoring_db.Column(monitoring_db.Integer, primary_key=True)
     contents = monitoring_db.Column(monitoring_db.String(100), nullable=False)
-    alerts = monitoring_db.relationship(
-        "Alert",
-        backref=monitoring_db.backref("rule"),
-    )
-
 
 class Alert(monitoring_db.Model):
     __bind_key__ = "monitoring"
@@ -32,9 +27,7 @@ class Alert(monitoring_db.Model):
         monitoring_db.ForeignKey("request.id"),
         primary_key=True,
     )
-    rule_id = monitoring_db.Column(
-        monitoring_db.Integer,
-        monitoring_db.ForeignKey("rule.id"),
-        primary_key=True,
-    )
+    alertLevel = monitoring_db.Column(monitoring_db.String(10), nullable=False)
+
     request = monitoring_db.relationship("Request")
+
