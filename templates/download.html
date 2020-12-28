@@ -1,8 +1,29 @@
 <!DOCTYPE html>
 <title>Download File</title>
-<h1>Download File</h1>
+<style>
+    h1 {
+      text-align: center;
+    }
+    div {
+      text-align: center;
+    }
+    h2 {
+      text-align: center;
+    }
+    img {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      width: 40%;
+      margin-top: 10%;
+    }
+</style>
+<img src="/static/icons/successful-icon.jpg" style="height:128px;width:128px;">
+<h1 style="font-size: 50px;">File Uploaded Successfully</h1>
 
-<body class="body">
+
+<body class="body" style="background-color:">
+<h2>Click the button below to download file</h2>
   <div class="container" align="left">
     <a href="/return-files/{{value}}" target="blank"><button
         class='btn btn-default'>Download</button></a>

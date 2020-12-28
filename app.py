@@ -326,6 +326,7 @@ def upload_file():
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == "":
+            flash(u"No file", "error")
             print("no filename")
             return redirect(request.url)
         else:
