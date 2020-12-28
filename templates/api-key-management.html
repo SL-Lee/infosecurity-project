@@ -92,7 +92,7 @@
         "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
       })
         .then(response => {
-          return response.status == 200
+          return response.ok
             ? location.reload()
             : Promise.reject("Error while revoking API key");
         })
@@ -166,7 +166,7 @@
         "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
       })
         .then(response => {
-          return response.status == 200
+          return response.ok
             ? response.json()
             : Promise.reject("Error while generating API key");
         })

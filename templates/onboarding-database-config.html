@@ -1,0 +1,101 @@
+{% extends "onboarding-template.html" %}
+{% block title %}Onboarding — Database Configuration{% endblock %}
+{% block onboarding_content %}
+<h4 class="mt-4">Database Upload</h4>
+<p>Upload the database you want to secure and its corresponding models.</p>
+<p><b>NOTE:</b> Upon completion of the onboarding process, please remember to
+  restart the SecureDB web application for changes to the database to take
+  effect.</p>
+<form>
+  <div class="row">
+    <div class="col-12 col-md-6 form-group">
+      <label for="db-file-input">Database File</label>
+      <input type="file" name="db-file" class="form-control" id="db-file-input"
+        required="" />
+    </div>
+    <div class="col-12 col-md-6 form-group">
+      <label for="db-models-input">Database Models</label>
+      <input type="file" name="db-models" class="form-control"
+        id="db-models-input" required="" />
+    </div>
+  </div>
+</form>
+<hr class="my-4" />
+<div class="d-flex">
+  <a class="btn btn-primary float-right ml-auto"
+    id="database-config-continue-btn"
+    href="{{ url_for('onboarding_api_config') }}" role="button">Continue
+    →</a>
+</div>
+
+<!-- Missing file modal -->
+<div class="modal fade" id="missing-file-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Missing file</h5>
+        <button type="button" class="close"
+          data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>You must provide <b>both</b> the database file and its corresponding
+          models to continue.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary"
+          data-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Invalid file modal -->
+<div class="modal fade" id="invalid-file-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Invalid file</h5>
+        <button type="button" class="close"
+          data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>The database file and/or models appears to be invalid. Please try
+          again.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary"
+          data-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document
+    .getElementById("database-config-continue-btn")
+    .addEventListener("click", e => {
+      e.preventDefault();
+      var dbFileInput = document.getElementById("db-file-input");
+      var dbModelsInput = document.getElementById("db-models-input");
+
+      if (dbFileInput.files.length == 1 && dbModelsInput.files.length == 1) {
+        var formData = new FormData();
+        formData.append("db-file", dbFileInput.files[0]);
+        formData.append("db-models", dbModelsInput.files[0]);
+
+        fetch("{{ url_for('onboarding_database_config') }}", {
+          "method": "POST",
+          "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
+          "body": formData,
+        })
+          .then(response => {
+            response.ok
+              ? (location.href = "{{ url_for('onboarding_api_config') }}")
+              : $("#invalid-file-modal").modal();
+          });
+      } else {
+        $("#missing-file-modal").modal();
+      }
+    });
+</script>
+{% endblock%}

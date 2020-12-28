@@ -33,15 +33,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
 import forms
-from client_models import (
-    Product,
-    ProductSchema,
-    Review,
-    ReviewSchema,
-    User,
-    UserSchema,
-    client_db,
-)
+from client_models import *
 from helper_functions import (
     get_config_value,
     set_config_value,
@@ -361,7 +353,29 @@ def return_files_tut(filename):
 # Onboarding routes
 @app.route("/onboarding")
 def onboarding():
-    return redirect(url_for("onboarding_api_config"))
+    return redirect(url_for("onboarding_database_config"))
+
+
+@app.route("/onboarding/database-config", methods=["GET", "POST"])
+def onboarding_database_config():
+    if request.method == "POST":
+        db_file = request.files.get("db-file")
+
+        if db_file is not None and db_file.filename.endswith(".sqlite3"):
+            db_file.save(secure_filename("client_db.sqlite3"))
+        else:
+            return jsonify({"status": "ERROR"}), 400
+
+        db_models = request.files.get("db-models")
+
+        if db_models is not None and db_models.filename.endswith(".py"):
+            db_models.save(secure_filename("client_models.py"))
+        else:
+            return jsonify({"status": "ERROR"}), 400
+
+        return jsonify({"status": "OK"}), 200
+
+    return render_template("onboarding-database-config.html")
 
 
 @app.route("/onboarding/api-config")
