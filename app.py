@@ -31,6 +31,8 @@ from flask_login import (
 from flask_restx import Api, Resource, reqparse
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 
 import forms
 from client_models import *
@@ -326,15 +328,41 @@ def upload_file():
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == "":
-            flash(u"No file", "error")
+            flash("No file", "error")
             print("no filename")
             return redirect(request.url)
         else:
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            key = get_random_bytes(32)  # Use a stored / generated key
+            buffer_size = 65536  # 64kb
+
+            # === Encrypt ===
+
+            # Open the input and output files
+            input_file = open(os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb")
+            output_file = open(os.path.join(app.config["UPLOAD_FOLDER"], filename) + ".encrypted", "wb")
+
+            # Create the cipher object and encrypt the data
+            cipher_encrypt = AES.new(key, AES.MODE_CFB)
+
+            # Initially write the iv to the output file
+            output_file.write(cipher_encrypt.iv)
+
+            # Keep reading the file into the buffer, encrypting then writing to the new file
+            buffer = input_file.read(buffer_size)
+
+            while len(buffer) > 0:
+                ciphered_bytes = cipher_encrypt.encrypt(buffer)
+                output_file.write(ciphered_bytes)
+                buffer = input_file.read(buffer_size)
+
+            # Close the input and output files
+            input_file.close()
+            output_file.close()
             print("saved file successfully")
             # send file name as parameter to download
-            return redirect("/downloadfile/" + filename)
+            return redirect("/downloadfile/" + filename + ".encrypted")
 
     return render_template("upload_file.html")
 
