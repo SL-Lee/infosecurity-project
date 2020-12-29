@@ -8,6 +8,8 @@ import uuid
 
 import marshmallow
 import sqlalchemy
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 from flask import (
     Blueprint,
     Flask,
@@ -31,8 +33,6 @@ from flask_login import (
 from flask_restx import Api, Resource, reqparse
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
 
 import forms
 from client_models import *
@@ -50,6 +50,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///client_db.sqlite3"
 app.config["SQLALCHEMY_BINDS"] = {
     "monitoring": "sqlite:///monitoring_db.sqlite3"
 }
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 csrf = CSRFProtect(app)
 UPLOAD_FOLDER = "uploads/"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -433,32 +434,57 @@ def onboarding_review_settings():
 def api_key_management():
     return render_template(
         "api-key-management.html",
-        api_key=get_config_value("api-key"),
+        api_keys=get_config_value("api-keys"),
     )
+
+
+@app.route("/api/key-management/rename", methods=["POST"])
+def api_key_rename():
+    api_keys = get_config_value("api-keys", [])
+    api_key_index = request.json.get("api-key-index")
+    new_api_key_name = request.json.get("new-api-key-name", "New API Key")
+
+    try:
+        api_keys[api_key_index]["name"] = new_api_key_name
+        set_config_value("api-keys", api_keys)
+    except:
+        return jsonify({"status": "ERROR"}), 400
+
+    return jsonify({"status": "OK"})
 
 
 @app.route("/api/key-management/revoke", methods=["POST"])
 def api_key_revoke():
-    set_config_value("api-key", None)
+    api_keys = get_config_value("api-keys", [])
+    api_key_index = request.json.get("api-key-index")
+
+    try:
+        del api_keys[api_key_index]
+        set_config_value("api-keys", api_keys)
+    except:
+        return jsonify({"status": "ERROR"}), 400
+
     return jsonify({"status": "OK"})
 
 
 @app.route("/api/key-management/generate", methods=["POST"])
 def api_key_generate():
     api_key = uuid.uuid4()
-    set_config_value(
-        "api-key",
+    api_keys = get_config_value("api-keys", [])
+    api_keys.append(
         {
+            "name": request.json.get("api-key-name", "New API Key"),
             "hash": hashlib.sha3_512(api_key.bytes).hexdigest(),
             "timestamp": datetime.datetime.now().strftime(
                 "%Y-%m-%dT%H:%M:%S+08:00"
             ),
-        },
+        }
     )
+    set_config_value("api-keys", api_keys)
     return jsonify(
         {
             "status": "OK",
-            "new_api_key": api_key.hex,
+            "new-api-key": api_key.hex,
         }
     )
 
