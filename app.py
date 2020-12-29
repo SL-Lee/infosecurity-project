@@ -340,8 +340,14 @@ def upload_file():
             # === Encrypt ===
 
             # Open the input and output files
-            input_file = open(os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb")
-            output_file = open(os.path.join(app.config["UPLOAD_FOLDER"], filename) + ".encrypted", "wb")
+            input_file = open(
+                os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb"
+            )
+            output_file = open(
+                os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                + ".encrypted",
+                "wb",
+            )
 
             # Create the cipher object and encrypt the data
             cipher_encrypt = AES.new(key, AES.MODE_CFB)
