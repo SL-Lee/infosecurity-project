@@ -196,7 +196,9 @@ def backup_history(file):
     timestamp = os.listdir(path)
     print(timestamp)
 
-    return render_template("backup-history.html", file=file, timestamp=timestamp)
+    return render_template(
+        "backup-history.html", file=file, timestamp=timestamp
+    )
 
 
 @app.route("/backup/<file>/update", methods=["GET", "POST"])
@@ -573,6 +575,14 @@ class Database(Resource):
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
     def post(self):
+        try:
+            validate_api_key(request.headers.get("X-API-KEY"))
+        except:
+            return {
+                "status": "ERROR",
+                "status_msg": "Authentication failed",
+            }, 401
+
         args = self.post_parser.parse_args()
 
         try:
@@ -607,6 +617,14 @@ class Database(Resource):
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
     def get(self):
+        try:
+            validate_api_key(request.headers.get("X-API-KEY"))
+        except:
+            return {
+                "status": "ERROR",
+                "status_msg": "Authentication failed",
+            }, 401
+
         args = self.get_parser.parse_args()
 
         try:
@@ -618,8 +636,8 @@ class Database(Resource):
             )
             status, status_msg, status_code = "OK", "OK", 200
 
-            request = Request(
-                datetime=datetime.now(),
+            logged_request = Request(
+                datetime=datetime.datetime.now(),
                 request_params="Model: {}, Filter: {}".format(
                     args["model"], args["filter"]
                 ),
@@ -629,24 +647,24 @@ class Database(Resource):
             x = re.findall(pattern, str(query_results))
             if len(x) > 1:  # if more than 1 sensitive data
                 try:
-                    alert = Alert(request=request, alert_level="high")
+                    alert = Alert(request=logged_request, alert_level="high")
                     monitoring_db.session.add(alert)
                 except:
                     print("error")
             else:
-                alert = Alert(request=request, alert_level="low")
+                alert = Alert(request=logged_request, alert_level="low")
                 monitoring_db.session.add(alert)
         except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             query_results = None
             status, status_msg, status_code = "ERROR", "invalid request", 400
-            request = Request(
-                datetime=datetime.now(),
+            logged_request = Request(
+                datetime=datetime.datetime.now(),
                 request_params="Model: {}, Filter: {}".format(
                     args["model"], args["filter"]
                 ),
                 response=str(query_results),
             )
-            alert = Alert(request=request, alertLevel="medium")
+            alert = Alert(request=logged_request, alert_level="medium")
             monitoring_db.session.add(alert)
         except:
             query_results = None
@@ -655,17 +673,17 @@ class Database(Resource):
                 "an unknown error occurred",
                 400,
             )
-            request = Request(
-                datetime=datetime.now(),
+            logged_request = Request(
+                datetime=datetime.datetime.now(),
                 request_params="Model: {}, Filter: {}".format(
                     args["model"], args["filter"]
                 ),
                 response=str(query_results),
             )
-            alert = Alert(request=request, alertLevel="medium")
+            alert = Alert(request=logged_request, alert_level="medium")
             monitoring_db.session.add(alert)
 
-        monitoring_db.session.add(request)
+        monitoring_db.session.add(logged_request)
         monitoring_db.session.commit()
 
         return {
@@ -678,6 +696,14 @@ class Database(Resource):
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
     def patch(self):
+        try:
+            validate_api_key(request.headers.get("X-API-KEY"))
+        except:
+            return {
+                "status": "ERROR",
+                "status_msg": "Authentication failed",
+            }, 401
+
         args = self.patch_parser.parse_args()
 
         try:
@@ -706,6 +732,14 @@ class Database(Resource):
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
     def delete(self):
+        try:
+            validate_api_key(request.headers.get("X-API-KEY"))
+        except:
+            return {
+                "status": "ERROR",
+                "status_msg": "Authentication failed",
+            }, 401
+
         args = self.delete_parser.parse_args()
 
         try:
