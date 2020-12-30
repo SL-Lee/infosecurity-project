@@ -126,8 +126,8 @@ def backup():
     return render_template("backup.html", files=files)
 
 
-@app.route("/tempBackupSetDefault")
-def backupSetDefault():
+@app.route("/temp_backup_set_default")
+def backup_set_default():
     path = ".\client_db.sqlite3"
     interval = 1
     interval_type = "min"
@@ -147,7 +147,7 @@ def backupSetDefault():
 
 
 @app.route("/backup/add", methods=["GET", "POST"])
-def backupAdd():
+def backup_add():
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
 
@@ -187,20 +187,20 @@ def backupAdd():
 
         return redirect(url_for("index"))
 
-    return render_template("backupForm.html", form1=form)
+    return render_template("backup-form.html", form1=form)
 
 
 @app.route("/backup/<file>", methods=["GET", "POST"])
-def backupHistory(file):
+def backup_history(file):
     path = os.path.join(backup_path, file)
     timestamp = os.listdir(path)
     print(timestamp)
 
-    return render_template("backupHistory.html", file=file, timestamp=timestamp)
+    return render_template("backup-history.html", file=file, timestamp=timestamp)
 
 
 @app.route("/backup/<file>/update", methods=["GET", "POST"])
-def backupUpdate(file):
+def backup_update(file):
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
     file_settings = backup_config[file]
@@ -287,11 +287,11 @@ def backupUpdate(file):
 
         return redirect(url_for("backup"))
 
-    return render_template("backupForm.html", form2=form)
+    return render_template("backup-form.html", form2=form)
 
 
 @app.route("/backup/<file>/<timestamp>/restore")
-def backupRestore(file, timestamp):
+def backup_restore(file, timestamp):
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
     file_settings = backup_config[file]
