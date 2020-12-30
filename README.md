@@ -33,3 +33,35 @@ IT2566 Infosecurity Project
 This project is formatted using [Black](https://github.com/psf/black). Instructions for how to install black can be found [here](https://github.com/psf/black#installation-and-usage).
 
 Please remember to run `black --line-length=80 .` **before** committing your changes to any Python file(s) to ensure consistent formatting across all Python files in this project.
+
+
+## Case Styles
+
+- `camelCase` is the first word is all lowercase, then subsequent words are capitalized and appended directly to the previous word(s)
+- `PascalCase` is like `camelCase` but the first word is also capitalized
+- `snake_case` is where all words are in lowercase, delimited by a single underscore
+- `SCREAMING_SNAKE_CASE` is like `snake_case` but all words are in uppercase
+- `kebab-case` is where all words are in lowercase, delimited by a single hyphen
+
+## What Case Style to use
+
+### Python
+- Variables: `snake_case` for most variables
+- Class Names: `PascalCase`
+- Constants: `SCREAMING_SNAKE_CASE`
+- Filename: `snake_case`
+
+You **DO NOT** use `camelCase` in Python
+
+### JavaScript
+- Variables: `camelCase` for most variables
+- Class Names: `PascalCase`
+- Constants: `SCREAMING_SNAKE_CASE`
+
+You **DO NOT** use `snake_case` in JavaScript
+
+### CSS (e.g. `background-color`), HTML (e.g. `.col-md-6`), and URLs (e.g. `/api/key-management`)
+- All (including HTML files): `kebab-case`
+
+### Jinja
+- Variables: `snake_case`

@@ -126,8 +126,8 @@ def backup():
     return render_template("backup.html", files=files)
 
 
-@app.route("/tempBackupSetDefault")
-def backupSetDefault():
+@app.route("/temp-backup-set-default")
+def backup_set_default():
     path = ".\client_db.sqlite3"
     interval = 1
     interval_type = "min"
@@ -147,7 +147,7 @@ def backupSetDefault():
 
 
 @app.route("/backup/add", methods=["GET", "POST"])
-def backupAdd():
+def backup_add():
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
 
@@ -187,20 +187,20 @@ def backupAdd():
 
         return redirect(url_for("index"))
 
-    return render_template("backupForm.html", form1=form)
+    return render_template("backup-form.html", form1=form)
 
 
 @app.route("/backup/<file>", methods=["GET", "POST"])
-def backupHistory(file):
+def backup_history(file):
     path = os.path.join(backup_path, file)
     timestamp = os.listdir(path)
     print(timestamp)
 
-    return render_template("backupHistory.html", file=file, timestamp=timestamp)
+    return render_template("backup-history.html", file=file, timestamp=timestamp)
 
 
 @app.route("/backup/<file>/update", methods=["GET", "POST"])
-def backupUpdate(file):
+def backup_update(file):
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
     file_settings = backup_config[file]
@@ -287,11 +287,11 @@ def backupUpdate(file):
 
         return redirect(url_for("backup"))
 
-    return render_template("backupForm.html", form2=form)
+    return render_template("backup-form.html", form2=form)
 
 
 @app.route("/backup/<file>/<timestamp>/restore")
-def backupRestore(file, timestamp):
+def backup_restore(file, timestamp):
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
     file_settings = backup_config[file]
@@ -619,16 +619,14 @@ class Database(Resource):
             status, status_msg, status_code = "OK", "OK", 200
 
             request = Request(
-                datetime=datetime.datetime.now(),
+                datetime=datetime.now(),
                 request_params="Model: {}, Filter: {}".format(
                     args["model"], args["filter"]
                 ),
                 response=str(query_results),
             )
-
             pattern = "'password'"
             x = re.findall(pattern, str(query_results))
-
             if len(x) > 1:  # if more than 1 sensitive data
                 try:
                     alert = Alert(request=request, alert_level="high")
@@ -648,7 +646,7 @@ class Database(Resource):
                 ),
                 response=str(query_results),
             )
-            alert = Alert(request=request, alert_level="medium")
+            alert = Alert(request=request, alertLevel="medium")
             monitoring_db.session.add(alert)
         except:
             query_results = None
@@ -664,7 +662,7 @@ class Database(Resource):
                 ),
                 response=str(query_results),
             )
-            alert = Alert(request=request, alert_level="medium")
+            alert = Alert(request=request, alertLevel="medium")
             monitoring_db.session.add(alert)
 
         monitoring_db.session.add(request)
