@@ -46,22 +46,22 @@ Please remember to run `black --line-length=80 .` **before** committing your cha
 ## What Case Style to use
 
 ### Python
-Variables: `snake_case` for most variables
-Class Names: `PascalCase`
-Constants: `SCREAMING_SNAKE_CASE` 
-Filename: `snake_case`
+- Variables: `snake_case` for most variables
+- Class Names: `PascalCase`
+- Constants: `SCREAMING_SNAKE_CASE`
+- Filename: `snake_case`
 
 You **DO NOT** use `camelCase` in Python
 
 ### JavaScript
-Variables: `camelCase` for most variables
-Class Names: `PascalCase`
-Constants: `SCREAMING_SNAKE_CASE` 
+- Variables: `camelCase` for most variables
+- Class Names: `PascalCase`
+- Constants: `SCREAMING_SNAKE_CASE`
 
 You **DO NOT** use `snake_case` in JavaScript
 
 ### CSS (e.g. `background-color`), HTML (e.g. `.col-md-6`), and URLs (e.g. `/api/key-management`)
-All (including HTML files): `kebab-case`
+- All (including HTML files): `kebab-case`
 
 ### Jinja
-Variables: `snake_case`
+- Variables: `snake_case`

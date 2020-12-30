@@ -126,7 +126,7 @@ def backup():
     return render_template("backup.html", files=files)
 
 
-@app.route("/temp_backup_set_default")
+@app.route("/temp-backup-set-default")
 def backup_set_default():
     path = ".\client_db.sqlite3"
     interval = 1
