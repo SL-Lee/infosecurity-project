@@ -1,0 +1,86 @@
+{% extends "onboarding-template.html" %}
+{% block title %}Onboarding — API Configuration{% endblock %}
+{% block onboarding_content %}
+<h4 class="mt-4">Generate API Key</h4>
+<p>To be able to access the SecureDB API, an API key will be
+  required. Click on the button below to generate one.</p>
+<button id="generate-api-key-btn" class="btn btn-primary">Generate API
+  Key</button>
+<hr class="my-4" />
+<div class="d-flex">
+  <a class="btn btn-primary float-left mr-auto"
+    href="{{ url_for('onboarding_database_config') }}" role="button">← Back</a>
+  <a class="btn btn-primary float-right ml-auto"
+    href="{{ url_for('onboarding_backup_config') }}" role="button">Continue
+    →</a>
+</div>
+
+<!-- API key generation success modal -->
+<div class="modal fade" id="api-key-generation-success-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">API key generated</h5>
+        <button type="button" class="close"
+          data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>The API key was successfully generated. <b>Please copy the API key
+            now as it will not be shown again</b>.</p>
+        <code id="new-api-key-hash"></code>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary"
+          data-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- API key generation failure modal -->
+<div class="modal fade" id="api-key-generation-failure-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Error while generating API key</h5>
+        <button type="button" class="close"
+          data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>There was an error while generating the API key. Please try again
+          later.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary"
+          data-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document
+    .getElementById("generate-api-key-btn")
+    .addEventListener("click", e => {
+      fetch("{{ url_for('api_key_generate') }}", {
+        "method": "POST",
+        "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
+      })
+        .then(response => {
+          return response.ok
+            ? response.json()
+            : Promise.reject("Error while generating API key");
+        })
+        .then(
+          json => {
+            $("#generate-api-key-btn").attr("disabled", "");
+            $("#new-api-key-hash").text(json["new_api_key"]);
+            $("#api-key-generation-success-modal").modal();
+          },
+          error => {
+            $("#api-key-generation-failure-modal").modal();
+          },
+        );
+    });
+</script>
+{% endblock%}

@@ -1,10 +1,65 @@
 <!DOCTYPE html>
 <title>Upload new File</title>
-<h1>Upload new File</h1>
+<style>
+  .alert-error {
+    padding: 12px;
+    border-radius: 3px;
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+    background-color: red;
+    color: white;
+    width: 450px;
+    margin: auto;
+  }
+  .content{
+    margin: auto;
+    margin-top: 10%;
+  }
+  h1{
+    text-align: center;
+    font-size: 60px;
+  }
+  form{
+    text-align: center;
+  }
+  p{
+    text-align: center;
+    font-size: 20px;
+  }
+  li{
+    text-align: center;
+    font-weight: bold;
+  }
+</style>
+<div class="content">
+<h1>Upload File</h1>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul class="flashes">
+      {% for category, message in messages %}
+        <li class="alert alert-{{ category }}">Error: {{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+<p>Choose file to upload:</p>
 <form action="" method=post enctype=multipart/form-data>
   <p>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type=file name=file />
-    <input type=submit value=Upload />
+    <!--<input type=submit value=Upload />-->
+    <button onclick="myFunction()">Upload</button>
   </p>
+  <script>
+    function myFunction() {
+      var txt;
+      if (confirm("Are you sure you want to upload this file?")){
+        txt = "You pressed OK!";
+      } else {
+        txt = "You pressed Cancel!";
+      }
+      document.getElementById("form").innerHTML = txt;
+    }
+  </script>
 </form>
+</div>

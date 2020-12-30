@@ -2,18 +2,19 @@ import datetime
 import hashlib
 import json
 import os
+import re
 import shutil
 import uuid
 
 import marshmallow
 import sqlalchemy
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 from flask import (
     Blueprint,
     Flask,
-    abort,
     flash,
     jsonify,
-    make_response,
     redirect,
     render_template,
     request,
@@ -32,32 +33,13 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
 import forms
-from client_models import (
-    Product,
-    ProductSchema,
-    Review,
-    ReviewSchema,
-    User,
-    UserSchema,
-    client_db,
-)
+from client_models import *
 from helper_functions import (
     get_config_value,
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import monitoring_db, Request, Alert
-from werkzeug.utils import secure_filename
-from datetime import datetime
-import re
-import forms
-import hashlib
-import json
-import marshmallow
-import os
-import shutil
-import sqlalchemy
-import uuid
+from monitoring_models import Alert, Request, monitoring_db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -66,6 +48,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///client_db.sqlite3"
 app.config["SQLALCHEMY_BINDS"] = {
     "monitoring": "sqlite:///monitoring_db.sqlite3"
 }
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 csrf = CSRFProtect(app)
 UPLOAD_FOLDER = "uploads/"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -251,7 +234,8 @@ def backupUpdate(file):
         elif form.update.data:
             print("update settings")
 
-            # if field different from settings and the file is valid and not empty
+            # if field different from settings and the file is valid and not
+            # empty
             if (
                 form.source.data != file_settings["path"]
                 and os.path.isfile(form.source.data)
@@ -275,7 +259,8 @@ def backupUpdate(file):
 
             # update settings for file
             backup_config[file] = file_settings
-            # cannot put file settings directly, else it would override the whole backup settings
+            # cannot put file settings directly, else it would override the
+            # whole backup settings
             set_config_value("backup", backup_config)
 
             # create folders to be used for saving
@@ -342,14 +327,47 @@ def upload_file():
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == "":
+            flash("No file", "error")
             print("no filename")
             return redirect(request.url)
         else:
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            key = get_random_bytes(32)  # Use a stored / generated key
+            buffer_size = 65536  # 64kb
+
+            # === Encrypt ===
+
+            # Open the input and output files
+            input_file = open(
+                os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb"
+            )
+            output_file = open(
+                os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                + ".encrypted",
+                "wb",
+            )
+
+            # Create the cipher object and encrypt the data
+            cipher_encrypt = AES.new(key, AES.MODE_CFB)
+
+            # Initially write the iv to the output file
+            output_file.write(cipher_encrypt.iv)
+
+            # Keep reading the file into the buffer, encrypting then writing to the new file
+            buffer = input_file.read(buffer_size)
+
+            while len(buffer) > 0:
+                ciphered_bytes = cipher_encrypt.encrypt(buffer)
+                output_file.write(ciphered_bytes)
+                buffer = input_file.read(buffer_size)
+
+            # Close the input and output files
+            input_file.close()
+            output_file.close()
             print("saved file successfully")
             # send file name as parameter to download
-            return redirect("/downloadfile/" + filename)
+            return redirect("/downloadfile/" + filename + ".encrypted")
 
     return render_template("upload_file.html")
 
@@ -366,36 +384,133 @@ def return_files_tut(filename):
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
 
+# Alert Function
+@app.route("/alert")
+def alert():
+    alert_config = get_config_value("alert")
+    print("alert files:", alert_config)
+    return render_template("alert.html")
+
+
+@app.route("/tempalertSetDefault")
+def alertSetDefault():
+    path = ".\monitoring_db.sqlite3"
+    interval = 1
+    interval_type = "min"
+    monitoring_db = {
+        "monitoring_db": {
+            "path": path,
+            "interval": interval,
+            "interval_type": interval_type,
+        }
+    }
+    set_config_value("alert", monitoring_db)
+    alert_config = get_config_value("alert")
+    print("alert files:", alert_config)
+    print(alert_config["client_db"]["path"])
+    print(os.path.isfile(alert_config["client_db"]["path"]))
+    return redirect(url_for("alert"))
+
+
+# Onboarding routes
+@app.route("/onboarding")
+def onboarding():
+    return redirect(url_for("onboarding_database_config"))
+
+
+@app.route("/onboarding/database-config", methods=["GET", "POST"])
+def onboarding_database_config():
+    if request.method == "POST":
+        db_file = request.files.get("db-file")
+
+        if db_file is not None and db_file.filename.endswith(".sqlite3"):
+            db_file.save(secure_filename("client_db.sqlite3"))
+        else:
+            return jsonify({"status": "ERROR"}), 400
+
+        db_models = request.files.get("db-models")
+
+        if db_models is not None and db_models.filename.endswith(".py"):
+            db_models.save(secure_filename("client_models.py"))
+        else:
+            return jsonify({"status": "ERROR"}), 400
+
+        return jsonify({"status": "OK"}), 200
+
+    return render_template("onboarding-database-config.html")
+
+
+@app.route("/onboarding/api-config")
+def onboarding_api_config():
+    return render_template("onboarding-api-config.html")
+
+
+@app.route("/onboarding/backup-config")
+def onboarding_backup_config():
+    return render_template("onboarding-backup-config.html")
+
+
+@app.route("/onboarding/review-settings")
+def onboarding_review_settings():
+    return render_template("onboarding-review-settings.html")
+
+
+# API key management routes
 @app.route("/api/key-management")
 def api_key_management():
     return render_template(
         "api-key-management.html",
-        api_key=get_config_value("api-key"),
+        api_keys=get_config_value("api-keys"),
     )
+
+
+@app.route("/api/key-management/rename", methods=["POST"])
+def api_key_rename():
+    api_keys = get_config_value("api-keys", [])
+    api_key_index = request.json.get("api-key-index")
+    new_api_key_name = request.json.get("new-api-key-name", "New API Key")
+
+    try:
+        api_keys[api_key_index]["name"] = new_api_key_name
+        set_config_value("api-keys", api_keys)
+    except:
+        return jsonify({"status": "ERROR"}), 400
+
+    return jsonify({"status": "OK"})
 
 
 @app.route("/api/key-management/revoke", methods=["POST"])
 def api_key_revoke():
-    set_config_value("api-key", None)
+    api_keys = get_config_value("api-keys", [])
+    api_key_index = request.json.get("api-key-index")
+
+    try:
+        del api_keys[api_key_index]
+        set_config_value("api-keys", api_keys)
+    except:
+        return jsonify({"status": "ERROR"}), 400
+
     return jsonify({"status": "OK"})
 
 
 @app.route("/api/key-management/generate", methods=["POST"])
 def api_key_generate():
     api_key = uuid.uuid4()
-    set_config_value(
-        "api-key",
+    api_keys = get_config_value("api-keys", [])
+    api_keys.append(
         {
+            "name": request.json.get("api-key-name", "New API Key"),
             "hash": hashlib.sha3_512(api_key.bytes).hexdigest(),
             "timestamp": datetime.datetime.now().strftime(
                 "%Y-%m-%dT%H:%M:%S+08:00"
             ),
-        },
+        }
     )
+    set_config_value("api-keys", api_keys)
     return jsonify(
         {
             "status": "OK",
-            "new_api_key": api_key.hex,
+            "new-api-key": api_key.hex,
         }
     )
 
@@ -510,14 +625,13 @@ class Database(Resource):
             x = re.findall(pattern, str(query_results))
             if len(x) > 1:  # if more than 1 sensitive data
                 try:
-                    alert = Alert(request=request, alertLevel="high")
+                    alert = Alert(request=request, alert_level="high")
                     monitoring_db.session.add(alert)
                 except:
                     print("error")
             else:
-                alert = Alert(request=request, alertLevel="low")
+                alert = Alert(request=request, alert_level="low")
                 monitoring_db.session.add(alert)
-
         except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
             query_results = None
             status, status_msg, status_code = "ERROR", "invalid request", 400
@@ -530,7 +644,6 @@ class Database(Resource):
             )
             alert = Alert(request=request, alertLevel="medium")
             monitoring_db.session.add(alert)
-
         except:
             query_results = None
             status, status_msg, status_code = (
