@@ -21,13 +21,6 @@ from flask import (
     send_file,
     url_for,
 )
-from flask_login import (
-    LoginManager,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
 from flask_restx import Api, Resource, reqparse
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
@@ -73,11 +66,6 @@ with app.app_context():
     client_db.create_all()
     monitoring_db.create_all(bind="monitoring")
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "login"
-login_manager.login_message_category = "danger"
-
 dirname = os.path.dirname(__file__)
 
 # only if backup folder does not exist
@@ -87,31 +75,9 @@ if not os.path.isdir(os.path.join(dirname, "backup")):
 backup_path = os.path.join(dirname, "backup")
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return redirect(url_for("index"))
-
-
 @app.route("/")
 def index():
     return render_template("index.html")
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    return redirect(url_for("index"))
-
-
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    return redirect(url_for("index"))
-
-
-@app.route("/logout")
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for("index"))
 
 
 # Backup functions
