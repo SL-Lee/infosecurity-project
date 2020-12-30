@@ -1,65 +1,26 @@
-<!DOCTYPE html>
-<title>Upload new File</title>
-<style>
-  .alert-error {
-    padding: 12px;
-    border-radius: 3px;
-    font-size: 1.2rem;
-    margin-bottom: 16px;
-    background-color: red;
-    color: white;
-    width: 450px;
-    margin: auto;
-  }
-  .content{
-    margin: auto;
-    margin-top: 10%;
-  }
-  h1{
-    text-align: center;
-    font-size: 60px;
-  }
-  form{
-    text-align: center;
-  }
-  p{
-    text-align: center;
-    font-size: 20px;
-  }
-  li{
-    text-align: center;
-    font-weight: bold;
-  }
-</style>
-<div class="content">
-<h1>Upload File</h1>
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <ul class="flashes">
-      {% for category, message in messages %}
-        <li class="alert alert-{{ category }}">Error: {{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-<p>Choose file to upload:</p>
-<form action="" method=post enctype=multipart/form-data>
-  <p>
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-    <input type=file name=file />
-    <!--<input type=submit value=Upload />-->
-    <button onclick="myFunction()">Upload</button>
-  </p>
-  <script>
-    function myFunction() {
-      var txt;
-      if (confirm("Are you sure you want to upload this file?")){
-        txt = "You pressed OK!";
-      } else {
-        txt = "You pressed Cancel!";
-      }
-      document.getElementById("form").innerHTML = txt;
-    }
-  </script>
-</form>
+{% extends "base.html" %}
+{% block title %}Upload New File{% endblock %}
+{% block content %}
+<div class="d-flex" style="height: 80vh;">
+  <div class="ml-auto mr-auto align-self-center">
+    <h1 class="text-center" style="font-size: 50px;">Upload File</h1>
+    <p class="lead text-center">Choose file to upload:</p>
+    <form action="" method="POST" enctype="multipart/form-data"
+      class="text-center">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div class="form-group">
+        <input type="file" name="file" class="form-control" />
+      </div>
+      <button class="btn btn-primary" onclick="confirmUpload()">Upload</button>
+    </form>
+  </div>
 </div>
+<script>
+  function confirmUpload() {
+    var message = confirm("Are you sure you want to upload this file?")
+      ? "You pressed OK!"
+      : "You pressed cancel!";
+    document.querySelector("form").innerText = message;
+  }
+</script>
+{% endblock %}

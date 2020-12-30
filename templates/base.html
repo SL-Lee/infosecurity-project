@@ -51,6 +51,17 @@
       </ul>
     </div>
   </nav>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div id="message-container" class="container mt-3">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} text-truncate" title="{{ message }}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
   <div id="content" class="container mt-3">
     {% block content %}
     {% endblock %}
@@ -64,8 +75,17 @@
   <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}">
   </script>
   <script>
-    document.getElementById("content").style.minHeight = `calc(100vh - 56px - \
-    16px - 73px)`;
+    var contentMinHeight = "100vh - 56px - 16px - 16px - 57px";
+    var messageContainer = document.getElementById("message-container");
+
+    if (messageContainer) {
+      contentMinHeight += ` - ${messageContainer.children.length * 66}px`;
+    }
+
+    document.getElementById(
+      "content"
+    ).style.minHeight = `calc(${contentMinHeight})`;
+
     document.getElementById("current-year").innerText = (new Date(Date.now()))
       .getFullYear()
       .toString();
