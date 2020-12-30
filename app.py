@@ -39,7 +39,7 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import Alert, Request, monitoring_db
+from monitoring_models import Alert, Request, monitoring_db, BackupLog
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -85,9 +85,6 @@ if not os.path.isdir(os.path.join(dirname, "backup")):
     os.mkdir(os.path.join(dirname, "backup"))
 
 backup_path = os.path.join(dirname, "backup")
-
-if not os.path.isdir(os.path.join(backup_path, "client_db")):
-    os.mkdir(os.path.join(backup_path, "client_db"))
 
 
 @login_manager.user_loader
@@ -156,15 +153,18 @@ def backup_add():
 
     if request.method == "POST" and form.validate():
         location = form.source.data
-        backup_datetime = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-        filename = os.path.join(
+        backup_datetime = datetime.datetime.now()
+        filename_folder = os.path.join(
             backup_path, os.path.splitext(os.path.basename(location))[0]
         )
 
-        if not os.path.exists(filename):
-            os.mkdir(filename)
+        if not os.path.exists(filename_folder):
+            os.mkdir(filename_folder)
 
-        backup_folder = os.path.join(filename, secure_filename(backup_datetime))
+        backup_folder = os.path.join(
+            filename_folder,
+            secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+        )
 
         if not os.path.exists(backup_folder):
             os.mkdir(backup_folder)
@@ -185,6 +185,28 @@ def backup_add():
 
         shutil.copy2(location, file_backup_path)
 
+        file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
+
+        backup_log = BackupLog(
+            filename=os.path.splitext(os.path.basename(location))[0],
+            date_created=backup_datetime,
+            method="Manual Backup",
+            source_path=location,
+            backup_path=file_backup_path,
+            md5=file_hash,
+        )
+        update_log = BackupLog(
+            filename=os.path.splitext(os.path.basename(location))[0],
+            date_created=backup_datetime,
+            method="Update Settings",
+            source_path=location,
+            backup_path=file_backup_path,
+            md5=file_hash,
+        )
+        monitoring_db.session.add(update_log)
+        monitoring_db.session.add(backup_log)
+        monitoring_db.session.commit()
+
         return redirect(url_for("index"))
 
     return render_template("backup-form.html", form1=form)
@@ -196,7 +218,9 @@ def backup_history(file):
     timestamp = os.listdir(path)
     print(timestamp)
 
-    return render_template("backup-history.html", file=file, timestamp=timestamp)
+    return render_template(
+        "backup-history.html", file=file, timestamp=timestamp
+    )
 
 
 @app.route("/backup/<file>/update", methods=["GET", "POST"])
@@ -211,15 +235,15 @@ def backup_update(file):
         if form.manual.data:
             print("manual backup")
 
-            backup_datetime = datetime.datetime.now().strftime(
-                "%d-%m-%Y %H:%M:%S"
-            )
+            backup_datetime = datetime.datetime.now()
+
             filename = os.path.join(backup_path, file)
             if not os.path.exists(filename):
                 os.mkdir(filename)
 
             backup_folder = os.path.join(
-                filename, secure_filename(backup_datetime)
+                filename,
+                secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
             )
             if not os.path.exists(backup_folder):
                 os.mkdir(backup_folder)
@@ -229,6 +253,23 @@ def backup_update(file):
             )
 
             shutil.copy2(file_settings["path"], file_backup_path)
+
+            file_hash = hashlib.md5(
+                open(file_settings["path"], "rb").read()
+            ).hexdigest()
+
+            backup_log = BackupLog(
+                filename=os.path.splitext(
+                    os.path.basename(file_settings["path"])
+                )[0],
+                date_created=backup_datetime,
+                method="Manual Backup",
+                source_path=file_settings["path"],
+                backup_path=file_backup_path,
+                md5=file_hash,
+            )
+            monitoring_db.session.add(backup_log)
+            monitoring_db.session.commit()
 
         # will perform a update, and update the settings
         elif form.update.data:
@@ -264,16 +305,15 @@ def backup_update(file):
             set_config_value("backup", backup_config)
 
             # create folders to be used for saving
-            backup_datetime = datetime.datetime.now().strftime(
-                "%d-%m-%Y %H:%M:%S"
-            )
+            backup_datetime = datetime.datetime.now()
             filename = os.path.join(backup_path, file)
 
             if not os.path.exists(filename):
                 os.mkdir(filename)
 
             backup_folder = os.path.join(
-                filename, secure_filename(backup_datetime)
+                filename,
+                secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
             )
 
             if not os.path.exists(backup_folder):
@@ -284,6 +324,34 @@ def backup_update(file):
             )
 
             shutil.copy2(file_settings["path"], file_backup_path)
+
+            file_hash = hashlib.md5(
+                open(file_settings["path"], "rb").read()
+            ).hexdigest()
+
+            backup_log = BackupLog(
+                filename=os.path.splitext(
+                    os.path.basename(file_settings["path"])
+                )[0],
+                date_created=backup_datetime,
+                method="Manual Backup",
+                source_path=file_settings["path"],
+                backup_path=file_backup_path,
+                md5=file_hash,
+            )
+            update_log = BackupLog(
+                filename=os.path.splitext(
+                    os.path.basename(file_settings["path"])
+                )[0],
+                date_created=backup_datetime,
+                method="Update Settings",
+                source_path=file_settings["path"],
+                backup_path=file_backup_path,
+                md5=file_hash,
+            )
+            monitoring_db.session.add(update_log)
+            monitoring_db.session.add(backup_log)
+            monitoring_db.session.commit()
 
         return redirect(url_for("backup"))
 
@@ -309,6 +377,19 @@ def backup_restore(file, timestamp):
 
     # copy from timestamp to source path
     shutil.copy2(restore, file_settings["path"])
+
+    file_hash = hashlib.md5(open(restore, "rb").read()).hexdigest()
+
+    restore_log = BackupLog(
+        filename=os.path.splitext(os.path.basename(restore))[0],
+        date_created=datetime.datetime.now(),
+        method="Restore",
+        source_path=restore,
+        backup_path=file_settings["path"],
+        md5=file_hash,
+    )
+    monitoring_db.session.add(restore_log)
+    monitoring_db.session.commit()
 
     return redirect(url_for("backup"))
 
