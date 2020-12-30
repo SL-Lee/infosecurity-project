@@ -33,17 +33,19 @@
         <li class="nav-item">
           <a class="nav-link" href="/">Home</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/api/doc/">API Documentation</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/api/key-management">API Key Management</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" role="button"
+            data-toggle="dropdown">Monitoring API</a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="/api/doc/">API Documentation</a>
+            <a class="dropdown-item" href="/api/key-management">API Key
+              Management</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="/alert">API Alerts</a>
+          </div>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/backup">Backup</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/alert">Alerts</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/uploadfile">File Upload</a>
