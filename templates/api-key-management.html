@@ -55,7 +55,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary"
           data-dismiss="modal">Cancel</button>
-        <button id="rename-api-key-btn" type="button" class="btn btn-primary"
+        <button type="button" class="btn btn-primary"
           onclick="document.getElementById('rename-api-key-form').requestSubmit();">OK</button>
       </div>
     </div>
@@ -84,7 +84,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary"
           data-dismiss="modal">Cancel</button>
-        <button id="revoke-api-key-btn" type="button" class="btn btn-primary"
+        <button type="button" class="btn btn-primary"
           onclick="document.getElementById('revoke-api-key-form').requestSubmit();">OK</button>
       </div>
     </div>
@@ -102,19 +102,19 @@
       </div>
       <div class="modal-body">
         <p>Input a name to be associated with the API key.</p>
-        <form>
+        <form id="generate-new-api-key-form">
           <div class="form-group">
             <label for="api-key-name-input">API key name</label>
             <input type="text" class="form-control" id="api-key-name-input"
-              required="" placeholder="API key name" />
+              name="api-key-name" required="" placeholder="API key name" />
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary"
           data-dismiss="modal">Cancel</button>
-        <button id="generate-new-api-key-btn" type="button"
-          class="btn btn-primary">OK</button>
+        <button type="button" class="btn btn-primary"
+          onclick="document.getElementById('generate-new-api-key-form').requestSubmit();">OK</button>
       </div>
     </div>
   </div>
@@ -132,7 +132,7 @@
       <div class="modal-body">
         <p>The API key was successfully generated. <b>Please copy the API key
             now as it will not be shown again</b>.</p>
-        <code id="new-api-key-hash"></code>
+        <code id="new-api-key"></code>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary"
@@ -164,21 +164,15 @@
 </div>
 
 <script>
-  // Event handler for the generate new API key button
+  // Event handler for submitting the generate new API key form
   document
-    .getElementById("generate-new-api-key-btn")
-    .addEventListener("click", e => {
+    .getElementById("generate-new-api-key-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
       fetch("{{ url_for('api_key_generate') }}", {
         "method": "POST",
-        "headers": {
-          "Content-Type": "application/json",
-          "X-CSRFToken": "{{ csrf_token() }}",
-        },
-        "body": JSON.stringify({
-          "api-key-name": document
-            .getElementById("api-key-name-input")
-            .value,
-        }),
+        "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
+        "body": new FormData(this),
       })
         .then(response => {
           return response.ok
@@ -188,7 +182,7 @@
         .then(
           json => {
             $(".modal").modal("hide");
-            $("#new-api-key-hash").text(json["new-api-key"]);
+            $("#new-api-key").text(json["new-api-key"]);
             $("#api-key-generation-success-modal").modal();
             $("#api-key-generation-success-modal").on("hidden.bs.modal", e => {
               location.reload();

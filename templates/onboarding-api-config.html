@@ -4,8 +4,9 @@
 <h4 class="mt-4">Generate API Key</h4>
 <p>To be able to access the SecureDB API, an API key will be
   required. Click on the button below to generate one.</p>
-<button id="generate-api-key-btn" class="btn btn-primary">Generate API
-  Key</button>
+<button type="button" class="btn btn-primary"
+  id="open-api-key-generation-prompt-btn" data-toggle="modal"
+  data-target="#generate-new-api-key-prompt">Generate new API Key</button>
 <hr class="my-4" />
 <div class="d-flex">
   <a class="btn btn-primary float-left mr-auto"
@@ -13,6 +14,35 @@
   <a class="btn btn-primary float-right ml-auto"
     href="{{ url_for('onboarding_backup_config') }}" role="button">Continue
     →</a>
+</div>
+
+<!-- Prompt for API key generation -->
+<div class="modal fade" id="generate-new-api-key-prompt" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Generate a new API key</h5>
+        <button type="button" class="close"
+          data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Input a name to be associated with the API key.</p>
+        <form id="generate-new-api-key-form">
+          <div class="form-group">
+            <label for="api-key-name-input">API key name</label>
+            <input type="text" class="form-control" id="api-key-name-input"
+              name="api-key-name" required="" placeholder="API key name" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+          data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary"
+          onclick="document.getElementById('generate-new-api-key-form').requestSubmit();">OK</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- API key generation success modal -->
@@ -27,7 +57,7 @@
       <div class="modal-body">
         <p>The API key was successfully generated. <b>Please copy the API key
             now as it will not be shown again</b>.</p>
-        <code id="new-api-key-hash"></code>
+        <code id="new-api-key"></code>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary"
@@ -60,11 +90,13 @@
 
 <script>
   document
-    .getElementById("generate-api-key-btn")
-    .addEventListener("click", e => {
+    .getElementById("generate-new-api-key-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
       fetch("{{ url_for('api_key_generate') }}", {
         "method": "POST",
         "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
+        "body": new FormData(this),
       })
         .then(response => {
           return response.ok
@@ -73,11 +105,13 @@
         })
         .then(
           json => {
-            $("#generate-api-key-btn").attr("disabled", "");
-            $("#new-api-key-hash").text(json["new_api_key"]);
+            $(".modal").modal("hide");
+            $("#new-api-key").text(json["new-api-key"]);
             $("#api-key-generation-success-modal").modal();
+            $("#open-api-key-generation-prompt-btn").attr("disabled", "");
           },
           error => {
+            $(".modal").modal("hide");
             $("#api-key-generation-failure-modal").modal();
           },
         );

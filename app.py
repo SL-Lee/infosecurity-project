@@ -584,7 +584,7 @@ def api_key_generate():
     api_keys = get_config_value("api-keys", [])
     api_keys.append(
         {
-            "name": request.json.get("api-key-name", "New API Key"),
+            "name": request.form.get("api-key-name", "New API Key"),
             "hash": hashlib.sha3_512(api_key.bytes).hexdigest(),
             "timestamp": datetime.datetime.now().strftime(
                 "%Y-%m-%dT%H:%M:%S+08:00"
