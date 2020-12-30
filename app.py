@@ -620,6 +620,7 @@ class Database(Resource):
     @api.expect(post_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
+    @api.response(401, "Authentication failed")
     def post(self):
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
@@ -662,6 +663,7 @@ class Database(Resource):
     @api.expect(get_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
+    @api.response(401, "Authentication failed")
     def get(self):
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
@@ -741,6 +743,7 @@ class Database(Resource):
     @api.expect(patch_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
+    @api.response(401, "Authentication failed")
     def patch(self):
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
@@ -777,6 +780,7 @@ class Database(Resource):
     @api.expect(delete_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
+    @api.response(401, "Authentication failed")
     def delete(self):
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
