@@ -561,6 +561,7 @@ def api_key_generate():
     return jsonify(
         {
             "status": "OK",
+            "new-api-key-name": request.form.get("api-key-name", "New API Key"),
             "new-api-key": api_key.hex,
         }
     )

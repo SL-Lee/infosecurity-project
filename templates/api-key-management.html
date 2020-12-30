@@ -130,8 +130,9 @@
           data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body">
-        <p>The API key was successfully generated. <b>Please copy the API key
-            now as it will not be shown again</b>.</p>
+        <p>The API key named <code id="generated-api-key-name"></code> was
+          successfully generated. <b>Please copy the API key now as it will not
+            be shown again</b>.</p>
         <code id="new-api-key"></code>
       </div>
       <div class="modal-footer">
@@ -182,6 +183,7 @@
         .then(
           json => {
             $(".modal").modal("hide");
+            $("#generated-api-key-name").text(json["new-api-key-name"]);
             $("#new-api-key").text(json["new-api-key"]);
             $("#api-key-generation-success-modal").modal();
             $("#api-key-generation-success-modal").on("hidden.bs.modal", e => {
