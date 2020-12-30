@@ -5,7 +5,6 @@ import os
 import re
 import shutil
 import uuid
-import datetime
 
 import marshmallow
 import sqlalchemy
@@ -14,6 +13,7 @@ from Crypto.Random import get_random_bytes
 from flask import (
     Blueprint,
     Flask,
+    flash,
     jsonify,
     redirect,
     render_template,
@@ -23,7 +23,9 @@ from flask import (
 )
 from flask_login import (
     LoginManager,
+    current_user,
     login_required,
+    login_user,
     logout_user,
 )
 from flask_restx import Api, Resource, reqparse
@@ -31,15 +33,13 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
 import forms
-from client_models import (
-    client_db,
-)
+from client_models import *
 from helper_functions import (
     get_config_value,
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import monitoring_db, Request, Alert
+from monitoring_models import Alert, Request, monitoring_db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -384,6 +384,34 @@ def return_files_tut(filename):
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
 
+# Alert Function
+@app.route("/alert")
+def alert():
+    alert_config = get_config_value("alert")
+    print("alert files:", alert_config)
+    return render_template("alert.html")
+
+
+@app.route("/tempalertSetDefault")
+def alertSetDefault():
+    path = ".\monitoring_db.sqlite3"
+    interval = 1
+    interval_type = "min"
+    monitoring_db = {
+        "monitoring_db": {
+            "path": path,
+            "interval": interval,
+            "interval_type": interval_type,
+        }
+    }
+    set_config_value("alert", monitoring_db)
+    alert_config = get_config_value("alert")
+    print("alert files:", alert_config)
+    print(alert_config["client_db"]["path"])
+    print(os.path.isfile(alert_config["client_db"]["path"]))
+    return redirect(url_for("alert"))
+
+
 # Onboarding routes
 @app.route("/onboarding")
 def onboarding():
@@ -695,31 +723,6 @@ class Database(Resource):
 
         return {"status": status, "status_msg": status_msg}, status_code
 
-#Alert Function
-@app.route("/alert")
-def alert():
-    alert_config = get_config_value("alert")
-    print("alert files:", alert_config)
-    return render_template("alert.html")
-
-@app.route("/tempalertSetDefault")
-def alertSetDefault():
-    path = ".\monitoring_db.sqlite3"
-    interval = 1
-    interval_type = "min"
-    monitoring_db = {
-        "monitoring_db": {
-            "path": path,
-            "interval": interval,
-            "interval_type": interval_type,
-        }
-    }
-    set_config_value("alert", monitoring_db)
-    alert_config = get_config_value("alert")
-    print("alert files:", alert_config)
-    print(alert_config["client_db"]["path"])
-    print(os.path.isfile(alert_config["client_db"]["path"]))
-    return redirect(url_for("alert"))
 
 if __name__ == "__main__":
     app.run(debug=True, port=4999)
