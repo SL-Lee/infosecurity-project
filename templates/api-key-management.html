@@ -13,10 +13,10 @@
     <div class="btn-group align-self-center" role="group">
       <button type="button" class="btn btn-primary" data-toggle="modal"
         data-target="#rename-api-key-prompt"
-        data-api-key-index="{{ loop.index }}">Rename</button>
+        data-api-key-index="{{ loop.index - 1 }}">Rename</button>
       <button type="button" class="btn btn-danger" data-toggle="modal"
         data-target="#revoke-api-key-alert"
-        data-api-key-index="{{ loop.index }}">Revoke</button>
+        data-api-key-index="{{ loop.index - 1 }}">Revoke</button>
     </div>
   </li>
   {% endfor %}
@@ -39,40 +39,24 @@
           data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body">
-        <form>
+        <form id="rename-api-key-form" method="POST"
+          action="{{ url_for('api_key_rename') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" id="rename-api-key-index"
+            name="rename-api-key-index" />
           <div class="form-group">
             <label for="new-api-key-name-input">Rename API key to</label>
             <input type="text" class="form-control" id="new-api-key-name-input"
-              required="" placeholder="New API key name" />
+              name="new-api-key-name" required=""
+              placeholder="New API key name" />
           </div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary"
           data-dismiss="modal">Cancel</button>
-        <button id="rename-api-key-btn" type="button"
-          class="btn btn-primary">OK</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- API key renaming failure modal -->
-<div class="modal fade" id="api-key-renaming-failure-modal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Error while renaming API key</h5>
-        <button type="button" class="close"
-          data-dismiss="modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>There was an error while renaming the API key. Please try again
-          later.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary"
-          data-dismiss="modal">OK</button>
+        <button id="rename-api-key-btn" type="button" class="btn btn-primary"
+          onclick="document.getElementById('rename-api-key-form').requestSubmit();">OK</button>
       </div>
     </div>
   </div>
@@ -90,33 +74,18 @@
       <div class="modal-body">
         <p>Are you sure you want to revoke this API key? Any subsequent
           requests that uses this API key will be denied.</p>
+        <form id="revoke-api-key-form" method="POST"
+          action="{{ url_for('api_key_revoke') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" id="revoke-api-key-index"
+            name="revoke-api-key-index" />
+        </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary"
           data-dismiss="modal">Cancel</button>
-        <button id="revoke-api-key-btn" type="button"
-          class="btn btn-primary">OK</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- API key revocation failure modal -->
-<div class="modal fade" id="api-key-revocation-failure-modal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Error while revoking API key</h5>
-        <button type="button" class="close"
-          data-dismiss="modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>There was an error while revoking the API key. Please try again
-          later.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary"
-          data-dismiss="modal">OK</button>
+        <button id="revoke-api-key-btn" type="button" class="btn btn-primary"
+          onclick="document.getElementById('revoke-api-key-form').requestSubmit();">OK</button>
       </div>
     </div>
   </div>
@@ -195,77 +164,6 @@
 </div>
 
 <script>
-  var csrfToken = "{{ csrf_token() }}";
-
-  // Event handler for the rename API key button
-  document
-    .getElementById("rename-api-key-btn")
-    .addEventListener("click", e => {
-      fetch("{{ url_for('api_key_rename') }}", {
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        "body": JSON.stringify({
-          "api-key-index":
-            parseInt(
-              document
-                .getElementById("rename-api-key-prompt")
-                .getAttribute("data-api-key-index"),
-              10
-            ) - 1,
-          "new-api-key-name": document
-            .getElementById("new-api-key-name-input")
-            .value,
-        }),
-      })
-        .then(response => {
-          return response.ok
-            ? location.reload()
-            : Promise.reject("Error while renaming API key");
-        })
-        .catch(
-          error => {
-            $(".modal").modal("hide");
-            $("#api-key-renaming-failure-modal").modal();
-          },
-        );
-    });
-
-  // Event handler for the revoke API key button
-  document
-    .getElementById("revoke-api-key-btn")
-    .addEventListener("click", e => {
-      fetch("{{ url_for('api_key_revoke') }}", {
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        "body": JSON.stringify({
-          "api-key-index":
-            parseInt(
-              document
-                .getElementById("revoke-api-key-alert")
-                .getAttribute("data-api-key-index"),
-              10
-            ) - 1,
-        }),
-      })
-        .then(response => {
-          return response.ok
-            ? location.reload()
-            : Promise.reject("Error while revoking API key");
-        })
-        .catch(
-          error => {
-            $(".modal").modal("hide");
-            $("#api-key-revocation-failure-modal").modal();
-          },
-        );
-    });
-
   // Event handler for the generate new API key button
   document
     .getElementById("generate-new-api-key-btn")
@@ -274,7 +172,7 @@
         "method": "POST",
         "headers": {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
+          "X-CSRFToken": "{{ csrf_token() }}",
         },
         "body": JSON.stringify({
           "api-key-name": document
@@ -305,18 +203,16 @@
 
   // Pass index of API key to modal when they are shown
   window.addEventListener("load", _ => {
-    $("#rename-api-key-prompt").on("show.bs.modal", function (e) {
-      this.setAttribute(
-        "data-api-key-index",
-        e.relatedTarget.getAttribute("data-api-key-index"),
-      );
+    $("#rename-api-key-prompt").on("show.bs.modal", e => {
+      document.getElementById(
+        "rename-api-key-index"
+      ).value = e.relatedTarget.getAttribute("data-api-key-index");
     });
 
     $("#revoke-api-key-alert").on("show.bs.modal", function (e) {
-      this.setAttribute(
-        "data-api-key-index",
-        e.relatedTarget.getAttribute("data-api-key-index"),
-      );
+      document.getElementById(
+        "revoke-api-key-index"
+      ).value = e.relatedTarget.getAttribute("data-api-key-index");
     });
   });
 </script>

@@ -327,7 +327,7 @@ def upload_file():
         # if user does not select file, browser also
         # submit a empty part without filename
         if file.filename == "":
-            flash("No file", "error")
+            flash("No file", "danger")
             print("no filename")
             return redirect(request.url)
         else:
@@ -467,30 +467,34 @@ def api_key_management():
 @app.route("/api/key-management/rename", methods=["POST"])
 def api_key_rename():
     api_keys = get_config_value("api-keys", [])
-    api_key_index = request.json.get("api-key-index")
-    new_api_key_name = request.json.get("new-api-key-name", "New API Key")
 
     try:
+        api_key_index = int(request.form["rename-api-key-index"])
+        new_api_key_name = request.form.get("new-api-key-name", "New API Key")
         api_keys[api_key_index]["name"] = new_api_key_name
         set_config_value("api-keys", api_keys)
     except:
-        return jsonify({"status": "ERROR"}), 400
+        flash("There was an error while renaming the API key.", "danger")
+        return redirect(url_for("api_key_management"))
 
-    return jsonify({"status": "OK"})
+    flash("The API key was renamed successfully.", "success")
+    return redirect(url_for("api_key_management"))
 
 
 @app.route("/api/key-management/revoke", methods=["POST"])
 def api_key_revoke():
     api_keys = get_config_value("api-keys", [])
-    api_key_index = request.json.get("api-key-index")
 
     try:
+        api_key_index = int(request.form["revoke-api-key-index"])
         del api_keys[api_key_index]
         set_config_value("api-keys", api_keys)
     except:
-        return jsonify({"status": "ERROR"}), 400
+        flash("There was an error while revoking the API key.", "danger")
+        return redirect(url_for("api_key_management"))
 
-    return jsonify({"status": "OK"})
+    flash("The API key was revoked successfully.", "success")
+    return redirect(url_for("api_key_management"))
 
 
 @app.route("/api/key-management/generate", methods=["POST"])
