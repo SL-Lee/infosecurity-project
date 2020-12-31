@@ -32,7 +32,7 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import Alert, Request, monitoring_db, BackupLog
+from monitoring_models import Alert, BackupLog, Request, monitoring_db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
