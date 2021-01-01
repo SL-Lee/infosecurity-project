@@ -48,7 +48,7 @@ class BaseSchema(Schema):
     def remove_null_fields(self, data, **kwargs):
         if type(data) == dict:
             for i in self.__fields_to_skip_none__:
-                if i in data and data[i] == None:
+                if i in data and data[i] is None:
                     del data[i]
 
         return data
