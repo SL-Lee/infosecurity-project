@@ -651,27 +651,71 @@ class Database(Resource):
             client_db.session.add(schema.load(args["object"]))
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
+            request = Request(
+                datetime=datetime.datetime.now(),
+                request_params="Model: {}".format(
+                    args["model"]
+                ),
+                response=str(args["object"]),
+            )
+            alert = Alert(request=request, alert_level="low")
         except marshmallow.exceptions.ValidationError:
             status, status_msg, status_code = (
                 "ERROR",
                 "error while deserializing object",
                 400,
             )
+            request = Request(
+                datetime=datetime.datetime.now(),
+                request_params="Model: {}".format(
+                    args["model"]
+                ),
+                response=str(args["object"]),
+            )
+            alert = Alert(request=request, alert_level="medium")
         except (NameError, SyntaxError):
             status, status_msg, status_code = "ERROR", "invalid request", 400
+            request = Request(
+                datetime=datetime.datetime.now(),
+                request_params="Model: {}".format(
+                    args["model"]
+                ),
+                response=str(args["object"]),
+            )
+            alert = Alert(request=request, alert_level="medium")
         except sqlalchemy.exc.IntegrityError:
             status, status_msg, status_code = (
                 "ERROR",
                 "database integrity error",
                 400,
             )
+            request = Request(
+                datetime=datetime.datetime.now(),
+                request_params="Model: {}".format(
+                    args["model"]
+                ),
+                response=str(args["object"]),
+            )
+            alert = Alert(request=request, alert_level="medium")
         except:
             status, status_msg, status_code = (
                 "ERROR",
                 "an unknown error occurred",
                 400,
             )
+            request = Request(
+                datetime=datetime.datetime.now(),
+                request_params="Model: {}".format(
+                    args["model"]
+                ),
+                response=str(args["object"]),
+            )
+            alert = Alert(request=request, alert_level="medium")
 
+        finally:
+            monitoring_db.session.add(alert)
+            monitoring_db.session.add(request)
+            monitoring_db.session.commit()
         return {"status": status, "status_msg": status_msg}, status_code
 
     @api.expect(get_parser)
