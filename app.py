@@ -473,16 +473,30 @@ def onboarding_database_config():
         if db_file is not None and db_file.filename.endswith(".sqlite3"):
             db_file.save(secure_filename("client_db.sqlite3"))
         else:
-            return jsonify({"status": "ERROR"}), 400
+            flash(
+                (
+                    "The database file seems to be of an incorrect format. "
+                    "Please try again."
+                ),
+                "danger",
+            )
+            return render_template("onboarding-database-config.html")
 
         db_models = request.files.get("db-models")
 
         if db_models is not None and db_models.filename.endswith(".py"):
             db_models.save(secure_filename("client_models.py"))
         else:
-            return jsonify({"status": "ERROR"}), 400
+            flash(
+                (
+                    "The database models file seems to be of an incorrect "
+                    "format. Please try again."
+                ),
+                "danger",
+            )
+            return render_template("onboarding-database-config.html")
 
-        return jsonify({"status": "OK"}), 200
+        return redirect(url_for("onboarding_api_config"))
 
     return render_template("onboarding-database-config.html")
 
