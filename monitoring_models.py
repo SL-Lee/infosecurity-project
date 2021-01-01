@@ -7,6 +7,8 @@ class Request(monitoring_db.Model):
     __bind_key__ = "monitoring"
     id = monitoring_db.Column(monitoring_db.Integer, primary_key=True)
     datetime = monitoring_db.Column(monitoring_db.DateTime, nullable=False)
+    status = monitoring_db.Column(monitoring_db.String(10), nullable=False)
+    status_msg = monitoring_db.Column(monitoring_db.String(100), nullable=False)
     request_params = monitoring_db.Column(
         monitoring_db.String(255),
         nullable=False,
