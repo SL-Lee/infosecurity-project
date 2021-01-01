@@ -91,17 +91,17 @@ def backup():
 
 @app.route("/temp-backup-set-default")
 def backup_set_default():
-    path = ".\client_db.sqlite3"
+    path = ".\\client_db.sqlite3"
     interval = 1
     interval_type = "min"
-    client_db = {
+    client_db_config = {
         "client_db": {
             "path": path,
             "interval": interval,
             "interval_type": interval_type,
         }
     }
-    set_config_value("backup", client_db)
+    set_config_value("backup", client_db_config)
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
     print(backup_config["client_db"]["path"])
@@ -401,7 +401,8 @@ def upload_file():
             # Initially write the iv to the output file
             output_file.write(cipher_encrypt.iv)
 
-            # Keep reading the file into the buffer, encrypting then writing to the new file
+            # Keep reading the file into the buffer, encrypting then writing to
+            # the new file
             buffer = input_file.read(buffer_size)
 
             while len(buffer) > 0:
@@ -439,19 +440,19 @@ def alert():
     return render_template("alert.html")
 
 
-@app.route("/tempalertSetDefault")
-def alertSetDefault():
-    path = ".\monitoring_db.sqlite3"
+@app.route("/temp-alert-set-default")
+def alert_set_default():
+    path = ".\\monitoring_db.sqlite3"
     interval = 1
     interval_type = "min"
-    monitoring_db = {
+    monitoring_db_config = {
         "monitoring_db": {
             "path": path,
             "interval": interval,
             "interval_type": interval_type,
         }
     }
-    set_config_value("alert", monitoring_db)
+    set_config_value("alert", monitoring_db_config)
     alert_config = get_config_value("alert")
     print("alert files:", alert_config)
     print(alert_config["client_db"]["path"])
@@ -750,9 +751,13 @@ class Database(Resource):
                 )
 
                 pattern = "'password'"
-                x = re.findall(pattern, str(query_results))
+                pattern_occurrence_count = re.findall(
+                    pattern, str(query_results)
+                )
 
-                if len(x) > 1:  # if more than 1 sensitive data
+                # if pattern occurs more than once, that means there are more
+                # than 1 sensitive data, so log this request as a high alert
+                if len(pattern_occurrence_count) > 1:
                     status, status_msg, status_code = "ERROR", "Denied", 401
                     logged_request, logged_alert = log_request(
                         "high", status, status_msg
