@@ -75,7 +75,10 @@ if not os.path.isdir(os.path.join(dirname, "backup")):
     os.mkdir(os.path.join(dirname, "backup"))
 
 backup_path = os.path.join(dirname, "backup")
-schedule = BackgroundScheduler(jobstores={"default": SQLAlchemyJobStore(url='sqlite:///jobs.sqlite3')}, daemon=True)
+schedule = BackgroundScheduler(
+    jobstores={"default": SQLAlchemyJobStore(url="sqlite:///jobs.sqlite3")},
+    daemon=True,
+)
 schedule.start()
 schedule.print_jobs()
 
@@ -158,9 +161,7 @@ def backup_add():
         location = form.source.data
         backup_datetime = datetime.datetime.now()
         filename = os.path.splitext(os.path.basename(location))[0]
-        filename_folder = os.path.join(
-            backup_path, filename
-        )
+        filename_folder = os.path.join(backup_path, filename)
 
         if not os.path.exists(filename_folder):
             os.mkdir(filename_folder)
@@ -212,16 +213,51 @@ def backup_add():
         monitoring_db.session.commit()
 
         if form.interval_type.data == "min":
-            schedule.add_job(schedule_backup, args=[filename], trigger="interval", minutes=form.interval.data, id=filename, replace_existing=True)
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                minutes=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
         elif form.interval_type.data == "hr":
-            schedule.add_job(schedule_backup, args=[filename], trigger="interval", hours=form.interval.data, id=filename, replace_existing=True)
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                hours=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
         elif form.interval_type.data == "d":
-            schedule.add_job(schedule_backup, args=[filename], trigger="interval", days=form.interval.data, id=filename, replace_existing=True)
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                days=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
         elif form.interval_type.data == "wk":
-            schedule.add_job(schedule_backup, args=[filename], trigger="interval", weeks=form.interval.data, id=filename, replace_existing=True)
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                weeks=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
         elif form.interval_type.data == "mth":
-            months = 31*form.interval.data
-            schedule.add_job(schedule_backup, args=[filename], trigger="interval", days=months, id=filename, replace_existing=True)
+            months = 31 * form.interval.data
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                days=months,
+                id=filename,
+                replace_existing=True,
+            )
         schedule.print_jobs()
 
         return redirect(url_for("index"))
@@ -283,7 +319,7 @@ def backup_update(file):
                 method="Manual Backup",
                 source_path=file_settings["path"],
                 backup_path=file_backup_path,
-                md5=file_hash
+                md5=file_hash,
             )
             monitoring_db.session.add(backup_log)
             monitoring_db.session.commit()
@@ -354,7 +390,7 @@ def backup_update(file):
                 method="Manual Backup",
                 source_path=file_settings["path"],
                 backup_path=file_backup_path,
-                md5=file_hash
+                md5=file_hash,
             )
             update_log = BackupLog(
                 filename=os.path.splitext(
@@ -364,7 +400,7 @@ def backup_update(file):
                 method="Update Settings",
                 source_path=file_settings["path"],
                 backup_path=file_backup_path,
-                md5=file_hash
+                md5=file_hash,
             )
             monitoring_db.session.add(update_log)
             monitoring_db.session.add(backup_log)
@@ -403,7 +439,7 @@ def backup_restore(file, timestamp):
         method="Restore",
         source_path=restore,
         backup_path=file_settings["path"],
-        md5=file_hash
+        md5=file_hash,
     )
     monitoring_db.session.add(restore_log)
     monitoring_db.session.commit()
