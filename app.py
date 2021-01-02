@@ -114,9 +114,9 @@ def schedule_backup(filename):
         ).hexdigest()
 
         backup_log = BackupLog(
-            filename=os.path.splitext(
-                os.path.basename(file_settings["path"])
-            )[0],
+            filename=os.path.splitext(os.path.basename(file_settings["path"]))[
+                0
+            ],
             date_created=backup_datetime,
             method="Automatic Backup",
             source_path=file_settings["path"],
@@ -177,6 +177,7 @@ if len(schedule.get_jobs()) == 0:
                 id=filename,
                 replace_existing=True,
             )
+
 
 @app.route("/")
 def index():
