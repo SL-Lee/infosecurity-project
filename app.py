@@ -645,9 +645,9 @@ class Database(Resource):
                 request_params="",
                 response="Failed Authentication",
             )
-            alert = Alert(request=logged_request, alert_level="low")
-            monitoring_db.session.add(alert)
-            monitoring_db.session.add(request)
+            generated_alert = Alert(request=logged_request, alert_level="low")
+            monitoring_db.session.add(generated_alert)
+            monitoring_db.session.add(logged_request)
             monitoring_db.session.commit()
             return {
                 "status": "ERROR",
@@ -666,7 +666,7 @@ class Database(Resource):
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
             )
-            alert = Alert(request=logged_request, alert_level="low")
+            generated_alert = Alert(request=logged_request, alert_level="low")
         except marshmallow.exceptions.ValidationError:
             status, status_msg, status_code = (
                 "ERROR",
@@ -678,7 +678,9 @@ class Database(Resource):
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
             )
-            alert = Alert(request=logged_request, alert_level="medium")
+            generated_alert = Alert(
+                request=logged_request, alert_level="medium"
+            )
         except (NameError, SyntaxError):
             status, status_msg, status_code = "ERROR", "invalid request", 400
             logged_request = Request(
@@ -686,7 +688,9 @@ class Database(Resource):
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
             )
-            alert = Alert(request=logged_request, alert_level="medium")
+            generated_alert = Alert(
+                request=logged_request, alert_level="medium"
+            )
         except sqlalchemy.exc.IntegrityError:
             status, status_msg, status_code = (
                 "ERROR",
@@ -698,7 +702,9 @@ class Database(Resource):
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
             )
-            alert = Alert(request=logged_request, alert_level="medium")
+            generated_alert = Alert(
+                request=logged_request, alert_level="medium"
+            )
         except:
             status, status_msg, status_code = (
                 "ERROR",
@@ -710,9 +716,11 @@ class Database(Resource):
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
             )
-            alert = Alert(request=logged_request, alert_level="medium")
+            generated_alert = Alert(
+                request=logged_request, alert_level="medium"
+            )
         finally:
-            monitoring_db.session.add(alert)
+            monitoring_db.session.add(generated_alert)
             monitoring_db.session.add(request)
             monitoring_db.session.commit()
 
@@ -827,8 +835,8 @@ class Database(Resource):
                 request_params="",
                 response="Failed Authentication",
             )
-            alert = Alert(request=logged_request, alert_level="low")
-            monitoring_db.session.add(alert)
+            generated_alert = Alert(request=logged_request, alert_level="low")
+            monitoring_db.session.add(generated_alert)
             monitoring_db.session.add(request)
             monitoring_db.session.commit()
             return {
@@ -873,8 +881,8 @@ class Database(Resource):
                 request_params="",
                 response="Failed Authentication",
             )
-            alert = Alert(request=logged_request, alert_level="low")
-            monitoring_db.session.add(alert)
+            generated_alert = Alert(request=logged_request, alert_level="low")
+            monitoring_db.session.add(generated_alert)
             monitoring_db.session.add(request)
             monitoring_db.session.commit()
             return {
