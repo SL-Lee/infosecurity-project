@@ -33,6 +33,8 @@ from helper_functions import (
     validate_api_key,
 )
 from monitoring_models import Alert, BackupLog, Request, monitoring_db
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -73,6 +75,41 @@ if not os.path.isdir(os.path.join(dirname, "backup")):
     os.mkdir(os.path.join(dirname, "backup"))
 
 backup_path = os.path.join(dirname, "backup")
+schedule = BackgroundScheduler(jobstores={"default": SQLAlchemyJobStore(url='sqlite:///jobs.sqlite3')}, daemon=True)
+schedule.start()
+schedule.print_jobs()
+
+
+def schedule_backup(filename):
+    # get the config of the file
+    schedule.print_jobs()
+    backup_config = get_config_value("backup")
+    print("backup files:", backup_config)
+    file_settings = backup_config[filename]
+    backup_datetime = datetime.datetime.now()
+    backup_folder = os.path.join(backup_path, filename)
+    # if the file does not have a backup folder
+    if not os.path.exists(backup_folder):
+        os.mkdir(backup_folder)
+
+    timestamp_folder = os.path.join(
+        backup_folder,
+        secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+    )
+
+    # if no timestamp folder
+    if not os.path.exists(timestamp_folder):
+        os.mkdir(timestamp_folder)
+
+    file_backup_path = os.path.join(
+        timestamp_folder, os.path.basename(file_settings["path"])
+    )
+
+    shutil.copy2(file_settings["path"], file_backup_path)
+
+    file_hash = hashlib.md5(
+        open(file_settings["path"], "rb").read()
+    ).hexdigest()
 
 
 @app.route("/")
@@ -120,8 +157,9 @@ def backup_add():
     if request.method == "POST" and form.validate():
         location = form.source.data
         backup_datetime = datetime.datetime.now()
+        filename = os.path.splitext(os.path.basename(location))[0]
         filename_folder = os.path.join(
-            backup_path, os.path.splitext(os.path.basename(location))[0]
+            backup_path, filename
         )
 
         if not os.path.exists(filename_folder):
@@ -140,7 +178,7 @@ def backup_add():
         )
 
         backup_config = {
-            os.path.splitext(os.path.basename(location))[0]: {
+            filename: {
                 "path": location,
                 "interval": form.interval.data,
                 "interval_type": form.interval_type.data,
@@ -154,7 +192,7 @@ def backup_add():
         file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
 
         backup_log = BackupLog(
-            filename=os.path.splitext(os.path.basename(location))[0],
+            filename=filename,
             date_created=backup_datetime,
             method="Manual Backup",
             source_path=location,
@@ -162,7 +200,7 @@ def backup_add():
             md5=file_hash,
         )
         update_log = BackupLog(
-            filename=os.path.splitext(os.path.basename(location))[0],
+            filename=filename,
             date_created=backup_datetime,
             method="Update Settings",
             source_path=location,
@@ -172,6 +210,19 @@ def backup_add():
         monitoring_db.session.add(update_log)
         monitoring_db.session.add(backup_log)
         monitoring_db.session.commit()
+
+        if form.interval_type.data == "min":
+            schedule.add_job(schedule_backup, args=[filename], trigger="interval", minutes=form.interval.data, id=filename, replace_existing=True)
+        elif form.interval_type.data == "hr":
+            schedule.add_job(schedule_backup, args=[filename], trigger="interval", hours=form.interval.data, id=filename, replace_existing=True)
+        elif form.interval_type.data == "d":
+            schedule.add_job(schedule_backup, args=[filename], trigger="interval", days=form.interval.data, id=filename, replace_existing=True)
+        elif form.interval_type.data == "wk":
+            schedule.add_job(schedule_backup, args=[filename], trigger="interval", weeks=form.interval.data, id=filename, replace_existing=True)
+        elif form.interval_type.data == "mth":
+            months = 31*form.interval.data
+            schedule.add_job(schedule_backup, args=[filename], trigger="interval", days=months, id=filename, replace_existing=True)
+        schedule.print_jobs()
 
         return redirect(url_for("index"))
 
@@ -232,7 +283,7 @@ def backup_update(file):
                 method="Manual Backup",
                 source_path=file_settings["path"],
                 backup_path=file_backup_path,
-                md5=file_hash,
+                md5=file_hash
             )
             monitoring_db.session.add(backup_log)
             monitoring_db.session.commit()
@@ -303,7 +354,7 @@ def backup_update(file):
                 method="Manual Backup",
                 source_path=file_settings["path"],
                 backup_path=file_backup_path,
-                md5=file_hash,
+                md5=file_hash
             )
             update_log = BackupLog(
                 filename=os.path.splitext(
@@ -313,7 +364,7 @@ def backup_update(file):
                 method="Update Settings",
                 source_path=file_settings["path"],
                 backup_path=file_backup_path,
-                md5=file_hash,
+                md5=file_hash
             )
             monitoring_db.session.add(update_log)
             monitoring_db.session.add(backup_log)
@@ -352,7 +403,7 @@ def backup_restore(file, timestamp):
         method="Restore",
         source_path=restore,
         backup_path=file_settings["path"],
-        md5=file_hash,
+        md5=file_hash
     )
     monitoring_db.session.add(restore_log)
     monitoring_db.session.commit()
