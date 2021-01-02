@@ -32,6 +32,8 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from monitoring_models import Alert, BackupLog, Request, Rule, monitoring_db
 
 app = Flask(__name__)
@@ -73,6 +75,44 @@ if not os.path.isdir(os.path.join(dirname, "backup")):
     os.mkdir(os.path.join(dirname, "backup"))
 
 backup_path = os.path.join(dirname, "backup")
+schedule = BackgroundScheduler(
+    jobstores={"default": SQLAlchemyJobStore(url="sqlite:///jobs.sqlite3")},
+    daemon=True,
+)
+schedule.start()
+schedule.print_jobs()
+
+
+def schedule_backup(filename):
+    # get the config of the file
+    schedule.print_jobs()
+    backup_config = get_config_value("backup")
+    print("backup files:", backup_config)
+    file_settings = backup_config[filename]
+    backup_datetime = datetime.datetime.now()
+    backup_folder = os.path.join(backup_path, filename)
+    # if the file does not have a backup folder
+    if not os.path.exists(backup_folder):
+        os.mkdir(backup_folder)
+
+    timestamp_folder = os.path.join(
+        backup_folder,
+        secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+    )
+
+    # if no timestamp folder
+    if not os.path.exists(timestamp_folder):
+        os.mkdir(timestamp_folder)
+
+    file_backup_path = os.path.join(
+        timestamp_folder, os.path.basename(file_settings["path"])
+    )
+
+    shutil.copy2(file_settings["path"], file_backup_path)
+
+    file_hash = hashlib.md5(
+        open(file_settings["path"], "rb").read()
+    ).hexdigest()
 
 
 @app.route("/")
@@ -91,17 +131,17 @@ def backup():
 
 @app.route("/temp-backup-set-default")
 def backup_set_default():
-    path = ".\client_db.sqlite3"
+    path = ".\\client_db.sqlite3"
     interval = 1
     interval_type = "min"
-    client_db = {
+    client_db_config = {
         "client_db": {
             "path": path,
             "interval": interval,
             "interval_type": interval_type,
         }
     }
-    set_config_value("backup", client_db)
+    set_config_value("backup", client_db_config)
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
     print(backup_config["client_db"]["path"])
@@ -120,9 +160,8 @@ def backup_add():
     if request.method == "POST" and form.validate():
         location = form.source.data
         backup_datetime = datetime.datetime.now()
-        filename_folder = os.path.join(
-            backup_path, os.path.splitext(os.path.basename(location))[0]
-        )
+        filename = os.path.splitext(os.path.basename(location))[0]
+        filename_folder = os.path.join(backup_path, filename)
 
         if not os.path.exists(filename_folder):
             os.mkdir(filename_folder)
@@ -140,7 +179,7 @@ def backup_add():
         )
 
         backup_config = {
-            os.path.splitext(os.path.basename(location))[0]: {
+            filename: {
                 "path": location,
                 "interval": form.interval.data,
                 "interval_type": form.interval_type.data,
@@ -154,7 +193,7 @@ def backup_add():
         file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
 
         backup_log = BackupLog(
-            filename=os.path.splitext(os.path.basename(location))[0],
+            filename=filename,
             date_created=backup_datetime,
             method="Manual Backup",
             source_path=location,
@@ -162,7 +201,7 @@ def backup_add():
             md5=file_hash,
         )
         update_log = BackupLog(
-            filename=os.path.splitext(os.path.basename(location))[0],
+            filename=filename,
             date_created=backup_datetime,
             method="Update Settings",
             source_path=location,
@@ -172,6 +211,54 @@ def backup_add():
         monitoring_db.session.add(update_log)
         monitoring_db.session.add(backup_log)
         monitoring_db.session.commit()
+
+        if form.interval_type.data == "min":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                minutes=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
+        elif form.interval_type.data == "hr":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                hours=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
+        elif form.interval_type.data == "d":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                days=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
+        elif form.interval_type.data == "wk":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                weeks=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
+        elif form.interval_type.data == "mth":
+            months = 31 * form.interval.data
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                days=months,
+                id=filename,
+                replace_existing=True,
+            )
+        schedule.print_jobs()
 
         return redirect(url_for("index"))
 
@@ -451,7 +538,8 @@ def upload_file():
             # Initially write the iv to the output file
             output_file.write(cipher_encrypt.iv)
 
-            # Keep reading the file into the buffer, encrypting then writing to the new file
+            # Keep reading the file into the buffer, encrypting then writing to
+            # the new file
             buffer = input_file.read(buffer_size)
 
             while len(buffer) > 0:
@@ -489,19 +577,19 @@ def alert():
     return render_template("alert.html")
 
 
-@app.route("/tempalertSetDefault")
-def alertSetDefault():
-    path = ".\monitoring_db.sqlite3"
+@app.route("/temp-alert-set-default")
+def alert_set_default():
+    path = ".\\monitoring_db.sqlite3"
     interval = 1
     interval_type = "min"
-    monitoring_db = {
+    monitoring_db_config = {
         "monitoring_db": {
             "path": path,
             "interval": interval,
             "interval_type": interval_type,
         }
     }
-    set_config_value("alert", monitoring_db)
+    set_config_value("alert", monitoring_db_config)
     alert_config = get_config_value("alert")
     print("alert files:", alert_config)
     print(alert_config["client_db"]["path"])
@@ -782,8 +870,8 @@ class Database(Resource):
                 datetime=datetime.datetime.now(),
                 status=status,
                 status_msg=status_msg,
-                request_params="Model: {}, Filter: {}".format(
-                    args["model"], args["filter"]
+                request_params=(
+                    f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response=str(query_results),
             )
@@ -794,7 +882,6 @@ class Database(Resource):
 
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
-
             args = self.get_parser.parse_args()
 
             try:
@@ -850,7 +937,6 @@ class Database(Resource):
                 "status_msg": status_msg,
                 "query_results": query_results,
             }, status_code
-
         except:
             logged_request = Request(
                 datetime=datetime.datetime.now(),
