@@ -8,6 +8,8 @@ import uuid
 
 import marshmallow
 import sqlalchemy
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.schedulers.background import BackgroundScheduler
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from flask import (
@@ -32,8 +34,6 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from monitoring_models import Alert, BackupLog, Request, Rule, monitoring_db
 
 app = Flask(__name__)
@@ -893,8 +893,14 @@ class Database(Resource):
                 )
 
                 pattern = "'password'"
-                x = re.findall(pattern, str(query_results))
-                if len(x) > 1:  # if more than 1 sensitive data
+                pattern_occurrence_count = re.findall(
+                    pattern, str(query_results)
+                )
+
+                # if pattern occurs more than once, that means there are more
+                # than 1 sensitive data, so deny this request and log it as a
+                # high alert
+                if len(pattern_occurrence_count) > 1:
                     status, status_msg, status_code = "ERROR", "Denied", 403
                     logged_request, logged_alert = log_request(
                         "high", status, status_msg
