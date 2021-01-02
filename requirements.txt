@@ -1,10 +1,11 @@
 aniso8601==8.0.0
 appdirs==1.4.4
 apscheduler==3.6.3
+astroid==2.4.2
 attrs==20.3.0
 black==20.8b1
 click==7.1.2
-flake8==3.8.4
+colorama==0.4.4
 Flask==1.1.2
 Flask-Login==0.5.0
 flask-restx==0.2.0
@@ -14,15 +15,16 @@ isort==5.6.4
 itsdangerous==1.1.0
 Jinja2==2.11.2
 jsonschema==3.2.0
+lazy-object-proxy==1.4.3
 MarkupSafe==1.1.1
 marshmallow==3.9.1
 mccabe==0.6.1
 mypy-extensions==0.4.3
 pathspec==0.8.1
 pipdeptree==2.0.0
-pycodestyle==2.6.0
 pycryptodome==3.9.9
-pyflakes==2.2.0
+pylint==2.6.0
+pylint-flask-sqlalchemy==0.2.0
 pyrsistent==0.17.3
 pytz==2020.4
 regex==2020.11.13
@@ -33,4 +35,5 @@ typed-ast==1.4.1
 typing-extensions==3.7.4.3
 tzlocal==2.1
 Werkzeug==1.0.1
+wrapt==1.12.1
 WTForms==2.3.3
