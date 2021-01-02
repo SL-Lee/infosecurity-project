@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Download File{% endblock %}
+{% block content %}
+<div class="d-flex" style="height: 80vh;">
+  <div class="ml-auto mr-auto align-self-center">
+    <img src="/static/icons/successful-icon.jpg"
+      style="display: block; margin-left: auto; margin-right: auto; height:128px; width:128px;" />
+    <h1 class="text-center" style="font-size: 50px;">File Uploaded Successfully
+    </h1>
+    <p class="lead text-center">Click the button below to download file</p>
+    <div class="text-center">
+      <a href="/return-files/{{value}}" target="blank"><button
+          class="btn btn-primary">Download</button></a>
+    </div>
+  </div>
+</div>
+{% endblock %}

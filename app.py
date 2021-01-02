@@ -450,8 +450,8 @@ def backup_restore(file, timestamp):
 # Configure Sensitive Fields
 @app.route("/sensitive-fields", methods=["GET"])
 def get_sensitive_fields():
-
     sensitive_fields = Rule.query.all()
+
     for i in sensitive_fields:
         print(i.contents)
 
@@ -463,6 +463,7 @@ def get_sensitive_fields():
 @app.route("/sensitive-fields/add", methods=["GET", "POST"])
 def add_sensitive_fields():
     form = forms.SensitiveFieldForm(request.form)
+
     if request.method == "POST" and form.validate():
         rule = Rule(contents=form.sensitive_field.data)
         monitoring_db.session.add(rule)
@@ -470,22 +471,21 @@ def add_sensitive_fields():
 
         return redirect(url_for("get_sensitive_fields"))
 
-    return render_template("sensitive-fields(add).html", form=form)
+    return render_template("sensitive-fields-add.html", form=form)
 
 
 @app.route("/sensitive-fields/update/<field>", methods=["GET", "POST"])
 def update_sensitive_fields(field):
     form = forms.SensitiveFieldForm(request.form)
     rule = Rule.query.filter_by(id=field).first_or_404()
+
     if request.method == "POST" and form.validate():
         rule.contents = form.sensitive_field.data
         monitoring_db.session.commit()
 
         return redirect(url_for("get_sensitive_fields"))
 
-    return render_template(
-        "sensitive-fields(update).html", form=form, rule=rule
-    )
+    return render_template("sensitive-fields-update.html", form=form, rule=rule)
 
 
 @app.route("/sensitive-fields/delete/<field>", methods=["GET", "POST"])
@@ -498,7 +498,7 @@ def delete_sensitive_fields(field):
 
 
 # Upload API
-@app.route("/uploadfile", methods=["GET", "POST"])
+@app.route("/upload-file", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
         # check if the post request has the file part
@@ -552,15 +552,15 @@ def upload_file():
             output_file.close()
             print("saved file successfully")
             # send file name as parameter to download
-            return redirect("/downloadfile/" + filename + ".encrypted")
+            return redirect("/download-file/" + filename + ".encrypted")
 
-    return render_template("upload_file.html")
+    return render_template("upload-file.html")
 
 
 # Download API
-@app.route("/downloadfile/<filename>", methods=["GET"])
+@app.route("/download-file/<filename>", methods=["GET"])
 def download_file(filename):
-    return render_template("download.html", value=filename)
+    return render_template("download-file.html", value=filename)
 
 
 @app.route("/return-files/<filename>")
