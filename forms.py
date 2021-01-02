@@ -72,3 +72,9 @@ class BackupForm(FlaskForm):
     )
     manual = SubmitField("Manual Backup")
     update = SubmitField("Backup & Update Settings")
+
+
+class SensitiveFieldForm(FlaskForm):
+    sensitive_field = StringField(
+        "Sensitive Field", [InputRequired(), Length(min=1, max=100)]
+    )

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Sensitive Fields{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
+
+{% block content %}
+<div class="container-fluid content">
+    <div class="row justify-content-center">
+        <div class="col-sm-12">
+            <h4 class="text-center">Sensitive Fields</h4>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-sm-8">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Sensitive Fields (Case-Sensitive)</th>
+                        <th scope="col">Update</th>
+                        <th scope="col">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in sensitive_fields %}
+                    <tr>
+                        <td>{{ i.id }}</td>
+                        <td>{{ i.contents }}</td>
+                        <td><button class="btn btn-warning"
+                            onclick="location.href='/sensitive-fields/update/{{ i.id }}'">Update</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-danger" onclick="location.href='/sensitive-fields/delete/{{ i.id }}'">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-primary btn-lg btn-block" onclick="location.href='/sensitive-fields/add'">Add Sensitive Field</button>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

@@ -32,7 +32,7 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import Alert, BackupLog, Request, monitoring_db
+from monitoring_models import Alert, BackupLog, Request, Rule, monitoring_db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -360,6 +360,56 @@ def backup_restore(file, timestamp):
     return redirect(url_for("backup"))
 
 
+# Configure Sensitive Fields
+@app.route("/sensitive-fields", methods=["GET"])
+def get_sensitive_fields():
+
+    sensitive_fields = Rule.query.all()
+    for i in sensitive_fields:
+        print(i.contents)
+
+    return render_template(
+        "sensitive-fields.html", sensitive_fields=sensitive_fields
+    )
+
+
+@app.route("/sensitive-fields/add", methods=["GET", "POST"])
+def add_sensitive_fields():
+    form = forms.SensitiveFieldForm(request.form)
+    if request.method == "POST" and form.validate():
+        rule = Rule(contents=form.sensitive_field.data)
+        monitoring_db.session.add(rule)
+        monitoring_db.session.commit()
+
+        return redirect(url_for("get_sensitive_fields"))
+
+    return render_template("sensitive-fields(add).html", form=form)
+
+
+@app.route("/sensitive-fields/update/<field>", methods=["GET", "POST"])
+def update_sensitive_fields(field):
+    form = forms.SensitiveFieldForm(request.form)
+    rule = Rule.query.filter_by(id=field).first_or_404()
+    if request.method == "POST" and form.validate():
+        rule.contents = form.sensitive_field.data
+        monitoring_db.session.commit()
+
+        return redirect(url_for("get_sensitive_fields"))
+
+    return render_template(
+        "sensitive-fields(update).html", form=form, rule=rule
+    )
+
+
+@app.route("/sensitive-fields/delete/<field>", methods=["GET", "POST"])
+def delete_sensitive_fields(field):
+    rule = Rule.query.filter_by(id=field).first_or_404()
+    monitoring_db.session.delete(rule)
+    monitoring_db.session.commit()
+
+    return redirect(url_for("get_sensitive_fields"))
+
+
 # Upload API
 @app.route("/uploadfile", methods=["GET", "POST"])
 def upload_file():
@@ -636,101 +686,96 @@ class Database(Resource):
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def post(self):
+        def log_request(alert_level, status, status_msg):
+            logged_request = Request(
+                datetime=datetime.datetime.now(),
+                status=status,
+                status_msg=status_msg,
+                request_params="Model: {}".format(args["model"]),
+                response=str(args["object"]),
+            )
+            logged_alert = Alert(
+                request=logged_request, alert_level=alert_level
+            )
+            return logged_request, logged_alert
+
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
+
+            args = self.post_parser.parse_args()
+
+            try:
+                schema = eval(f"{args['model']}Schema()")
+                client_db.session.add(schema.load(args["object"]))
+                client_db.session.commit()
+                status, status_msg, status_code = "OK", "OK", 200
+                logged_request, logged_alert = log_request(
+                    "low", status, status_msg
+                )
+            except marshmallow.exceptions.ValidationError:
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "error while deserializing object",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+            except (NameError, SyntaxError):
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "invalid request",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+            except sqlalchemy.exc.IntegrityError:
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "database integrity error",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+            except:
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "an unknown error occurred",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+            finally:
+                monitoring_db.session.add(logged_alert)
+                monitoring_db.session.add(logged_request)
+                monitoring_db.session.commit()
+            return {"status": status, "status_msg": status_msg}, status_code
+
         except:
             logged_request = Request(
                 datetime=datetime.datetime.now(),
-                request_params=""
-                ,
-                response="Failed Authentication",
+                status="ERROR",
+                status_msg="Authentication Failed",
+                request_params="",
+                response="",
             )
-            alert = Alert(request=logged_request, alert_level="low")
-            monitoring_db.session.add(alert)
-            monitoring_db.session.add(request)
+            logged_alert = Alert(request=logged_request, alert_level="medium")
+            monitoring_db.session.add(logged_alert)
+            monitoring_db.session.add(logged_request)
             monitoring_db.session.commit()
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
             }, 401
 
-        args = self.post_parser.parse_args()
-
-        try:
-            schema = eval(f"{args['model']}Schema()")
-            client_db.session.add(schema.load(args["object"]))
-            client_db.session.commit()
-            status, status_msg, status_code = "OK", "OK", 200
-            logged_request = Request(
-                datetime=datetime.datetime.now(),
-                request_params="Model: {}".format(
-                    args["model"]
-                ),
-                response=str(args["object"]),
-            )
-            alert = Alert(request=logged_request, alert_level="low")
-        except marshmallow.exceptions.ValidationError:
-            status, status_msg, status_code = (
-                "ERROR",
-                "error while deserializing object",
-                400,
-            )
-            logged_request = Request(
-                datetime=datetime.datetime.now(),
-                request_params="Model: {}".format(
-                    args["model"]
-                ),
-                response=str(args["object"]),
-            )
-            alert = Alert(request=logged_request, alert_level="medium")
-        except (NameError, SyntaxError):
-            status, status_msg, status_code = "ERROR", "invalid request", 400
-            logged_request = Request(
-                datetime=datetime.datetime.now(),
-                request_params="Model: {}".format(
-                    args["model"]
-                ),
-                response=str(args["object"]),
-            )
-            alert = Alert(request=logged_request, alert_level="medium")
-        except sqlalchemy.exc.IntegrityError:
-            status, status_msg, status_code = (
-                "ERROR",
-                "database integrity error",
-                400,
-            )
-            logged_request = Request(
-                datetime=datetime.datetime.now(),
-                request_params="Model: {}".format(
-                    args["model"]
-                ),
-                response=str(args["object"]),
-            )
-            alert = Alert(request=logged_request, alert_level="medium")
-        except:
-            status, status_msg, status_code = (
-                "ERROR",
-                "an unknown error occurred",
-                400,
-            )
-            logged_request = Request(
-                datetime=datetime.datetime.now(),
-                request_params="Model: {}".format(
-                    args["model"]
-                ),
-                response=str(args["object"]),
-            )
-            alert = Alert(request=logged_request, alert_level="medium")
-        finally:
-            monitoring_db.session.add(alert)
-            monitoring_db.session.add(request)
-            monitoring_db.session.commit()
-        return {"status": status, "status_msg": status_msg}, status_code
-
     @api.expect(get_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
+    @api.response(403, "Forbidden")
     def get(self):
         def log_request(alert_level, status, status_msg):
             logged_request = Request(
@@ -742,7 +787,9 @@ class Database(Resource):
                 ),
                 response=str(query_results),
             )
-            logged_alert = Alert(request=logged_request, alert_level=alert_level)
+            logged_alert = Alert(
+                request=logged_request, alert_level=alert_level
+            )
             return logged_request, logged_alert
 
         try:
@@ -761,16 +808,27 @@ class Database(Resource):
                 pattern = "'password'"
                 x = re.findall(pattern, str(query_results))
                 if len(x) > 1:  # if more than 1 sensitive data
-                    status, status_msg, status_code = "ERROR", "Denied", 401
-                    logged_request, logged_alert = log_request("high", status, status_msg)
+                    status, status_msg, status_code = "ERROR", "Denied", 403
+                    logged_request, logged_alert = log_request(
+                        "high", status, status_msg
+                    )
+                    query_results = None
                 else:
                     status, status_msg, status_code = "OK", "OK", 200
-                    logged_request, logged_alert = log_request("low", status, status_msg)
+                    logged_request, logged_alert = log_request(
+                        "low", status, status_msg
+                    )
 
             except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
                 query_results = None
-                status, status_msg, status_code = "ERROR", "invalid request", 400
-                logged_request, logged_alert = log_request("medium", status, status_msg)
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "invalid request",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
 
             except:
                 query_results = None
@@ -779,7 +837,9 @@ class Database(Resource):
                     "an unknown error occurred",
                     400,
                 )
-                logged_request, logged_alert = log_request("medium", status, status_msg)
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
 
             monitoring_db.session.add(logged_alert)
             monitoring_db.session.add(logged_request)
@@ -808,95 +868,158 @@ class Database(Resource):
                 "status_msg": "Authentication failed",
             }, 401
 
-
     @api.expect(patch_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def patch(self):
+        def log_request(alert_level, status, status_msg):
+            logged_request = Request(
+                datetime=datetime.datetime.now(),
+                status=status,
+                status_msg=status_msg,
+                request_params="Model: {}, Filter: {}".format(
+                    args["model"], args["filter"]
+                ),
+                response=str(args["values"]),
+            )
+            logged_alert = Alert(
+                request=logged_request, alert_level=alert_level
+            )
+            return logged_request, logged_alert
+
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
+
+            args = self.patch_parser.parse_args()
+            try:
+                client_db.session.query(eval(args["model"])).filter(
+                    eval(args["filter"])
+                ).update(args["values"])
+                client_db.session.commit()
+                status, status_msg, status_code = "OK", "OK", 200
+                logged_request, logged_alert = log_request(
+                    "low", status, status_msg
+                )
+            except (
+                NameError,
+                sqlalchemy.exc.InvalidRequestError,
+                sqlalchemy.exc.StatementError,
+                SyntaxError,
+            ):
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "invalid request",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+            except:
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "an unknown error occurred",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+
+            monitoring_db.session.add(logged_alert)
+            monitoring_db.session.add(logged_request)
+            monitoring_db.session.commit()
+            return {"status": status, "status_msg": status_msg}, status_code
         except:
             logged_request = Request(
                 datetime=datetime.datetime.now(),
-                request_params=""
-                ,
-                response="Failed Authentication",
+                status="ERROR",
+                status_msg="Authentication Failed",
+                request_params="",
+                response="",
             )
-            alert = Alert(request=logged_request, alert_level="low")
-            monitoring_db.session.add(alert)
-            monitoring_db.session.add(request)
+            logged_alert = Alert(request=logged_request, alert_level="medium")
+            monitoring_db.session.add(logged_alert)
+            monitoring_db.session.add(logged_request)
             monitoring_db.session.commit()
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
             }, 401
-
-        args = self.patch_parser.parse_args()
-
-        try:
-            client_db.session.query(eval(args["model"])).filter(
-                eval(args["filter"])
-            ).update(args["values"])
-            client_db.session.commit()
-            status, status_msg, status_code = "OK", "OK", 200
-        except (
-            NameError,
-            sqlalchemy.exc.InvalidRequestError,
-            sqlalchemy.exc.StatementError,
-            SyntaxError,
-        ):
-            status, status_msg, status_code = "ERROR", "invalid request", 400
-        except:
-            status, status_msg, status_code = (
-                "ERROR",
-                "an unknown error occurred",
-                400,
-            )
-
-        return {"status": status, "status_msg": status_msg}, status_code
 
     @api.expect(delete_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def delete(self):
+        def log_request(alert_level, status, status_msg):
+            logged_request = Request(
+                datetime=datetime.datetime.now(),
+                status=status,
+                status_msg=status_msg,
+                request_params="Model: {}, Filter: {}".format(
+                    args["model"], args["filter"]
+                ),
+                response="",
+            )
+            logged_alert = Alert(
+                request=logged_request, alert_level=alert_level
+            )
+            return logged_request, logged_alert
+
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
+
+            args = self.delete_parser.parse_args()
+
+            try:
+                client_db.session.query(eval(args["model"])).filter(
+                    eval(args["filter"])
+                ).delete()
+                client_db.session.commit()
+                status, status_msg, status_code = "OK", "OK", 200
+                logged_request, logged_alert = log_request(
+                    "low", status, status_msg
+                )
+            except (NameError, sqlalchemy.exc.InvalidRequestError, SyntaxError):
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "invalid request",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+            except:
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "an unknown error occurred",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+
+            monitoring_db.session.add(logged_alert)
+            monitoring_db.session.add(logged_request)
+            monitoring_db.session.commit()
+            return {"status": status, "status_msg": status_msg}, status_code
+
         except:
             logged_request = Request(
                 datetime=datetime.datetime.now(),
-                request_params=""
-                ,
-                response="Failed Authentication",
+                status="ERROR",
+                status_msg="Authentication Failed",
+                request_params="",
+                response="",
             )
-            alert = Alert(request=logged_request, alert_level="low")
-            monitoring_db.session.add(alert)
-            monitoring_db.session.add(request)
+            logged_alert = Alert(request=logged_request, alert_level="medium")
+            monitoring_db.session.add(logged_alert)
+            monitoring_db.session.add(logged_request)
             monitoring_db.session.commit()
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
             }, 401
-
-        args = self.delete_parser.parse_args()
-
-        try:
-            client_db.session.query(eval(args["model"])).filter(
-                eval(args["filter"])
-            ).delete()
-            client_db.session.commit()
-            status, status_msg, status_code = "OK", "OK", 200
-        except (NameError, sqlalchemy.exc.InvalidRequestError, SyntaxError):
-            status, status_msg, status_code = "ERROR", "invalid request", 400
-        except:
-            status, status_msg, status_code = (
-                "ERROR",
-                "an unknown error occurred",
-                400,
-            )
-
-        return {"status": status, "status_msg": status_msg}, status_code
 
 
 if __name__ == "__main__":
