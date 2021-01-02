@@ -9,6 +9,10 @@ from datetime import datetime
 
 import marshmallow
 import sqlalchemy
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.schedulers.background import BackgroundScheduler
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 from flask import (
     Blueprint,
     Flask,
@@ -37,7 +41,7 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import monitoring_db, Request, Alert
+from monitoring_models import Alert, BackupLog, Request, Rule, monitoring_db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -308,8 +312,58 @@ def backupRestore(file, timestamp):
     return redirect(url_for("backup"))
 
 
+# Configure Sensitive Fields
+@app.route("/sensitive-fields", methods=["GET"])
+def get_sensitive_fields():
+    sensitive_fields = Rule.query.all()
+
+    for i in sensitive_fields:
+        print(i.contents)
+
+    return render_template(
+        "sensitive-fields.html", sensitive_fields=sensitive_fields
+    )
+
+
+@app.route("/sensitive-fields/add", methods=["GET", "POST"])
+def add_sensitive_fields():
+    form = forms.SensitiveFieldForm(request.form)
+
+    if request.method == "POST" and form.validate():
+        rule = Rule(contents=form.sensitive_field.data)
+        monitoring_db.session.add(rule)
+        monitoring_db.session.commit()
+
+        return redirect(url_for("get_sensitive_fields"))
+
+    return render_template("sensitive-fields-add.html", form=form)
+
+
+@app.route("/sensitive-fields/update/<field>", methods=["GET", "POST"])
+def update_sensitive_fields(field):
+    form = forms.SensitiveFieldForm(request.form)
+    rule = Rule.query.filter_by(id=field).first_or_404()
+
+    if request.method == "POST" and form.validate():
+        rule.contents = form.sensitive_field.data
+        monitoring_db.session.commit()
+
+        return redirect(url_for("get_sensitive_fields"))
+
+    return render_template("sensitive-fields-update.html", form=form, rule=rule)
+
+
+@app.route("/sensitive-fields/delete/<field>", methods=["GET", "POST"])
+def delete_sensitive_fields(field):
+    rule = Rule.query.filter_by(id=field).first_or_404()
+    monitoring_db.session.delete(rule)
+    monitoring_db.session.commit()
+
+    return redirect(url_for("get_sensitive_fields"))
+
+
 # Upload API
-@app.route("/uploadfile", methods=["GET", "POST"])
+@app.route("/upload-file", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
         # check if the post request has the file part
@@ -329,15 +383,15 @@ def upload_file():
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             print("saved file successfully")
             # send file name as parameter to download
-            return redirect("/downloadfile/" + filename)
+            return redirect("/download-file/" + filename + ".encrypted")
 
-    return render_template("upload_file.html")
+    return render_template("upload-file.html")
 
 
 # Download API
-@app.route("/downloadfile/<filename>", methods=["GET"])
+@app.route("/download-file/<filename>", methods=["GET"])
 def download_file(filename):
-    return render_template("download.html", value=filename)
+    return render_template("download-file.html", value=filename)
 
 
 @app.route("/return-files/<filename>")
@@ -471,34 +525,68 @@ class Database(Resource):
         args = self.get_parser.parse_args()
 
         try:
-            schema = eval(f"{args['model']}Schema(many=True)")
-            query_results = schema.dump(
-                client_db.session.query(eval(args["model"]))
-                .filter(eval(args["filter"]))
-                .all()
-            )
-            status, status_msg, status_code = "OK", "OK", 200
+            validate_api_key(request.headers.get("X-API-KEY"))
+            args = self.get_parser.parse_args()
 
-            request = Request(datetime=datetime.now(), request_params="Model: {}, Filter: {}".format(args["model"], args["filter"]), response=str(query_results))
-            pattern = "'password'"
-            x = re.findall(pattern, str(query_results))
-            if len(x) > 1: # if more than 1 sensitive data
-                try:
-                    alert = Alert(request=request, alertLevel="high")
-                    monitoring_db.session.add(alert)
-                except:
-                    print("error")
-            else:
-                alert = Alert(request=request, alertLevel="low")
-                monitoring_db.session.add(alert)
+            try:
+                schema = eval(f"{args['model']}Schema(many=True)")
+                query_results = schema.dump(
+                    client_db.session.query(eval(args["model"]))
+                    .filter(eval(args["filter"]))
+                    .all()
+                )
 
-        except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
-            query_results = None
-            status, status_msg, status_code = "ERROR", "invalid request", 400
-            request = Request(datetime=datetime.now(), request_params="Model: {}, Filter: {}".format(args["model"], args["filter"]), response=str(query_results))
-            alert = Alert(request=request, alertLevel="medium")
-            monitoring_db.session.add(alert)
+                pattern = "'password'"
+                pattern_occurrence_count = re.findall(
+                    pattern, str(query_results)
+                )
 
+                # if pattern occurs more than once, that means there are more
+                # than 1 sensitive data, so deny this request and log it as a
+                # high alert
+                if len(pattern_occurrence_count) > 1:
+                    status, status_msg, status_code = "ERROR", "Denied", 403
+                    logged_request, logged_alert = log_request(
+                        "high", status, status_msg
+                    )
+                    query_results = None
+                else:
+                    status, status_msg, status_code = "OK", "OK", 200
+                    logged_request, logged_alert = log_request(
+                        "low", status, status_msg
+                    )
+
+            except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
+                query_results = None
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "invalid request",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+
+            except:
+                query_results = None
+                status, status_msg, status_code = (
+                    "ERROR",
+                    "an unknown error occurred",
+                    400,
+                )
+                logged_request, logged_alert = log_request(
+                    "medium", status, status_msg
+                )
+
+            monitoring_db.session.add(logged_alert)
+            monitoring_db.session.add(logged_request)
+            monitoring_db.session.commit()
+
+            return {
+                "status": status,
+                "status_msg": status_msg,
+                "query_results": query_results,
+            }, status_code
         except:
             query_results = None
             status, status_msg, status_code = (
