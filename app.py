@@ -9,10 +9,8 @@ from datetime import datetime
 
 import marshmallow
 import sqlalchemy
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from apscheduler.schedulers.background import BackgroundScheduler
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
+from sqlalchemy import create_engine
+engine = create_engine('sqlite:///monitoring_db.sqlite3')
 from flask import (
     Blueprint,
     Flask,
@@ -400,6 +398,104 @@ def return_files_tut(filename):
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
 
+
+# Alert Function
+@app.route("/alert")
+def alert():
+    alert_config = get_config_value("alert")
+    files = list(alert_config.keys())
+    print("alert files:", alert_config)
+    return render_template("alert.html", files=files)
+
+@app.route("/temp-alert-set-default")
+def alert_set_default():
+    path = ".\\monitoring_db.sqlite3"
+    interval = 1
+    interval_type = "min"
+    monitoring_db_config = {
+        "monitoring_db": {
+            "path": path,
+            "interval": interval,
+            "interval_type": interval_type,
+        }
+    }
+    set_config_value("alert", monitoring_db_config)
+    alert_config = get_config_value("alert")
+    print("alert files:", alert_config)
+    print(alert_config["monitoring_db"]["path"])
+    print(os.path.isfile(alert_config["monitoring_db"]["path"]))
+    return redirect(url_for("alert"))
+
+@app.route("/alert/view", methods=['GET'])
+def alertview():
+    alert_config = get_config_value("alert")
+    files = list(alert_config.keys())
+    print("alert files:", alert_config)
+    with engine.connect() as con:
+        rs = con.execute('SELECT * FROM alert, request')
+        for col in rs:
+            print(col)
+    return render_template("alert-view.html", files=rs)
+
+
+# Onboarding routes
+@app.route("/onboarding")
+def onboarding():
+    return redirect(url_for("onboarding_database_config"))
+
+
+@app.route("/onboarding/database-config", methods=["GET", "POST"])
+def onboarding_database_config():
+    if request.method == "POST":
+        db_file = request.files.get("db-file")
+
+        if db_file is not None and db_file.filename.endswith(".sqlite3"):
+            db_file.save(secure_filename("client_db.sqlite3"))
+        else:
+            flash(
+                (
+                    "The database file seems to be of an incorrect format. "
+                    "Please try again."
+                ),
+                "danger",
+            )
+            return render_template("onboarding-database-config.html")
+
+        db_models = request.files.get("db-models")
+
+        if db_models is not None and db_models.filename.endswith(".py"):
+            db_models.save(secure_filename("client_models.py"))
+        else:
+            flash(
+                (
+                    "The database models file seems to be of an incorrect "
+                    "format. Please try again."
+                ),
+                "danger",
+            )
+            return render_template("onboarding-database-config.html")
+
+        return redirect(url_for("onboarding_api_config"))
+
+    return render_template("onboarding-database-config.html")
+
+
+@app.route("/onboarding/api-config")
+def onboarding_api_config():
+    return render_template("onboarding-api-config.html")
+
+
+@app.route("/onboarding/backup-config")
+def onboarding_backup_config():
+    return render_template("onboarding-backup-config.html")
+
+
+@app.route("/onboarding/review-settings")
+def onboarding_review_settings():
+    return render_template("onboarding-review-settings.html")
+
+
+# API key management routes
 @app.route("/api/key-management")
 def api_key_management():
     return render_template(
@@ -435,6 +531,10 @@ def api_key_generate():
 
 
 # API routes
+def log_request(param, status, status_msg):
+    pass
+
+
 @api.route("/database")
 class Database(Resource):
     base_parser = reqparse.RequestParser(bundle_errors=True)
@@ -521,7 +621,7 @@ class Database(Resource):
     @api.expect(get_parser)
     @api.response(200, "Success")
     @api.response(400, "Invalid Request")
-    def get(self):
+    def get(self, request=None):
         args = self.get_parser.parse_args()
 
         try:

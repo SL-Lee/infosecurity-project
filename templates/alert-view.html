@@ -6,7 +6,7 @@
 <div class="container-fluid content">
   <div class="row justify-content-center">
     <div class="col-sm-12">
-      <h4 class="text-center">Alert Notifications</h4>
+      <h4 class="text-center">Alert Details</h4>
     </div>
   </div>
   <div class="row justify-content-center">
@@ -14,19 +14,23 @@
       <table class="table table-striped table-hover">
         <thead>
           <tr>
-            <th scope="col">#</th>
-            <th scope="col">Alerts Received</th>
-            <th scope="col">View Alert</th>
-
+            <th scope="col">Request ID</th>
+            <th scope="col">Alert Level</th>
+            <th scope="col">Datetime</th>
+            <th scope="col">Request Parameters</th>
+            <th scope="col">Status</th>
+            <th scope="col">Message</th>
+            <th scope="col">Response</th>
           </tr>
         </thead>
         <tbody>
-           {% for i in files %}
+          {% for row in files %}
           <tr>
-            <th scope="row">{{ loop.index }}</th>
-            <td>{{ i }}</td>
+            {% for col in row %}
+            <th scope="col">{{ col }}</th>
+            {% endfor %}
             <td><button class="btn btn-success"
-                onclick="location.href='/alert/view'">View</button>
+                onclick="location.href='/alert/email">Email</button>
             </td>
           </tr>
           {% endfor %}
