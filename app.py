@@ -11,7 +11,7 @@ import sqlalchemy
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
+from Crypto import Random
 from flask import (
     Blueprint,
     Flask,
@@ -612,44 +612,55 @@ def upload_file():
             flash("No file", "danger")
             print("no filename")
             return redirect(request.url)
+        else:
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        key = get_random_bytes(32)  # Use a stored / generated key
-        buffer_size = 65536  # 64kb
+            def pad(s):
+                return s + b"\0" * (AES.block_size - len(s) % AES.block_size)
 
-        # === Encrypt ===
+            def encrypt(message, key, key_size=256):
+                message = pad(message)
+                iv = Random.new().read(AES.block_size)
+                cipher = AES.new(key, AES.MODE_CBC, iv)
+                return iv + cipher.encrypt(message)
 
-        # Open the input and output files
-        input_file = open(
-            os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb"
-        )
-        output_file = open(
-            os.path.join(app.config["UPLOAD_FOLDER"], filename) + ".encrypted",
-            "wb",
-        )
+            def decrypt(ciphertext, key):
+                iv = ciphertext[: AES.block_size]
+                cipher = AES.new(key, AES.MODE_CBC, iv)
+                plaintext = cipher.decrypt(ciphertext[AES.block_size :])
+                return plaintext.rstrip(b"\0")
 
-        # Create the cipher object and encrypt the data
-        cipher_encrypt = AES.new(key, AES.MODE_CFB)
+            def encrypt_file(file_name, key):
+                with open(file_name, "rb") as fo:
+                    plaintext = fo.read()
+                enc = encrypt(plaintext, key)
+                with open(file_name + ".enc", "wb") as fo:
+                    fo.write(enc)
 
-        # Initially write the iv to the output file
-        output_file.write(cipher_encrypt.iv)
+            def decrypt_file(file_name, key):
+                with open(file_name, "rb") as fo:
+                    ciphertext = fo.read()
+                dec = decrypt(ciphertext, key)
+                with open(file_name[:-4] + ".dec", "wb") as fo:
+                    fo.write(dec)
 
-        # Keep reading the file into the buffer, encrypting then writing to
-        # the new file
-        buffer = input_file.read(buffer_size)
+            key = b"\xbf\xc0\x85)\x10nc\x94\x02)j\xdf\xcb\xc4\x94\x9d(\x9e[EX\xc8\xd5\xbfI{\xa2$\x05(\xd5\x18"
+            if "encrypt" in request.form:
+                encrypt_file(
+                    os.path.join(app.config["UPLOAD_FOLDER"], filename), key
+                )
+                print("saved file successfully")
+                # send file name as parameter to download
+                return redirect("/download-file/" + filename + ".enc")
 
-        while len(buffer) > 0:
-            ciphered_bytes = cipher_encrypt.encrypt(buffer)
-            output_file.write(ciphered_bytes)
-            buffer = input_file.read(buffer_size)
-
-        # Close the input and output files
-        input_file.close()
-        output_file.close()
-        print("saved file successfully")
-        # send file name as parameter to download
-        return redirect("/download-file/" + filename + ".encrypted")
+            elif "decrypt" in request.form:
+                decrypt_file(
+                    os.path.join(app.config["UPLOAD_FOLDER"], filename), key
+                )
+                print("saved file2 successfully")
+                # send file name as parameter to download
+                return redirect("/download-file2/" + filename[:-4] + ".dec")
 
     return render_template("upload-file.html")
 
@@ -662,6 +673,18 @@ def download_file(filename):
 
 @app.route("/return-files/<filename>")
 def return_files_tut(filename):
+    file_path = UPLOAD_FOLDER + filename
+    return send_file(file_path, as_attachment=True, attachment_filename="")
+
+
+# Download API
+@app.route("/download-file2/<filename>", methods=["GET"])
+def download_file2(filename):
+    return render_template("download-file2.html", value=filename)
+
+
+@app.route("/return-files2/<filename>")
+def return_files_tut2(filename):
     file_path = UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
