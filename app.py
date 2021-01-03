@@ -612,45 +612,44 @@ def upload_file():
             flash("No file", "danger")
             print("no filename")
             return redirect(request.url)
-        else:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            key = get_random_bytes(32)  # Use a stored / generated key
-            buffer_size = 65536  # 64kb
 
-            # === Encrypt ===
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        key = get_random_bytes(32)  # Use a stored / generated key
+        buffer_size = 65536  # 64kb
 
-            # Open the input and output files
-            input_file = open(
-                os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb"
-            )
-            output_file = open(
-                os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                + ".encrypted",
-                "wb",
-            )
+        # === Encrypt ===
 
-            # Create the cipher object and encrypt the data
-            cipher_encrypt = AES.new(key, AES.MODE_CFB)
+        # Open the input and output files
+        input_file = open(
+            os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb"
+        )
+        output_file = open(
+            os.path.join(app.config["UPLOAD_FOLDER"], filename) + ".encrypted",
+            "wb",
+        )
 
-            # Initially write the iv to the output file
-            output_file.write(cipher_encrypt.iv)
+        # Create the cipher object and encrypt the data
+        cipher_encrypt = AES.new(key, AES.MODE_CFB)
 
-            # Keep reading the file into the buffer, encrypting then writing to
-            # the new file
+        # Initially write the iv to the output file
+        output_file.write(cipher_encrypt.iv)
+
+        # Keep reading the file into the buffer, encrypting then writing to
+        # the new file
+        buffer = input_file.read(buffer_size)
+
+        while len(buffer) > 0:
+            ciphered_bytes = cipher_encrypt.encrypt(buffer)
+            output_file.write(ciphered_bytes)
             buffer = input_file.read(buffer_size)
 
-            while len(buffer) > 0:
-                ciphered_bytes = cipher_encrypt.encrypt(buffer)
-                output_file.write(ciphered_bytes)
-                buffer = input_file.read(buffer_size)
-
-            # Close the input and output files
-            input_file.close()
-            output_file.close()
-            print("saved file successfully")
-            # send file name as parameter to download
-            return redirect("/download-file/" + filename + ".encrypted")
+        # Close the input and output files
+        input_file.close()
+        output_file.close()
+        print("saved file successfully")
+        # send file name as parameter to download
+        return redirect("/download-file/" + filename + ".encrypted")
 
     return render_template("upload-file.html")
 
