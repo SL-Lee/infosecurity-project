@@ -891,21 +891,33 @@ class Database(Resource):
                     .filter(eval(args["filter"]))
                     .all()
                 )
-
-                pattern = "'password'"
-                x = re.findall(pattern, str(query_results))
-                if len(x) > 1:  # if more than 1 sensitive data
-                    status, status_msg, status_code = "ERROR", "Denied", 403
-                    logged_request, logged_alert = log_request(
-                        "high", status, status_msg
-                    )
-                    query_results = None
-                else:
+                sensitive_fields = Rule.query.all()
+                try:
+                    for i in sensitive_fields:
+                        pattern = "'" + i.contents + "',"
+                        print(pattern)
+                        x = re.findall(pattern, str(query_results))
+                        if len(x) > 1:  # if more than 1 sensitive data
+                            status, status_msg, status_code = (
+                                "ERROR",
+                                "Denied",
+                                403,
+                            )
+                            logged_request, logged_alert = log_request(
+                                "high", status, status_msg
+                            )
+                            query_results = None
+                            break
+                        else:
+                            status, status_msg, status_code = "OK", "OK", 200
+                            logged_request, logged_alert = log_request(
+                                "low", status, status_msg
+                            )
+                except:
                     status, status_msg, status_code = "OK", "OK", 200
                     logged_request, logged_alert = log_request(
                         "low", status, status_msg
                     )
-
             except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
                 query_results = None
                 status, status_msg, status_code = (
