@@ -40,7 +40,7 @@
       </div>
       <div class="modal-body">
         <form id="rename-api-key-form" method="POST"
-          action="{{ url_for('api_key_rename') }}">
+          action="/api/key-management/rename">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <input type="hidden" id="rename-api-key-index"
             name="rename-api-key-index" />
@@ -75,7 +75,7 @@
         <p>Are you sure you want to revoke this API key? Any subsequent
           requests that uses this API key will be denied.</p>
         <form id="revoke-api-key-form" method="POST"
-          action="{{ url_for('api_key_revoke') }}">
+          action="/api/key-management/revoke">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <input type="hidden" id="revoke-api-key-index"
             name="revoke-api-key-index" />
@@ -165,9 +165,7 @@
 </div>
 
 <script>
-  let apiKeyGenerateRoute = "{{ url_for('api_key_generate') }}";
   let csrfToken = "{{ csrf_token() }}";
 </script>
-<script
-  src="{{ url_for('static', filename='js/apiKeyManagement.js') }}"></script>
+<script src="/static/js/apiKeyManagement.js"></script>
 {% endblock %}

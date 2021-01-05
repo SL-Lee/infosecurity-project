@@ -2,7 +2,7 @@ document
   .getElementById("generate-new-api-key-form")
   .addEventListener("submit", function (e) {
     e.preventDefault();
-    fetch(apiKeyGenerateRoute, {
+    fetch("/api/key-management/generate", {
       "method": "POST",
       "headers": { "X-CSRFToken": csrfToken },
       "body": new FormData(this),

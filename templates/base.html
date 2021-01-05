@@ -5,20 +5,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}{% endblock %} | SecureDB</title>
+  <link rel="stylesheet" type="text/css" href="/static/css/styles.css" />
   <link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='css/styles.css') }}" />
+    href="/static/css/source-code-pro.css" />
   <link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='css/source-code-pro.css') }}" />
+    href="/static/css/source-sans-pro.css" />
   <link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='css/source-sans-pro.css') }}" />
-  <link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='css/source-serif-pro.css') }}" />
-  <link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='css/icofont.min.css') }}" />
-  <link rel="stylesheet" type="text/css"
-    href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
-  <link rel="icon" type="image/png"
-    href="{{ url_for('static', filename='images/favicon.png') }}" />
+    href="/static/css/source-serif-pro.css" />
+  <link rel="stylesheet" type="text/css" href="/static/css/icofont.min.css" />
+  <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css" />
+  <link rel="icon" type="image/png" href="/static/images/favicon.png" />
 </head>
 
 <body>
@@ -74,13 +70,10 @@
     <p class="text-center text-secondary m-0">&#xa9; Copyright <span
         id="current-year"></span></p>
   </footer>
-  <script
-    src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}">
-  </script>
-  <script
-    src="{{ url_for('static', filename='js/contentMinHeight.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/footerYear.js') }}"></script>
+  <script src="/static/js/jquery-3.5.1.min.js"></script>
+  <script src="/static/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/contentMinHeight.js"></script>
+  <script src="/static/js/footerYear.js"></script>
 </body>
 
 </html>

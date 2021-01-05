@@ -10,9 +10,9 @@
 <hr class="my-4" />
 <div class="d-flex">
   <a class="btn btn-primary float-left mr-auto"
-    href="{{ url_for('onboarding_database_config') }}" role="button">← Back</a>
+    href="/onboarding/database-config" role="button">← Back</a>
   <a class="btn btn-primary float-right ml-auto"
-    href="{{ url_for('onboarding_backup_config') }}" role="button">Continue
+    href="/onboarding/backup-config" role="button">Continue
     →</a>
 </div>
 
@@ -89,9 +89,7 @@
 </div>
 
 <script>
-  let apiKeyGenerateRoute = "{{ url_for('api_key_generate') }}";
   let csrfToken = "{{ csrf_token() }}";
 </script>
-<script
-  src="{{ url_for('static', filename='js/onboardingApiConfig.js') }}"></script>
+<script src="/static/js/onboardingApiConfig.js"></script>
 {% endblock%}
