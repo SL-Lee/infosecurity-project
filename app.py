@@ -8,8 +8,10 @@ import uuid
 
 import marshmallow
 import sqlalchemy
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.schedulers.background import BackgroundScheduler
+from Crypto import Random
 from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
 from flask import (
     Blueprint,
     Flask,
@@ -32,8 +34,6 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from monitoring_models import Alert, BackupLog, Request, Rule, monitoring_db
 
 app = Flask(__name__)
@@ -80,39 +80,104 @@ schedule = BackgroundScheduler(
     daemon=True,
 )
 schedule.start()
-schedule.print_jobs()
 
 
 def schedule_backup(filename):
-    # get the config of the file
-    schedule.print_jobs()
+    with app.app_context():
+        # get the config of the file
+        schedule.print_jobs()
+        backup_config = get_config_value("backup")
+        print("backup files:", backup_config)
+        file_settings = backup_config[filename]
+        backup_datetime = datetime.datetime.now()
+        backup_folder = os.path.join(backup_path, filename)
+        # if the file does not have a backup folder
+        if not os.path.exists(backup_folder):
+            os.mkdir(backup_folder)
+
+        timestamp_folder = os.path.join(
+            backup_folder,
+            secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+        )
+
+        # if no timestamp folder
+        if not os.path.exists(timestamp_folder):
+            os.mkdir(timestamp_folder)
+
+        file_backup_path = os.path.join(
+            timestamp_folder, os.path.basename(file_settings["path"])
+        )
+
+        shutil.copy2(file_settings["path"], file_backup_path)
+
+        file_hash = hashlib.md5(
+            open(file_settings["path"], "rb").read()
+        ).hexdigest()
+
+        backup_log = BackupLog(
+            filename=os.path.splitext(os.path.basename(file_settings["path"]))[
+                0
+            ],
+            date_created=backup_datetime,
+            method="Automatic Backup",
+            source_path=file_settings["path"],
+            backup_path=file_backup_path,
+            md5=file_hash,
+        )
+        monitoring_db.session.add(backup_log)
+        monitoring_db.session.commit()
+
+
+if len(schedule.get_jobs()) == 0:
     backup_config = get_config_value("backup")
-    print("backup files:", backup_config)
-    file_settings = backup_config[filename]
-    backup_datetime = datetime.datetime.now()
-    backup_folder = os.path.join(backup_path, filename)
-    # if the file does not have a backup folder
-    if not os.path.exists(backup_folder):
-        os.mkdir(backup_folder)
-
-    timestamp_folder = os.path.join(
-        backup_folder,
-        secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
-    )
-
-    # if no timestamp folder
-    if not os.path.exists(timestamp_folder):
-        os.mkdir(timestamp_folder)
-
-    file_backup_path = os.path.join(
-        timestamp_folder, os.path.basename(file_settings["path"])
-    )
-
-    shutil.copy2(file_settings["path"], file_backup_path)
-
-    file_hash = hashlib.md5(
-        open(file_settings["path"], "rb").read()
-    ).hexdigest()
+    for filename in backup_config.keys():
+        file_settings = backup_config[filename]
+        if file_settings["interval_type"] == "min":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                minutes=file_settings["interval"],
+                id=filename,
+                replace_existing=True,
+            )
+        elif file_settings["interval_type"] == "hr":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                minutes=file_settings["interval"],
+                id=filename,
+                replace_existing=True,
+            )
+        elif file_settings["interval_type"] == "d":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                minutes=file_settings["interval"],
+                id=filename,
+                replace_existing=True,
+            )
+        elif file_settings["interval_type"] == "wk":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                minutes=file_settings["interval"],
+                id=filename,
+                replace_existing=True,
+            )
+        elif file_settings["interval_type"] == "mth":
+            months = 31 * file_settings["interval"]
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                days=months,
+                id=filename,
+                replace_existing=True,
+            )
 
 
 @app.route("/")
@@ -406,6 +471,39 @@ def backup_update(file):
             monitoring_db.session.add(backup_log)
             monitoring_db.session.commit()
 
+            if form.interval_type.data == "min":
+                schedule.reschedule_job(
+                    file,
+                    trigger="interval",
+                    minutes=form.interval.data,
+                )
+            elif form.interval_type.data == "hr":
+                schedule.reschedule_job(
+                    file,
+                    trigger="interval",
+                    hours=form.interval.data,
+                )
+            elif form.interval_type.data == "d":
+                schedule.reschedule_job(
+                    file,
+                    trigger="interval",
+                    days=form.interval.data,
+                )
+            elif form.interval_type.data == "wk":
+                schedule.reschedule_job(
+                    file,
+                    trigger="interval",
+                    weeks=form.interval.data,
+                )
+            elif form.interval_type.data == "mth":
+                months = 31 * form.interval.data
+                schedule.reschedule_job(
+                    file,
+                    trigger="interval",
+                    days=months,
+                )
+            schedule.print_jobs()
+
         return redirect(url_for("backup"))
 
     return render_template("backup-form.html", form2=form)
@@ -450,8 +548,8 @@ def backup_restore(file, timestamp):
 # Configure Sensitive Fields
 @app.route("/sensitive-fields", methods=["GET"])
 def get_sensitive_fields():
-
     sensitive_fields = Rule.query.all()
+
     for i in sensitive_fields:
         print(i.contents)
 
@@ -463,6 +561,7 @@ def get_sensitive_fields():
 @app.route("/sensitive-fields/add", methods=["GET", "POST"])
 def add_sensitive_fields():
     form = forms.SensitiveFieldForm(request.form)
+
     if request.method == "POST" and form.validate():
         rule = Rule(contents=form.sensitive_field.data)
         monitoring_db.session.add(rule)
@@ -470,22 +569,21 @@ def add_sensitive_fields():
 
         return redirect(url_for("get_sensitive_fields"))
 
-    return render_template("sensitive-fields(add).html", form=form)
+    return render_template("sensitive-fields-add.html", form=form)
 
 
 @app.route("/sensitive-fields/update/<field>", methods=["GET", "POST"])
 def update_sensitive_fields(field):
     form = forms.SensitiveFieldForm(request.form)
     rule = Rule.query.filter_by(id=field).first_or_404()
+
     if request.method == "POST" and form.validate():
         rule.contents = form.sensitive_field.data
         monitoring_db.session.commit()
 
         return redirect(url_for("get_sensitive_fields"))
 
-    return render_template(
-        "sensitive-fields(update).html", form=form, rule=rule
-    )
+    return render_template("sensitive-fields-update.html", form=form, rule=rule)
 
 
 @app.route("/sensitive-fields/delete/<field>", methods=["GET", "POST"])
@@ -498,7 +596,7 @@ def delete_sensitive_fields(field):
 
 
 # Upload API
-@app.route("/uploadfile", methods=["GET", "POST"])
+@app.route("/upload-file", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
         # check if the post request has the file part
@@ -517,54 +615,79 @@ def upload_file():
         else:
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            key = get_random_bytes(32)  # Use a stored / generated key
-            buffer_size = 65536  # 64kb
 
-            # === Encrypt ===
+            def pad(s):
+                return s + b"\0" * (AES.block_size - len(s) % AES.block_size)
 
-            # Open the input and output files
-            input_file = open(
-                os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb"
+            def encrypt(message, key, key_size=256):
+                message = pad(message)
+                iv = Random.new().read(AES.block_size)
+                cipher = AES.new(key, AES.MODE_CBC, iv)
+                return iv + cipher.encrypt(message)
+
+            def decrypt(ciphertext, key):
+                iv = ciphertext[: AES.block_size]
+                cipher = AES.new(key, AES.MODE_CBC, iv)
+                plaintext = cipher.decrypt(ciphertext[AES.block_size :])
+                return plaintext.rstrip(b"\0")
+
+            def encrypt_file(file_name, key):
+                with open(file_name, "rb") as fo:
+                    plaintext = fo.read()
+                enc = encrypt(plaintext, key)
+                with open(file_name + ".enc", "wb") as fo:
+                    fo.write(enc)
+
+            def decrypt_file(file_name, key):
+                with open(file_name, "rb") as fo:
+                    ciphertext = fo.read()
+                dec = decrypt(ciphertext, key)
+                with open(file_name[:-4] + ".dec", "wb") as fo:
+                    fo.write(dec)
+
+            key = (
+                b"\xbf\xc0\x85)\x10nc\x94\x02)j\xdf\xcb\xc4\x94\x9d(\x9e"
+                b"[EX\xc8\xd5\xbfI{\xa2$\x05(\xd5\x18"
             )
-            output_file = open(
-                os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                + ".encrypted",
-                "wb",
-            )
+            if "encrypt" in request.form:
+                encrypt_file(
+                    os.path.join(app.config["UPLOAD_FOLDER"], filename), key
+                )
+                print("saved file successfully")
+                # send file name as parameter to download
+                return redirect("/download-file/" + filename + ".enc")
 
-            # Create the cipher object and encrypt the data
-            cipher_encrypt = AES.new(key, AES.MODE_CFB)
+            elif "decrypt" in request.form:
+                decrypt_file(
+                    os.path.join(app.config["UPLOAD_FOLDER"], filename), key
+                )
+                print("saved file2 successfully")
+                # send file name as parameter to download
+                return redirect("/download-file2/" + filename[:-4] + ".dec")
 
-            # Initially write the iv to the output file
-            output_file.write(cipher_encrypt.iv)
-
-            # Keep reading the file into the buffer, encrypting then writing to
-            # the new file
-            buffer = input_file.read(buffer_size)
-
-            while len(buffer) > 0:
-                ciphered_bytes = cipher_encrypt.encrypt(buffer)
-                output_file.write(ciphered_bytes)
-                buffer = input_file.read(buffer_size)
-
-            # Close the input and output files
-            input_file.close()
-            output_file.close()
-            print("saved file successfully")
-            # send file name as parameter to download
-            return redirect("/downloadfile/" + filename + ".encrypted")
-
-    return render_template("upload_file.html")
+    return render_template("upload-file.html")
 
 
 # Download API
-@app.route("/downloadfile/<filename>", methods=["GET"])
+@app.route("/download-file/<filename>", methods=["GET"])
 def download_file(filename):
-    return render_template("download.html", value=filename)
+    return render_template("download-file.html", value=filename)
 
 
 @app.route("/return-files/<filename>")
 def return_files_tut(filename):
+    file_path = UPLOAD_FOLDER + filename
+    return send_file(file_path, as_attachment=True, attachment_filename="")
+
+
+# Download API
+@app.route("/download-file2/<filename>", methods=["GET"])
+def download_file2(filename):
+    return render_template("download-file2.html", value=filename)
+
+
+@app.route("/return-files2/<filename>")
+def return_files_tut2(filename):
     file_path = UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
@@ -574,7 +697,8 @@ def return_files_tut(filename):
 def alert():
     alert_config = get_config_value("alert")
     print("alert files:", alert_config)
-    return render_template("alert.html")
+    files = list(alert_config.keys())
+    return render_template("alert.html", files=files)
 
 
 @app.route("/temp-alert-set-default")
@@ -592,8 +716,8 @@ def alert_set_default():
     set_config_value("alert", monitoring_db_config)
     alert_config = get_config_value("alert")
     print("alert files:", alert_config)
-    print(alert_config["client_db"]["path"])
-    print(os.path.isfile(alert_config["client_db"]["path"]))
+    print(alert_config["monitoring_db"]["path"])
+    print(os.path.isfile(alert_config["monitoring_db"]["path"]))
     return redirect(url_for("alert"))
 
 
