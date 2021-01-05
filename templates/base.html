@@ -78,22 +78,9 @@
     src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}">
   </script>
-  <script>
-    var contentMinHeight = "100vh - 56px - 16px - 16px - 57px";
-    var messageContainer = document.getElementById("message-container");
-
-    if (messageContainer) {
-      contentMinHeight += ` - ${messageContainer.children.length * 66}px`;
-    }
-
-    document.getElementById(
-      "content"
-    ).style.minHeight = `calc(${contentMinHeight})`;
-
-    document.getElementById("current-year").innerText = (new Date(Date.now()))
-      .getFullYear()
-      .toString();
-  </script>
+  <script
+    src="{{ url_for('static', filename='js/contentMinHeight.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/footerYear.js') }}"></script>
 </body>
 
 </html>

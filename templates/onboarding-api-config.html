@@ -89,32 +89,9 @@
 </div>
 
 <script>
-  document
-    .getElementById("generate-new-api-key-form")
-    .addEventListener("submit", function (e) {
-      e.preventDefault();
-      fetch("{{ url_for('api_key_generate') }}", {
-        "method": "POST",
-        "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
-        "body": new FormData(this),
-      })
-        .then(response => {
-          return response.ok
-            ? response.json()
-            : Promise.reject("Error while generating API key");
-        })
-        .then(
-          json => {
-            $(".modal").modal("hide");
-            $("#new-api-key").text(json["new-api-key"]);
-            $("#api-key-generation-success-modal").modal();
-            $("#open-api-key-generation-prompt-btn").attr("disabled", "");
-          },
-          error => {
-            $(".modal").modal("hide");
-            $("#api-key-generation-failure-modal").modal();
-          },
-        );
-    });
+  let apiKeyGenerateRoute = "{{ url_for('api_key_generate') }}";
+  let csrfToken = "{{ csrf_token() }}";
 </script>
+<script
+  src="{{ url_for('static', filename='js/onboardingApiConfig.js') }}"></script>
 {% endblock%}
