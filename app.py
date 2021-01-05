@@ -9,8 +9,6 @@ from datetime import datetime
 
 import marshmallow
 import sqlalchemy
-from sqlalchemy import create_engine
-engine = create_engine('sqlite:///monitoring_db.sqlite3')
 from flask import (
     Blueprint,
     Flask,
@@ -19,7 +17,7 @@ from flask import (
     render_template,
     request,
     send_file,
-    url_for,
+    url_for, flash,
 )
 from flask_login import (
     LoginManager,
@@ -39,7 +37,7 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import Alert, BackupLog, Request, Rule, monitoring_db
+from monitoring_models import Alert, Request, Rule, monitoring_db, BackupLog
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -429,12 +427,9 @@ def alert_set_default():
 @app.route("/alert/view", methods=['GET'])
 def alertview():
     alert_config = get_config_value("alert")
-    files = list(alert_config.keys())
     print("alert files:", alert_config)
-    with engine.connect() as con:
-        rs = con.execute('SELECT * FROM alert, request')
-        for col in rs:
-            print(col)
+    rs = Alert.query.all()
+    print(rs)
     return render_template("alert-view.html", files=rs)
 
 
@@ -757,35 +752,6 @@ class Database(Resource):
             )
 
         return {"status": status, "status_msg": status_msg}, status_code
-
-#Alert Function
-@app.route("/alert")
-def alert():
-    alert_config = get_config_value("alert")
-    print("alert files:", alert_config)
-    files = list(alert_config.keys())
-    return render_template("alert.html", files = files)
-
-@app.route("/tempalertSetDefault")
-def alertSetDefault():
-    path = ".\monitoring_db.sqlite3"
-    interval = 1
-    interval_type = "min"
-    monitoring_db = {
-        "monitoring_db": {
-            "path": path,
-            "interval": interval,
-            "interval_type": interval_type,
-        }
-    }
-    set_config_value("alert", monitoring_db)
-    alert_config = get_config_value("alert")
-    print("alert files:", alert_config)
-    print(alert_config["monitoring_db"]["path"])
-    print(os.path.isfile(alert_config["monitoring_db"]["path"]))
-    return redirect(url_for("alert"))
-
-
 
 if __name__ == "__main__":
     app.run(debug=True, port=4999)

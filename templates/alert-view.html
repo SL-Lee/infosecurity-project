@@ -25,10 +25,14 @@
         </thead>
         <tbody>
           {% for row in files %}
+        <td>{{ row.request.id }}</td>
+        <td>{{ row.alert_level }}</td>
+        <td>{{ row.request.datetime }}</td>
+        <td>{{ row.request.request_params }}</td>
+        <td>{{ row.request.status }}</td>
+        <td>{{ row.request.status_msg }}</td>
+        <td>{{ row.request.response }}</td>
           <tr>
-            {% for col in row %}
-            <th scope="col">{{ col }}</th>
-            {% endfor %}
             <td><button class="btn btn-success"
                 onclick="location.href='/alert/email">Email</button>
             </td>
