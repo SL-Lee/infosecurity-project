@@ -10,9 +10,9 @@
 <hr class="my-4" />
 <div class="d-flex">
   <a class="btn btn-primary float-left mr-auto"
-    href="{{ url_for('onboarding_database_config') }}" role="button">← Back</a>
+    href="/onboarding/database-config" role="button">← Back</a>
   <a class="btn btn-primary float-right ml-auto"
-    href="{{ url_for('onboarding_backup_config') }}" role="button">Continue
+    href="/onboarding/backup-config" role="button">Continue
     →</a>
 </div>
 
@@ -89,32 +89,7 @@
 </div>
 
 <script>
-  document
-    .getElementById("generate-new-api-key-form")
-    .addEventListener("submit", function (e) {
-      e.preventDefault();
-      fetch("{{ url_for('api_key_generate') }}", {
-        "method": "POST",
-        "headers": { "X-CSRFToken": "{{ csrf_token() }}" },
-        "body": new FormData(this),
-      })
-        .then(response => {
-          return response.ok
-            ? response.json()
-            : Promise.reject("Error while generating API key");
-        })
-        .then(
-          json => {
-            $(".modal").modal("hide");
-            $("#new-api-key").text(json["new-api-key"]);
-            $("#api-key-generation-success-modal").modal();
-            $("#open-api-key-generation-prompt-btn").attr("disabled", "");
-          },
-          error => {
-            $(".modal").modal("hide");
-            $("#api-key-generation-failure-modal").modal();
-          },
-        );
-    });
+  let csrfToken = "{{ csrf_token() }}";
 </script>
+<script src="/static/js/onboardingApiConfig.js"></script>
 {% endblock%}
