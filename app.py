@@ -27,6 +27,7 @@ from flask_login import (
 from flask_restx import Api, Resource, reqparse
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
+from flask_mail import Mail, Message
 
 import forms
 from client_models import (
@@ -37,7 +38,7 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import Alert, Request, Rule, monitoring_db, BackupLog
+from monitoring_models import Alert, Request, Rule, monitoring_db
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -432,6 +433,11 @@ def alertview():
     print(rs)
     return render_template("alert-view.html", files=rs)
 
+@app.route("/alert/email")
+def alertemail():
+   msg = Message('SecureDB Report on Suspicious Requests', sender = 'securedbadmin@gmail.com', recipients = ['ecommadmin@gmail.com'])
+   msg.body = "This is a report on High Alert Level Requests we have received. Please look through and respond accordingly. Thank you for using SecureDB."
+   return "Sent"
 
 # Onboarding routes
 @app.route("/onboarding")
