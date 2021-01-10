@@ -46,7 +46,8 @@ class BaseSchema(Schema):
 
     @pre_load
     def remove_null_fields(self, data, **kwargs):
-        if type(data) == dict:
+        # pylint: disable=unused-argument
+        if isinstance(data, dict):
             for i in self.__fields_to_skip_none__:
                 if i in data and data[i] is None:
                     del data[i]
@@ -55,6 +56,8 @@ class BaseSchema(Schema):
 
     @post_load
     def make_model(self, data, **kwargs):
+        # pylint: disable=not-callable
+        # pylint: disable=unused-argument
         return self.__model__(**data) if self.__model__ is not None else None
 
     class Meta:

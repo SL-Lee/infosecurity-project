@@ -612,58 +612,64 @@ def upload_file():
             flash("No file", "danger")
             print("no filename")
             return redirect(request.url)
-        else:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
-            def pad(s):
-                return s + b"\0" * (AES.block_size - len(s) % AES.block_size)
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
-            def encrypt(message, key, key_size=256):
-                message = pad(message)
-                iv = Random.new().read(AES.block_size)
-                cipher = AES.new(key, AES.MODE_CBC, iv)
-                return iv + cipher.encrypt(message)
-
-            def decrypt(ciphertext, key):
-                iv = ciphertext[: AES.block_size]
-                cipher = AES.new(key, AES.MODE_CBC, iv)
-                plaintext = cipher.decrypt(ciphertext[AES.block_size :])
-                return plaintext.rstrip(b"\0")
-
-            def encrypt_file(file_name, key):
-                with open(file_name, "rb") as fo:
-                    plaintext = fo.read()
-                enc = encrypt(plaintext, key)
-                with open(file_name + ".enc", "wb") as fo:
-                    fo.write(enc)
-
-            def decrypt_file(file_name, key):
-                with open(file_name, "rb") as fo:
-                    ciphertext = fo.read()
-                dec = decrypt(ciphertext, key)
-                with open(file_name[:-4] + ".dec", "wb") as fo:
-                    fo.write(dec)
-
-            key = (
-                b"\xbf\xc0\x85)\x10nc\x94\x02)j\xdf\xcb\xc4\x94\x9d(\x9e"
-                b"[EX\xc8\xd5\xbfI{\xa2$\x05(\xd5\x18"
+        def pad(string):
+            return string + b"\0" * (
+                AES.block_size - len(string) % AES.block_size
             )
-            if "encrypt" in request.form:
-                encrypt_file(
-                    os.path.join(app.config["UPLOAD_FOLDER"], filename), key
-                )
-                print("saved file successfully")
-                # send file name as parameter to download
-                return redirect("/download-file/" + filename + ".enc")
 
-            elif "decrypt" in request.form:
-                decrypt_file(
-                    os.path.join(app.config["UPLOAD_FOLDER"], filename), key
-                )
-                print("saved file2 successfully")
-                # send file name as parameter to download
-                return redirect("/download-file2/" + filename[:-4] + ".dec")
+        def encrypt(message, key):
+            message = pad(message)
+            iv = Random.new().read(AES.block_size)
+            cipher = AES.new(key, AES.MODE_CBC, iv)
+            return iv + cipher.encrypt(message)
+
+        def decrypt(ciphertext, key):
+            iv = ciphertext[: AES.block_size]
+            cipher = AES.new(key, AES.MODE_CBC, iv)
+            plaintext = cipher.decrypt(ciphertext[AES.block_size :])
+            return plaintext.rstrip(b"\0")
+
+        def encrypt_file(file_name, key):
+            with open(file_name, "rb") as file:
+                plaintext = file.read()
+
+            enc = encrypt(plaintext, key)
+
+            with open(file_name + ".enc", "wb") as file:
+                file.write(enc)
+
+        def decrypt_file(file_name, key):
+            with open(file_name, "rb") as file:
+                ciphertext = file.read()
+
+            dec = decrypt(ciphertext, key)
+
+            with open(file_name[:-4] + ".dec", "wb") as file:
+                file.write(dec)
+
+        key = (
+            b"\xbf\xc0\x85)\x10nc\x94\x02)j\xdf\xcb\xc4\x94\x9d(\x9e"
+            b"[EX\xc8\xd5\xbfI{\xa2$\x05(\xd5\x18"
+        )
+        if "encrypt" in request.form:
+            encrypt_file(
+                os.path.join(app.config["UPLOAD_FOLDER"], filename), key
+            )
+            print("saved file successfully")
+            # send file name as parameter to download
+            return redirect("/download-file/" + filename + ".enc")
+
+        if "decrypt" in request.form:
+            decrypt_file(
+                os.path.join(app.config["UPLOAD_FOLDER"], filename), key
+            )
+            print("saved file2 successfully")
+            # send file name as parameter to download
+            return redirect("/download-file2/" + filename[:-4] + ".dec")
 
     return render_template("upload-file.html")
 
@@ -1020,8 +1026,14 @@ class Database(Resource):
                     for i in sensitive_fields:
                         pattern = "'" + i.contents + "',"
                         print(pattern)
-                        x = re.findall(pattern, str(query_results))
-                        if len(x) > 1:  # if more than 1 sensitive data
+                        pattern_occurrence_count = re.findall(
+                            pattern, str(query_results)
+                        )
+
+                        # if pattern occurs more than once, that means there
+                        # are more than 1 sensitive data, so deny this request
+                        # and log it as a high alert
+                        if len(pattern_occurrence_count) > 1:
                             status, status_msg, status_code = (
                                 "ERROR",
                                 "Denied",
@@ -1032,11 +1044,11 @@ class Database(Resource):
                             )
                             query_results = None
                             break
-                        else:
-                            status, status_msg, status_code = "OK", "OK", 200
-                            logged_request, logged_alert = log_request(
-                                "low", status, status_msg
-                            )
+
+                        status, status_msg, status_code = "OK", "OK", 200
+                        logged_request, logged_alert = log_request(
+                            "low", status, status_msg
+                        )
                 except:
                     status, status_msg, status_code = "OK", "OK", 200
                     logged_request, logged_alert = log_request(
