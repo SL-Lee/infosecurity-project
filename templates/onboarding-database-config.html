@@ -6,8 +6,7 @@
 <p><b>NOTE:</b> Upon completion of the onboarding process, please remember to
   restart the SecureDB web application for changes to the database to take
   effect.</p>
-<form id="db-upload-form" method="POST"
-  action="{{ url_for('onboarding_database_config') }}"
+<form id="db-upload-form" method="POST" action="/onboarding/database-config"
   enctype="multipart/form-data">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
   <div class="row">
