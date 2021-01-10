@@ -10,7 +10,6 @@ import marshmallow
 import sqlalchemy
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
-from Crypto import Random
 from Crypto.Cipher import AES
 from flask import (
     Blueprint,
@@ -35,7 +34,7 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import Alert, Request, Rule, monitoring_db
+from monitoring_models import Alert, Request, Rule, monitoring_db, BackupLog
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -694,14 +693,6 @@ def return_files_tut2(filename):
 
 
 # Alert Function
-@app.route("/alert")
-def alert():
-    alert_config = get_config_value("alert")
-    print("alert files:", alert_config)
-    files = list(alert_config.keys())
-    return render_template("alert.html", files=files)
-
-
 @app.route("/temp-alert-set-default")
 def alert_set_default():
     path = ".\\monitoring_db.sqlite3"
@@ -721,6 +712,17 @@ def alert_set_default():
     print(os.path.isfile(alert_config["monitoring_db"]["path"]))
     return redirect(url_for("alert"))
 
+@app.route("/alert/view", methods=['GET'])
+def alertview():
+    rs = Alert.query.filter_by(alert_level="high").all
+    print(rs)
+    return render_template("alert-view.html", files=rs)
+
+@app.route("/alert/email")
+def alertemail():
+   msg = Message('SecureDB Report on Suspicious Requests', sender = 'securedbadmin@gmail.com', recipients = ['ecommadmin@gmail.com'])
+   msg.body = "This is a report on High Alert Level Requests we have received. Please look through and respond accordingly. Thank you for using SecureDB."
+   return "Sent"
 
 # Onboarding routes
 @app.route("/onboarding")
