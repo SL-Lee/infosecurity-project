@@ -924,13 +924,16 @@ class Database(Resource):
 
             try:
                 schema = eval(f"{args['model']}Schema()")
-                client_db.session.add(schema.load(args["object"]))
+                created_object = schema.load(args["object"])
+                client_db.session.add(created_object)
                 client_db.session.commit()
+                serialized_created_object = schema.dump(created_object)
                 status, status_msg, status_code = "OK", "OK", 200
                 logged_request, logged_alert = log_request(
                     "low", status, status_msg
                 )
             except marshmallow.exceptions.ValidationError:
+                serialized_created_object = None
                 status, status_msg, status_code = (
                     "ERROR",
                     "error while deserializing object",
@@ -940,6 +943,7 @@ class Database(Resource):
                     "medium", status, status_msg
                 )
             except (NameError, SyntaxError):
+                serialized_created_object = None
                 status, status_msg, status_code = (
                     "ERROR",
                     "invalid request",
@@ -949,6 +953,7 @@ class Database(Resource):
                     "medium", status, status_msg
                 )
             except sqlalchemy.exc.IntegrityError:
+                serialized_created_object = None
                 status, status_msg, status_code = (
                     "ERROR",
                     "database integrity error",
@@ -958,6 +963,7 @@ class Database(Resource):
                     "medium", status, status_msg
                 )
             except:
+                serialized_created_object = None
                 status, status_msg, status_code = (
                     "ERROR",
                     "an unknown error occurred",
@@ -970,7 +976,12 @@ class Database(Resource):
                 monitoring_db.session.add(logged_alert)
                 monitoring_db.session.add(logged_request)
                 monitoring_db.session.commit()
-            return {"status": status, "status_msg": status_msg}, status_code
+
+            return {
+                "status": status,
+                "status_msg": status_msg,
+                "created_object": serialized_created_object,
+            }, status_code
 
         except:
             logged_request = Request(
@@ -1031,9 +1042,17 @@ class Database(Resource):
                         )
 
                         # if pattern occurs more than once, that means there
-                        # are more than 1 sensitive data, so deny this request
+                        # are more than 10 sensitive data, so deny this request
                         # and log it as a high alert
-                        if len(pattern_occurrence_count) > 1:
+
+                        # FIXME: Temporarily increased the threshold for pattern
+                        # occurrences since the admin page of the client
+                        # application needs to list out all users. This can be
+                        # set back to normal once the rule definitions allow for
+                        # for more advanced conditions, such as the ability to
+                        # filter requests based on the remote address of the
+                        # request initiator.
+                        if len(pattern_occurrence_count) > 10:
                             status, status_msg, status_code = (
                                 "ERROR",
                                 "Denied",
@@ -1054,7 +1073,12 @@ class Database(Resource):
                     logged_request, logged_alert = log_request(
                         "low", status, status_msg
                     )
-            except (sqlalchemy.exc.InvalidRequestError, NameError, SyntaxError):
+            except (
+                sqlalchemy.exc.InvalidRequestError,
+                AttributeError,
+                NameError,
+                SyntaxError,
+            ):
                 query_results = None
                 status, status_msg, status_code = (
                     "ERROR",
@@ -1126,7 +1150,18 @@ class Database(Resource):
             validate_api_key(request.headers.get("X-API-KEY"))
 
             args = self.patch_parser.parse_args()
+
             try:
+                if args["model"] == "CreditCard":
+                    for field, value in args["values"].items():
+                        if field in ["card_number", "iv"]:
+                            binary = bytes.fromhex(value)
+                            args["values"][field] = binary
+
+                        if field == "expiry":
+                            date = datetime.datetime.strptime(value, "%Y-%m-%d")
+                            args["values"][field] = date
+
                 client_db.session.query(eval(args["model"])).filter(
                     eval(args["filter"])
                 ).update(args["values"])
