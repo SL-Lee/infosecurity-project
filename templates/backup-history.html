@@ -22,18 +22,54 @@
         </thead>
         <tbody>
           {% for i in timestamp %}
-          <tr>
-            <th scope="row">{{ loop.index }}</th>
-            <td>{{ i }}</td>
-            <td>
-              <button class="btn btn-warning"
-                onclick="restore('{{ file }}', '{{ i }}')">Restore
-              </button>
-            </td>
-          </tr>
+            {% if loop.index <= 10 %}
+              <tr id="{{ loop.index }}">
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ i }}</td>
+                <td>
+                  <button class="btn btn-warning"
+                    onclick="restore('{{ file }}', '{{ i }}')">Restore
+                  </button>
+                </td>
+              </tr>
+            {% else %}
+              <tr style="display:none" id="{{ loop.index }}">
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ i }}</td>
+                <td>
+                  <button class="btn btn-warning"
+                    onclick="restore('{{ file }}', '{{ i }}')">Restore
+                  </button>
+                </td>
+              </tr>
+            {% endif %}
           {% endfor %}
         </tbody>
       </table>
+      <nav aria-label="pagination">
+        <ul class="pagination justify-content-center">
+          <li class="page-item disabled" id="previous">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+          </li>
+
+          {% set pages = (((timestamp | length)/10) | round(method='ceil') | int) %}
+          {% for i in range(pages) %}
+              <li class="page-item">
+                <a class="page-link" href="#" onclick="next_page({{ i+1 }})">{{ i+1 }}</a>
+              </li>
+          {% endfor %}
+
+          {% if (pages) == 1 %}
+            <li class="page-item disabled" id="next">
+              <a class="page-link" href="#" onclick="next_page()" tabindex="-1">Next</a>
+            </li>
+          {% else %}
+            <li class="page-item" id="next">
+              <a class="page-link" href="#" onclick="next_page()">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
       {% else %}
       <h6 class="text-center text-muted">There are no backups of the file
         selected</h6>
@@ -46,6 +82,40 @@
   function restore(file, time) {
     if (confirm("Are you sure you want to restore file back to time?")) {
       location.href="/backup/"+(file)+"/"+(time)+"/restore";
+    }
+  }
+
+  var current = 0;
+  var first = 0;
+  var last = 10;
+  function next_page(page=-1) {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    if (page == -1) {
+
+      for (i = 0; i < {{ pages }}; i++) {
+        if (tr[i]) {
+          tr[i].style.display = "none";
+        }
+      }
+
+      current += 1;
+      first += 10;
+      last += 10;
+
+      for (i = first; i < last; i++) {
+        if (tr[i]) {
+          tr[i].style.display = "";
+        }
+      }
+      if (current+1 == {{ pages }}) {
+        var next = document.getElementById("next");
+        next.classList.add("disabled");
+        next.firstChild.tabIndex = "-1";
+      }
     }
   }
 </script>

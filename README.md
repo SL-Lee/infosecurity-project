@@ -60,6 +60,7 @@ You **DO NOT** use `camelCase` in Python
 
 - Variables: `camelCase` for most variables
 - Class Names: `PascalCase`
+- Function Names: `snake_case`
 - Constants: `SCREAMING_SNAKE_CASE`
 
 You **DO NOT** use `snake_case` in JavaScript
