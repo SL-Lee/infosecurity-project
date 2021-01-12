@@ -49,13 +49,13 @@
       <nav aria-label="pagination">
         <ul class="pagination justify-content-center">
           <li class="page-item disabled" id="previous">
-            <a class="page-link" href="#" tabindex="-1">Previous</a>
+            <a class="page-link" href="#" tabindex="-1" onclick="previous_page()">Previous</a>
           </li>
 
           {% set pages = (((timestamp | length)/10) | round(method='ceil') | int) %}
           {% for i in range(pages) %}
               <li class="page-item">
-                <a class="page-link" href="#" onclick="next_page({{ i+1 }})">{{ i+1 }}</a>
+                <a class="page-link" href="#" onclick="go_to_page({{ i+1 }})">{{ i+1 }}</a>
               </li>
           {% endfor %}
 
@@ -88,34 +88,141 @@
   var current = 0;
   var first = 0;
   var last = 10;
-  function next_page(page=-1) {
+  function next_page() {
     // numbers are following index
     var i, tbody, tr;
     tbody = document.getElementsByTagName("tbody")[0];
     tr = tbody.getElementsByTagName("tr");
 
-    if (page == -1) {
-
-      for (i = 0; i < {{ pages }}; i++) {
-        if (tr[i]) {
-          tr[i].style.display = "none";
-        }
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
       }
+    }
 
-      current += 1;
-      first += 10;
-      last += 10;
+    current += 1;
+    first += 10;
+    last += 10;
 
-      for (i = first; i < last; i++) {
-        if (tr[i]) {
-          tr[i].style.display = "";
-        }
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
       }
-      if (current+1 == {{ pages }}) {
-        var next = document.getElementById("next");
-        next.classList.add("disabled");
-        next.firstChild.tabIndex = "-1";
+    }
+
+    if (current+1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    }
+    else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current+1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    }
+    else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
+    }
+  }
+
+  function previous_page() {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
       }
+    }
+
+    current -= 1;
+    first -= 10;
+    last -= 10;
+
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
+      }
+    }
+
+    if (current+1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    }
+    else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current+1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    }
+    else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
+    }
+  }
+
+  function go_to_page(page) {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
+      }
+    }
+
+    current = page - 1;
+    first = page * 10 -10;
+    last = page * 10;
+
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
+      }
+    }
+
+    if (current+1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    }
+    else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current+1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    }
+    else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
     }
   }
 </script>
