@@ -4,11 +4,11 @@ from Crypto import Random
 from Crypto.Cipher import AES
 
 
-def pad(s):
-    return s + b"\0" * (AES.block_size - len(s) % AES.block_size)
+def pad(string):
+    return string + b"\0" * (AES.block_size - len(string) % AES.block_size)
 
 
-def encrypt(message, key, key_size=256):
+def encrypt(message, key):
     message = pad(message)
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(key, AES.MODE_CBC, iv)
@@ -23,22 +23,29 @@ def decrypt(ciphertext, key):
 
 
 def encrypt_file(file_name, key):
-    with open(file_name, "rb") as fo:
-        plaintext = fo.read()
+    with open(file_name, "rb") as file:
+        plaintext = file.read()
+
     enc = encrypt(plaintext, key)
-    with open(file_name + ".enc", "wb") as fo:
-        fo.write(enc)
+
+    with open(file_name + ".enc", "wb") as file:
+        file.write(enc)
 
 
 def decrypt_file(file_name, key):
-    with open(file_name, "rb") as fo:
-        ciphertext = fo.read()
+    with open(file_name, "rb") as file:
+        ciphertext = file.read()
+
     dec = decrypt(ciphertext, key)
-    with open(file_name[:-4] + ".dec", "wb") as fo:
-        fo.write(dec)
+
+    with open(file_name[:-4] + ".dec", "wb") as file:
+        file.write(dec)
 
 
-key = b"\xbf\xc0\x85)\x10nc\x94\x02)j\xdf\xcb\xc4\x94\x9d(\x9e[EX\xc8\xd5\xbfI{\xa2$\x05(\xd5\x18"
+KEY = (
+    b"\xbf\xc0\x85)\x10nc\x94\x02)j\xdf\xcb\xc4\x94\x9d(\x9e[EX\xc8\xd5\xbfI"
+    b"{\xa2$\x05(\xd5\x18"
+)
 
-encrypt_file("client_db.sqlite3", key)
-decrypt_file("client_db.sqlite3.enc", key)
+encrypt_file("client_db.sqlite3", KEY)
+decrypt_file("client_db.sqlite3.enc", KEY)
