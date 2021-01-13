@@ -23,7 +23,7 @@ from flask import (
     send_file,
     url_for,
 )
-from flask_restx import Api, Resource, reqparse
+from flask_restx import Api, Resource, inputs, reqparse
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
@@ -884,6 +884,12 @@ class Database(Resource):
         "filter",
         required=True,
         type=str,
+        location="args",
+    )
+    get_parser.add_argument(
+        "ip",
+        required=True,
+        type=inputs.ipv4,
         location="args",
     )
 
