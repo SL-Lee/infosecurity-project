@@ -545,13 +545,18 @@ def backup_restore(file, timestamp):
     return redirect(url_for("backup"))
 
 
+# Requests
+@app.route("/requests/filter=<field>", methods=["GET"])
+def get_requests(field):
+    alerts = Alert.query.all()
+    request_filter = field
+    return render_template("requests.html", alerts=alerts, filter=request_filter)
+
+
 # Configure Sensitive Fields
 @app.route("/sensitive-fields", methods=["GET"])
 def get_sensitive_fields():
     sensitive_fields = Rule.query.all()
-
-    for i in sensitive_fields:
-        print(i.contents)
 
     return render_template(
         "sensitive-fields.html", sensitive_fields=sensitive_fields
@@ -1042,7 +1047,6 @@ class Database(Resource):
                 try:
                     for i in sensitive_fields:
                         pattern = "'" + i.contents + "',"
-                        print(pattern)
                         pattern_occurrence_count = re.findall(
                             pattern, str(query_results)
                         )
