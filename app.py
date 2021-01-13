@@ -1036,7 +1036,6 @@ class Database(Resource):
                 try:
                     for i in sensitive_fields:
                         pattern = "'" + i.contents + "',"
-                        print(pattern)
                         pattern_occurrence_count = re.findall(
                             pattern, str(query_results)
                         )
