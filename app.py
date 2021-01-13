@@ -690,31 +690,10 @@ def download_file2(filename):
 def return_files_tut2(filename):
     file_path = UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
-
-
 # Alert Function
-@app.route("/temp-alert-set-default")
-def alert_set_default():
-    path = ".\\monitoring_db.sqlite3"
-    interval = 1
-    interval_type = "min"
-    monitoring_db_config = {
-        "monitoring_db": {
-            "path": path,
-            "interval": interval,
-            "interval_type": interval_type,
-        }
-    }
-    set_config_value("alert", monitoring_db_config)
-    alert_config = get_config_value("alert")
-    print("alert files:", alert_config)
-    print(alert_config["monitoring_db"]["path"])
-    print(os.path.isfile(alert_config["monitoring_db"]["path"]))
-    return redirect(url_for("alert"))
-
 @app.route("/alert/view", methods=['GET'])
 def alertview():
-    rs = Alert.query.filter_by(alert_level="high").all
+    rs = Alert.query.filter_by(alert_level="high").all()
     print(rs)
     return render_template("alert-view.html", files=rs)
 
