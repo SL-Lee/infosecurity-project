@@ -550,7 +550,9 @@ def backup_restore(file, timestamp):
 def get_requests(field):
     alerts = Alert.query.all()
     request_filter = field
-    return render_template("requests.html", alerts=alerts, filter=request_filter)
+    return render_template(
+        "requests.html", alerts=alerts, filter=request_filter
+    )
 
 
 # Configure Sensitive Fields
