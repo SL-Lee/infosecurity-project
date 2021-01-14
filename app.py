@@ -1098,16 +1098,8 @@ class Database(Resource):
                             )
 
                             # if pattern occurs more than once, that means there
-                            # are more than 10 sensitive data, so deny this request
-                            # and log it as a high alert
-
-                            # FIXME: Temporarily increased the threshold for pattern
-                            # occurrences since the admin page of the client
-                            # application needs to list out all users. This can be
-                            # set back to normal once the rule definitions allow for
-                            # for more advanced conditions, such as the ability to
-                            # filter requests based on the remote address of the
-                            # request initiator.
+                            # are more than 10 sensitive data, so deny this
+                            # request and log it as a high alert
                             if len(pattern_occurrence_count) > 1:
                                 status, status_msg, status_code = (
                                     "ERROR",
