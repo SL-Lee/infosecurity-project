@@ -1,21 +1,17 @@
-{% extends "base.html" %}
-{% block title %}Alert{% endblock %}
-{% from "includes/_form_helper.html" import render_field %}
-
+{% extends 'base.html' %}
+{% block title %} Alert Details/Report {% endblock %}
 {% block content %}
-<div class="container-fluid content">
-  <div class="row justify-content-center">
-    <div class="col-sm-12">
-      <h4 class="text-center">Email Specified Alert</h4>
+{% from "includes/_formhelper.html" import render_field %}
+
+  <div class="container-fluid content">
+    <div class="row justify-content-center">
+      <form class='form' method="POST">
+        <div class="col-sm-12">
+          <p>Report on High Level Alerts that have been detected.</p>
+
+        </div>
+      </form>
+
     </div>
   </div>
-  <div class="row justify-content-center">
-    <div class="col-sm-5">
-        <tbody>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
 {% endblock %}

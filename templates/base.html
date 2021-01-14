@@ -39,7 +39,6 @@
             <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="/sensitive-fields">Sensitive Field
               Rules</a>
-            <a class="dropdown-item" href="/alert/view">API Alerts</a>
           </div>
         </li>
         <li class="nav-item">
@@ -49,6 +48,9 @@
           <a class="nav-link" href="/upload-file">File Upload</a>
         </li>
       </ul>
+    </div>
+    <div class="justify-content-end">
+      <a class="nav-item" href="/alert/view"><img src="\static\images\alertnotif.png" width="40" height="40"></a>
     </div>
   </nav>
   {% with messages = get_flashed_messages(with_categories=true) %}

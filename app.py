@@ -58,6 +58,16 @@ api = Api(
     security="api-key",
     doc="/doc/",
 )
+app.config.update(dict(
+    DEBUG = True,
+    MAIL_SERVER = 'smtp.gmail.com',
+    MAIL_PORT = 587,
+    MAIL_USE_TLS = True,
+    MAIL_USE_SSL = False,
+    MAIL_DEFAULT_SENDER = 'asecuredb@gmail.com',
+    MAIL_USERNAME = 'asecuredb@gmail.com',
+    MAIL_PASSWORD = 'securedb123',
+))
 app.register_blueprint(blueprint)
 csrf.exempt(blueprint)
 
@@ -699,7 +709,7 @@ def alertview():
 
 @app.route("/alert/email")
 def alertemail():
-   msg = Message('SecureDB Report on Suspicious Requests', sender = 'securedbadmin@gmail.com', recipients = ['ecommadmin@gmail.com'])
+   msg = Message('SecureDB Report on Suspicious Requests', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'])
    msg.body = "This is a report on High Alert Level Requests we have received. Please look through and respond accordingly. Thank you for using SecureDB."
    return "Sent"
 
