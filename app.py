@@ -545,6 +545,43 @@ def backup_restore(file, timestamp):
     return redirect(url_for("backup"))
 
 
+# Whitelist
+@app.route("/whitelist", methods=["GET"])
+def get_whitelist():
+    try:
+        whitelist = get_config_value("whitelist")
+    except:
+        whitelist = list()
+    return render_template("whitelist.html", whitelist=whitelist)
+
+
+@app.route("/whitelist/add", methods=["GET", "POST"])
+def whitelist():
+    form = forms.WhitelistForm(request.form)
+
+    if request.method == "POST" and form.validate():
+        try:
+            whitelist = get_config_value("whitelist")
+            whitelist.append(form.ip_address.data)
+        except:
+            whitelist = list()
+            whitelist.append(form.ip_address.data)
+        set_config_value("whitelist", whitelist)
+
+        return redirect(url_for("get_whitelist"))
+
+    return render_template("whitelist-add.html", form=form)
+
+
+@app.route("/whitelist/delete/<field>", methods=["GET", "POST"])
+def delete_whitelist(field):
+    whitelist = get_config_value("whitelist")
+    whitelist.remove(field)
+    set_config_value("whitelist", whitelist)
+
+    return redirect(url_for("get_whitelist"))
+
+
 # Requests
 @app.route("/requests/filter=<field>", methods=["GET"])
 def get_requests(field):
@@ -1047,39 +1084,46 @@ class Database(Resource):
                 )
                 sensitive_fields = Rule.query.all()
                 try:
-                    for i in sensitive_fields:
-                        pattern = "'" + i.contents + "',"
-                        pattern_occurrence_count = re.findall(
-                            pattern, str(query_results)
-                        )
-
-                        # if pattern occurs more than once, that means there
-                        # are more than 10 sensitive data, so deny this request
-                        # and log it as a high alert
-
-                        # FIXME: Temporarily increased the threshold for pattern
-                        # occurrences since the admin page of the client
-                        # application needs to list out all users. This can be
-                        # set back to normal once the rule definitions allow for
-                        # for more advanced conditions, such as the ability to
-                        # filter requests based on the remote address of the
-                        # request initiator.
-                        if len(pattern_occurrence_count) > 10:
-                            status, status_msg, status_code = (
-                                "ERROR",
-                                "Denied",
-                                403,
-                            )
-                            logged_request, logged_alert = log_request(
-                                "high", status, status_msg
-                            )
-                            query_results = None
-                            break
-
+                    whitelist = get_config_value("whitelist")
+                    if args["ip"] in whitelist:
                         status, status_msg, status_code = "OK", "OK", 200
                         logged_request, logged_alert = log_request(
                             "low", status, status_msg
                         )
+                    else:
+                        for i in sensitive_fields:
+                            pattern = "'" + i.contents + "',"
+                            pattern_occurrence_count = re.findall(
+                                pattern, str(query_results)
+                            )
+
+                            # if pattern occurs more than once, that means there
+                            # are more than 10 sensitive data, so deny this request
+                            # and log it as a high alert
+
+                            # FIXME: Temporarily increased the threshold for pattern
+                            # occurrences since the admin page of the client
+                            # application needs to list out all users. This can be
+                            # set back to normal once the rule definitions allow for
+                            # for more advanced conditions, such as the ability to
+                            # filter requests based on the remote address of the
+                            # request initiator.
+                            if len(pattern_occurrence_count) > 1:
+                                status, status_msg, status_code = (
+                                    "ERROR",
+                                    "Denied",
+                                    403,
+                                )
+                                logged_request, logged_alert = log_request(
+                                    "high", status, status_msg
+                                )
+                                query_results = None
+                                break
+
+                            status, status_msg, status_code = "OK", "OK", 200
+                            logged_request, logged_alert = log_request(
+                                "low", status, status_msg
+                            )
                 except:
                     status, status_msg, status_code = "OK", "OK", 200
                     logged_request, logged_alert = log_request(

@@ -67,3 +67,9 @@ class SensitiveFieldForm(FlaskForm):
     sensitive_field = StringField(
         "Sensitive Field", [InputRequired(), Length(min=1, max=100)]
     )
+
+
+class WhitelistForm(FlaskForm):
+    ip_address = StringField(
+        "IP address", [InputRequired(), Length(min=7, max=15)]
+    )
