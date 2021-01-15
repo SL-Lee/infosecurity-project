@@ -19,6 +19,9 @@
 
 <body>
   <nav class="navbar navbar-expand-sm navbar-dark bg-dark sticky-top">
+    {% if current_user.is_authenticated %}
+    {% set current_user_permissions = current_user.permissions |
+    map(attribute="name") | list %}
     <a class="navbar-brand" href="/">SecureDB</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse"
       data-target="#navbar-links">
@@ -29,29 +32,72 @@
         <li class="nav-item">
           <a class="nav-link" href="/">Home</a>
         </li>
+        {% if "manage_users" in current_user_permissions %}
+        <li class="nav-item">
+          <a class="nav-link" href="/user-management">User Management</a>
+        </li>
+        {% endif %}
+        {% if "view_api_documentation" in current_user_permissions or
+        "manage_api_keys" in current_user_permissions or
+        "manage_sensitive_fields" in current_user_permissions or
+        "view_logged_requests" in current_user_permissions or
+        "manage_ip_whitelist" in current_user_permissions or "manage_api_alerts"
+        in current_user_permissions %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" role="button"
             data-toggle="dropdown">Monitoring API</a>
           <div class="dropdown-menu">
+            {% if "view_api_documentation" in current_user_permissions %}
             <a class="dropdown-item" href="/api/doc/">API Documentation</a>
+            {% endif %}
+            {% if "manage_api_keys" in current_user_permissions %}
             <a class="dropdown-item" href="/api/key-management">API Key
               Management</a>
+            {% endif %}
+            {% if "manage_sensitive_fields" in current_user_permissions or
+            "view_logged_requests" in current_user_permissions or
+            "manage_ip_whitelist" in current_user_permissions or
+            "manage_api_alerts" in current_user_permissions %}
             <div class="dropdown-divider"></div>
+            {% endif %}
+            {% if "manage_sensitive_fields" in current_user_permissions %}
             <a class="dropdown-item" href="/sensitive-fields">Sensitive Field
               Rules</a>
+            {% endif %}
+            {% if "view_logged_requests" in current_user_permissions %}
             <a class="dropdown-item" href="/requests/filter=none">Requests</a>
+            {% endif %}
+            {% if "manage_ip_whitelist" in current_user_permissions %}
             <a class="dropdown-item" href="/whitelist">Whitelist</a>
+            {% endif %}
+            {% if "manage_api_alerts" in current_user_permissions %}
             <a class="dropdown-item" href="/alert">API Alerts</a>
+            {% endif %}
           </div>
         </li>
+        {% endif %}
+        {% if "manage_backups" in current_user_permissions %}
         <li class="nav-item">
           <a class="nav-link" href="/backup">Backup</a>
         </li>
+        {% endif %}
+        {% if "manage_encrypted_files" in current_user_permissions %}
         <li class="nav-item">
           <a class="nav-link" href="/upload-file">File Upload</a>
         </li>
+        {% endif %}
+        <li class="nav-item">
+          <form method="POST" action="/logout">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <a class="nav-link" href="#"
+              onclick="this.parentElement.requestSubmit()">Logout</a>
+          </form>
+        </li>
       </ul>
     </div>
+    {% else %}
+    <a class="navbar-brand ml-auto mr-auto" href="/">SecureDB</a>
+    {% endif %}
   </nav>
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}

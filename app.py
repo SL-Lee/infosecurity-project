@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import uuid
+from functools import wraps
 
 import marshmallow
 import sqlalchemy
@@ -15,6 +16,7 @@ from Crypto.Cipher import AES
 from flask import (
     Blueprint,
     Flask,
+    abort,
     flash,
     jsonify,
     redirect,
@@ -23,7 +25,14 @@ from flask import (
     send_file,
     url_for,
 )
-from flask_restx import Api, Resource, inputs, reqparse
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+from flask_restx import Api, Resource, apidoc, inputs, reqparse
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
@@ -34,19 +43,32 @@ from helper_functions import (
     set_config_value,
     validate_api_key,
 )
-from monitoring_models import Alert, BackupLog, Request, Rule, monitoring_db
+from server_models import (
+    Alert,
+    BackupLog,
+    Request,
+    Rule,
+    ServerPermission,
+    ServerUser,
+    server_db,
+)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///client_db.sqlite3"
 app.config["SQLALCHEMY_BINDS"] = {
-    "monitoring": "sqlite:///monitoring_db.sqlite3"
+    "server": "sqlite:///server_db.sqlite3",
 }
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 csrf = CSRFProtect(app)
 UPLOAD_FOLDER = "uploads/"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "index"
+login_manager.login_message_category = "danger"
 
 blueprint = Blueprint("api", __name__, url_prefix="/api")
 authorizations = {
@@ -62,11 +84,13 @@ app.register_blueprint(blueprint)
 csrf.exempt(blueprint)
 
 client_db.init_app(app)
-monitoring_db.init_app(app)
+server_db.init_app(app)
 
 with app.app_context():
     client_db.create_all()
-    monitoring_db.create_all(bind="monitoring")
+    server_db.create_all(bind="server")
+    client_db.session.commit()
+    server_db.session.commit()
 
 dirname = os.path.dirname(__file__)
 
@@ -124,8 +148,8 @@ def schedule_backup(filename):
             backup_path=file_backup_path,
             md5=file_hash,
         )
-        monitoring_db.session.add(backup_log)
-        monitoring_db.session.commit()
+        server_db.session.add(backup_log)
+        server_db.session.commit()
 
 
 if len(schedule.get_jobs()) == 0:
@@ -180,13 +204,203 @@ if len(schedule.get_jobs()) == 0:
             )
 
 
-@app.route("/")
+def required_permissions(required_permission_names):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not current_user.is_authenticated:
+                abort(404)
+
+            if not all(
+                required_permission
+                in [
+                    user_permission.name
+                    for user_permission in current_user.permissions
+                ]
+                for required_permission in required_permission_names
+            ):
+                abort(403)
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return server_db.session.query(ServerUser).get(int(user_id))
+
+
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
+    login_form = forms.LoginForm(request.form)
+
+    if request.method == "POST" and login_form.validate():
+        server_user = ServerUser.query.filter_by(
+            username=login_form.username.data
+        ).first()
+
+        if server_user is None:
+            flash("Invalid username and/or password.", "danger")
+            return render_template("index.html", form=login_form)
+
+        if (
+            hashlib.scrypt(
+                password=login_form.password.data.encode("UTF-8"),
+                salt=server_user.password_salt,
+                n=16384,
+                r=8,
+                p=1,
+            )
+            == server_user.password_hash
+        ):
+            login_user(server_user)
+            flash("Logged in successfully!", "success")
+        else:
+            flash("Invalid username and/or password.", "danger")
+
+    return render_template(
+        "index.html", form=login_form, next=request.args.get("next")
+    )
+
+
+@app.route("/logout", methods=["POST"])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
+
+
+# User management routes
+@app.route("/user-management")
+@required_permissions(["manage_users"])
+def user_management():
+    server_users = ServerUser.query.all()
+    return render_template("user-management.html", server_users=server_users)
+
+
+@app.route("/user-management/create", methods=["GET", "POST"])
+@required_permissions(["manage_users"])
+def user_management_create():
+    create_user_form = forms.CreateUserForm(request.form)
+    create_user_form.permissions.choices = [
+        (server_permission.name, server_permission.name)
+        for server_permission in ServerPermission.query.all()
+    ]
+
+    if request.method == "POST" and create_user_form.validate():
+        new_server_user_password_salt = os.urandom(32)
+        new_server_user_password_hash = hashlib.scrypt(
+            password=create_user_form.password.data.encode("UTF-8"),
+            salt=new_server_user_password_salt,
+            n=16384,
+            r=8,
+            p=1,
+        )
+        new_server_user = ServerUser(
+            username=create_user_form.username.data,
+            password_salt=new_server_user_password_salt,
+            password_hash=new_server_user_password_hash,
+            date_created=datetime.datetime.now(),
+        )
+
+        for server_permission in create_user_form.permissions.data:
+            new_server_user_permission = ServerPermission.query.get(
+                server_permission
+            )
+
+            if new_server_user_permission is not None:
+                new_server_user.permissions.append(new_server_user_permission)
+
+        server_db.session.add(new_server_user)
+        server_db.session.commit()
+        flash("New user created successfully.", "success")
+        return redirect(url_for("user_management"))
+
+    return render_template(
+        "user-management-form.html",
+        title="User Management — Create User",
+        form=create_user_form,
+        form_action_route=url_for("user_management_create"),
+        action_name="Create",
+    )
+
+
+@app.route(
+    "/user-management/edit/<int:server_user_id>", methods=["GET", "POST"]
+)
+@required_permissions(["manage_users"])
+def user_management_edit(server_user_id):
+    edit_user_form = forms.CreateUserForm(request.form)
+    edit_user_form.permissions.choices = [
+        (server_permission.name, server_permission.name)
+        for server_permission in ServerPermission.query.all()
+    ]
+    server_user = ServerUser.query.get(server_user_id)
+
+    if request.method == "POST" and edit_user_form.validate():
+        server_user.username = edit_user_form.username.data
+        password_salt = os.urandom(32)
+        password_hash = hashlib.scrypt(
+            password=edit_user_form.password.data.encode("UTF-8"),
+            salt=password_salt,
+            n=16384,
+            r=8,
+            p=1,
+        )
+        server_user.password_salt = password_salt
+        server_user.password_hash = password_hash
+        server_user.permissions = []
+
+        for server_permission in edit_user_form.permissions.data:
+            server_user_permission = ServerPermission.query.get(
+                server_permission
+            )
+
+            if server_user_permission is not None:
+                server_user.permissions.append(server_user_permission)
+
+        print(edit_user_form.username.data)
+
+        server_db.session.commit()
+        flash("User edited successfully.", "success")
+        return redirect(url_for("user_management"))
+
+    edit_user_form.username.data = server_user.username
+    edit_user_form.permissions.data = [
+        server_permission.name for server_permission in server_user.permissions
+    ]
+
+    return render_template(
+        "user-management-form.html",
+        title="User Management — Edit User",
+        form=edit_user_form,
+        form_action_route=url_for(
+            "user_management_edit", server_user_id=server_user_id
+        ),
+        action_name="Edit",
+    )
+
+
+@app.route("/user-management/delete", methods=["POST"])
+@required_permissions(["manage_users"])
+def user_management_delete():
+    try:
+        server_user = ServerUser.query.get(int(request.form["server-user-id"]))
+        server_db.session.delete(server_user)
+        server_db.session.commit()
+        flash("User deleted successfully.", "success")
+    except:
+        flash("There was an error while deleting the user.", "danger")
+
+    return redirect(url_for("user_management"))
 
 
 # Backup functions
 @app.route("/backup")
+@required_permissions(["manage_backups"])
 def backup():
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -195,6 +409,7 @@ def backup():
 
 
 @app.route("/temp-backup-set-default")
+@required_permissions(["manage_backups"])
 def backup_set_default():
     path = ".\\client_db.sqlite3"
     interval = 1
@@ -215,6 +430,7 @@ def backup_set_default():
 
 
 @app.route("/backup/add", methods=["GET", "POST"])
+@required_permissions(["manage_backups"])
 def backup_add():
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -273,9 +489,9 @@ def backup_add():
             backup_path=file_backup_path,
             md5=file_hash,
         )
-        monitoring_db.session.add(update_log)
-        monitoring_db.session.add(backup_log)
-        monitoring_db.session.commit()
+        server_db.session.add(update_log)
+        server_db.session.add(backup_log)
+        server_db.session.commit()
 
         if form.interval_type.data == "min":
             schedule.add_job(
@@ -331,6 +547,7 @@ def backup_add():
 
 
 @app.route("/backup/<file>", methods=["GET", "POST"])
+@required_permissions(["manage_backups"])
 def backup_history(file):
     path = os.path.join(backup_path, file)
     timestamp = os.listdir(path)
@@ -342,6 +559,7 @@ def backup_history(file):
 
 
 @app.route("/backup/<file>/update", methods=["GET", "POST"])
+@required_permissions(["manage_backups"])
 def backup_update(file):
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -386,8 +604,8 @@ def backup_update(file):
                 backup_path=file_backup_path,
                 md5=file_hash,
             )
-            monitoring_db.session.add(backup_log)
-            monitoring_db.session.commit()
+            server_db.session.add(backup_log)
+            server_db.session.commit()
 
         # will perform a update, and update the settings
         elif form.update.data:
@@ -467,9 +685,9 @@ def backup_update(file):
                 backup_path=file_backup_path,
                 md5=file_hash,
             )
-            monitoring_db.session.add(update_log)
-            monitoring_db.session.add(backup_log)
-            monitoring_db.session.commit()
+            server_db.session.add(update_log)
+            server_db.session.add(backup_log)
+            server_db.session.commit()
 
             if form.interval_type.data == "min":
                 schedule.reschedule_job(
@@ -510,6 +728,7 @@ def backup_update(file):
 
 
 @app.route("/backup/<file>/<timestamp>/restore")
+@required_permissions(["manage_backups"])
 def backup_restore(file, timestamp):
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -539,14 +758,15 @@ def backup_restore(file, timestamp):
         backup_path=file_settings["path"],
         md5=file_hash,
     )
-    monitoring_db.session.add(restore_log)
-    monitoring_db.session.commit()
+    server_db.session.add(restore_log)
+    server_db.session.commit()
 
     return redirect(url_for("backup"))
 
 
 # Whitelist
 @app.route("/whitelist", methods=["GET"])
+@required_permissions(["manage_ip_whitelist"])
 def get_whitelist():
     try:
         whitelist = get_config_value("whitelist")
@@ -556,6 +776,7 @@ def get_whitelist():
 
 
 @app.route("/whitelist/add", methods=["GET", "POST"])
+@required_permissions(["manage_ip_whitelist"])
 def whitelist():
     form = forms.WhitelistForm(request.form)
 
@@ -574,6 +795,7 @@ def whitelist():
 
 
 @app.route("/whitelist/delete/<field>", methods=["GET", "POST"])
+@required_permissions(["manage_ip_whitelist"])
 def delete_whitelist(field):
     whitelist = get_config_value("whitelist")
     whitelist.remove(field)
@@ -584,6 +806,7 @@ def delete_whitelist(field):
 
 # Requests
 @app.route("/requests/filter=<field>", methods=["GET"])
+@required_permissions(["view_logged_requests"])
 def get_requests(field):
     alerts = Alert.query.all()
     request_filter = field
@@ -594,6 +817,7 @@ def get_requests(field):
 
 # Configure Sensitive Fields
 @app.route("/sensitive-fields", methods=["GET"])
+@required_permissions(["manage_sensitive_fields"])
 def get_sensitive_fields():
     sensitive_fields = Rule.query.all()
 
@@ -603,13 +827,14 @@ def get_sensitive_fields():
 
 
 @app.route("/sensitive-fields/add", methods=["GET", "POST"])
+@required_permissions(["manage_sensitive_fields"])
 def add_sensitive_fields():
     form = forms.SensitiveFieldForm(request.form)
 
     if request.method == "POST" and form.validate():
         rule = Rule(contents=form.sensitive_field.data)
-        monitoring_db.session.add(rule)
-        monitoring_db.session.commit()
+        server_db.session.add(rule)
+        server_db.session.commit()
 
         return redirect(url_for("get_sensitive_fields"))
 
@@ -617,13 +842,14 @@ def add_sensitive_fields():
 
 
 @app.route("/sensitive-fields/update/<field>", methods=["GET", "POST"])
+@required_permissions(["manage_sensitive_fields"])
 def update_sensitive_fields(field):
     form = forms.SensitiveFieldForm(request.form)
     rule = Rule.query.filter_by(id=field).first_or_404()
 
     if request.method == "POST" and form.validate():
         rule.contents = form.sensitive_field.data
-        monitoring_db.session.commit()
+        server_db.session.commit()
 
         return redirect(url_for("get_sensitive_fields"))
 
@@ -631,16 +857,18 @@ def update_sensitive_fields(field):
 
 
 @app.route("/sensitive-fields/delete/<field>", methods=["GET", "POST"])
+@required_permissions(["manage_sensitive_fields"])
 def delete_sensitive_fields(field):
     rule = Rule.query.filter_by(id=field).first_or_404()
-    monitoring_db.session.delete(rule)
-    monitoring_db.session.commit()
+    server_db.session.delete(rule)
+    server_db.session.commit()
 
     return redirect(url_for("get_sensitive_fields"))
 
 
 # Upload API
 @app.route("/upload-file", methods=["GET", "POST"])
+@required_permissions(["manage_encrypted_files"])
 def upload_file():
     if request.method == "POST":
         # check if the post request has the file part
@@ -720,11 +948,13 @@ def upload_file():
 
 # Download API
 @app.route("/download-file/<filename>", methods=["GET"])
+@required_permissions(["manage_encrypted_files"])
 def download_file(filename):
     return render_template("download-file.html", value=filename)
 
 
 @app.route("/return-files/<filename>")
+@required_permissions(["manage_encrypted_files"])
 def return_files_tut(filename):
     file_path = UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
@@ -732,11 +962,13 @@ def return_files_tut(filename):
 
 # Download API
 @app.route("/download-file2/<filename>", methods=["GET"])
+@required_permissions(["manage_encrypted_files"])
 def download_file2(filename):
     return render_template("download-file2.html", value=filename)
 
 
 @app.route("/return-files2/<filename>")
+@required_permissions(["manage_encrypted_files"])
 def return_files_tut2(filename):
     file_path = UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
@@ -744,6 +976,7 @@ def return_files_tut2(filename):
 
 # Alert Function
 @app.route("/alert")
+@required_permissions(["manage_alerts"])
 def alert():
     alert_config = get_config_value("alert")
     print("alert files:", alert_config)
@@ -752,22 +985,23 @@ def alert():
 
 
 @app.route("/temp-alert-set-default")
+@required_permissions(["manage_alerts"])
 def alert_set_default():
-    path = ".\\monitoring_db.sqlite3"
+    path = ".\\server_db.sqlite3"
     interval = 1
     interval_type = "min"
-    monitoring_db_config = {
-        "monitoring_db": {
+    server_db_config = {
+        "server_db": {
             "path": path,
             "interval": interval,
             "interval_type": interval_type,
         }
     }
-    set_config_value("alert", monitoring_db_config)
+    set_config_value("alert", server_db_config)
     alert_config = get_config_value("alert")
     print("alert files:", alert_config)
-    print(alert_config["monitoring_db"]["path"])
-    print(os.path.isfile(alert_config["monitoring_db"]["path"]))
+    print(alert_config["server_db"]["path"])
+    print(os.path.isfile(alert_config["server_db"]["path"]))
     return redirect(url_for("alert"))
 
 
@@ -830,6 +1064,7 @@ def onboarding_review_settings():
 
 # API key management routes
 @app.route("/api/key-management")
+@required_permissions(["manage_api_keys"])
 def api_key_management():
     return render_template(
         "api-key-management.html",
@@ -838,6 +1073,7 @@ def api_key_management():
 
 
 @app.route("/api/key-management/rename", methods=["POST"])
+@required_permissions(["manage_api_keys"])
 def api_key_rename():
     api_keys = get_config_value("api-keys", [])
 
@@ -855,6 +1091,7 @@ def api_key_rename():
 
 
 @app.route("/api/key-management/revoke", methods=["POST"])
+@required_permissions(["manage_api_keys"])
 def api_key_revoke():
     api_keys = get_config_value("api-keys", [])
 
@@ -871,6 +1108,7 @@ def api_key_revoke():
 
 
 @app.route("/api/key-management/generate", methods=["POST"])
+@required_permissions(["manage_api_keys"])
 def api_key_generate():
     api_key = uuid.uuid4()
     api_keys = get_config_value("api-keys", [])
@@ -891,6 +1129,13 @@ def api_key_generate():
             "new-api-key": api_key.hex,
         }
     )
+
+
+# API documentation route
+@api.documentation
+@required_permissions(["view_api_documentation"])
+def api_documentation():
+    return apidoc.ui_for(api)
 
 
 # API routes
@@ -1023,9 +1268,9 @@ class Database(Resource):
                     "medium", status, status_msg
                 )
             finally:
-                monitoring_db.session.add(logged_alert)
-                monitoring_db.session.add(logged_request)
-                monitoring_db.session.commit()
+                server_db.session.add(logged_alert)
+                server_db.session.add(logged_request)
+                server_db.session.commit()
 
             return {
                 "status": status,
@@ -1042,9 +1287,9 @@ class Database(Resource):
                 response="",
             )
             logged_alert = Alert(request=logged_request, alert_level="medium")
-            monitoring_db.session.add(logged_alert)
-            monitoring_db.session.add(logged_request)
-            monitoring_db.session.commit()
+            server_db.session.add(logged_alert)
+            server_db.session.add(logged_request)
+            server_db.session.commit()
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
@@ -1148,9 +1393,9 @@ class Database(Resource):
                     "medium", status, status_msg
                 )
 
-            monitoring_db.session.add(logged_alert)
-            monitoring_db.session.add(logged_request)
-            monitoring_db.session.commit()
+            server_db.session.add(logged_alert)
+            server_db.session.add(logged_request)
+            server_db.session.commit()
 
             return {
                 "status": status,
@@ -1166,9 +1411,9 @@ class Database(Resource):
                 response="",
             )
             logged_alert = Alert(request=logged_request, alert_level="medium")
-            monitoring_db.session.add(logged_alert)
-            monitoring_db.session.add(logged_request)
-            monitoring_db.session.commit()
+            server_db.session.add(logged_alert)
+            server_db.session.add(logged_request)
+            server_db.session.commit()
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
@@ -1242,9 +1487,9 @@ class Database(Resource):
                     "medium", status, status_msg
                 )
 
-            monitoring_db.session.add(logged_alert)
-            monitoring_db.session.add(logged_request)
-            monitoring_db.session.commit()
+            server_db.session.add(logged_alert)
+            server_db.session.add(logged_request)
+            server_db.session.commit()
             return {"status": status, "status_msg": status_msg}, status_code
         except:
             logged_request = Request(
@@ -1255,9 +1500,9 @@ class Database(Resource):
                 response="",
             )
             logged_alert = Alert(request=logged_request, alert_level="medium")
-            monitoring_db.session.add(logged_alert)
-            monitoring_db.session.add(logged_request)
-            monitoring_db.session.commit()
+            server_db.session.add(logged_alert)
+            server_db.session.add(logged_request)
+            server_db.session.commit()
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
@@ -1316,9 +1561,9 @@ class Database(Resource):
                     "medium", status, status_msg
                 )
 
-            monitoring_db.session.add(logged_alert)
-            monitoring_db.session.add(logged_request)
-            monitoring_db.session.commit()
+            server_db.session.add(logged_alert)
+            server_db.session.add(logged_request)
+            server_db.session.commit()
             return {"status": status, "status_msg": status_msg}, status_code
 
         except:
@@ -1330,9 +1575,9 @@ class Database(Resource):
                 response="",
             )
             logged_alert = Alert(request=logged_request, alert_level="medium")
-            monitoring_db.session.add(logged_alert)
-            monitoring_db.session.add(logged_request)
-            monitoring_db.session.commit()
+            server_db.session.add(logged_alert)
+            server_db.session.add(logged_request)
+            server_db.session.commit()
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",

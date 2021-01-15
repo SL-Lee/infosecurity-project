@@ -1,5 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, RadioField, StringField, SubmitField
+from wtforms import (
+    IntegerField,
+    PasswordField,
+    RadioField,
+    SelectMultipleField,
+    StringField,
+    SubmitField,
+)
 from wtforms.validators import InputRequired, Length, Optional
 
 
@@ -73,3 +80,18 @@ class WhitelistForm(FlaskForm):
     ip_address = StringField(
         "IP address", [InputRequired(), Length(min=7, max=15)]
     )
+
+
+class LoginForm(FlaskForm):
+    username = StringField("Username", [InputRequired(), Length(max=32)])
+    password = PasswordField(
+        "Password", [InputRequired(), Length(min=8, max=32)]
+    )
+
+
+class CreateUserForm(FlaskForm):
+    username = StringField("Username", [InputRequired(), Length(max=32)])
+    password = PasswordField(
+        "Password", [InputRequired(), Length(min=8, max=32)]
+    )
+    permissions = SelectMultipleField("Permissions", [InputRequired()])
