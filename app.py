@@ -76,6 +76,8 @@ authorizations = {
 }
 api = Api(
     blueprint,
+    title="SecureDB API",
+    description="Documentation for the SecureDB API",
     authorizations=authorizations,
     security="api-key",
     doc="/doc/",
@@ -86,10 +88,46 @@ csrf.exempt(blueprint)
 client_db.init_app(app)
 server_db.init_app(app)
 
+VALID_SERVER_PERMISSION_NAMES = [
+    "manage_backups",
+    "manage_ip_whitelist",
+    "view_logged_requests",
+    "manage_sensitive_fields",
+    "manage_encrypted_files",
+    "manage_alerts",
+    "manage_api_keys",
+    "manage_users",
+    "view_api_documentation",
+]
+
 with app.app_context():
     client_db.create_all()
-    server_db.create_all(bind="server")
     client_db.session.commit()
+
+    server_db.create_all(bind="server")
+    server_permissions = ServerPermission.query.all()
+    server_permission_names = [
+        server_permission.name for server_permission in server_permissions
+    ]
+
+    # Create missing server permissions
+    for server_permission_name in [
+        valid_server_permission_name
+        for valid_server_permission_name in VALID_SERVER_PERMISSION_NAMES
+        if valid_server_permission_name not in server_permission_names
+    ]:
+        server_db.session.add(ServerPermission(name=server_permission_name))
+
+    # Remove any invalid server permission(s)
+    for server_permission_name in [
+        server_permission_name
+        for server_permission_name in server_permission_names
+        if server_permission_name not in VALID_SERVER_PERMISSION_NAMES
+    ]:
+        server_db.session.delete(
+            ServerPermission.query.get(server_permission_name)
+        )
+
     server_db.session.commit()
 
 dirname = os.path.dirname(__file__)
@@ -204,13 +242,24 @@ if len(schedule.get_jobs()) == 0:
             )
 
 
-def required_permissions(required_permission_names):
+def required_permissions(*required_permission_names):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            # Abort with a 404 error code if current user is not authenticated
             if not current_user.is_authenticated:
                 abort(404)
 
+            # Abort with a 500 error code if not all required permissions are
+            # valid
+            if not all(
+                permission in VALID_SERVER_PERMISSION_NAMES
+                for permission in required_permission_names
+            ):
+                abort(500)
+
+            # Abort with a 403 error code if not all required permissions are
+            # found in the current user's list of permissions
             if not all(
                 required_permission
                 in [
@@ -275,14 +324,14 @@ def logout():
 
 # User management routes
 @app.route("/user-management")
-@required_permissions(["manage_users"])
+@required_permissions("manage_users")
 def user_management():
     server_users = ServerUser.query.all()
     return render_template("user-management.html", server_users=server_users)
 
 
 @app.route("/user-management/create", methods=["GET", "POST"])
-@required_permissions(["manage_users"])
+@required_permissions("manage_users")
 def user_management_create():
     create_user_form = forms.CreateUserForm(request.form)
     create_user_form.permissions.choices = [
@@ -331,7 +380,7 @@ def user_management_create():
 @app.route(
     "/user-management/edit/<int:server_user_id>", methods=["GET", "POST"]
 )
-@required_permissions(["manage_users"])
+@required_permissions("manage_users")
 def user_management_edit(server_user_id):
     edit_user_form = forms.CreateUserForm(request.form)
     edit_user_form.permissions.choices = [
@@ -385,7 +434,7 @@ def user_management_edit(server_user_id):
 
 
 @app.route("/user-management/delete", methods=["POST"])
-@required_permissions(["manage_users"])
+@required_permissions("manage_users")
 def user_management_delete():
     try:
         server_user = ServerUser.query.get(int(request.form["server-user-id"]))
@@ -400,7 +449,7 @@ def user_management_delete():
 
 # Backup functions
 @app.route("/backup")
-@required_permissions(["manage_backups"])
+@required_permissions("manage_backups")
 def backup():
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -409,7 +458,7 @@ def backup():
 
 
 @app.route("/temp-backup-set-default")
-@required_permissions(["manage_backups"])
+@required_permissions("manage_backups")
 def backup_set_default():
     path = ".\\client_db.sqlite3"
     interval = 1
@@ -430,7 +479,7 @@ def backup_set_default():
 
 
 @app.route("/backup/add", methods=["GET", "POST"])
-@required_permissions(["manage_backups"])
+@required_permissions("manage_backups")
 def backup_add():
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -547,7 +596,7 @@ def backup_add():
 
 
 @app.route("/backup/<file>", methods=["GET", "POST"])
-@required_permissions(["manage_backups"])
+@required_permissions("manage_backups")
 def backup_history(file):
     path = os.path.join(backup_path, file)
     timestamp = os.listdir(path)
@@ -559,7 +608,7 @@ def backup_history(file):
 
 
 @app.route("/backup/<file>/update", methods=["GET", "POST"])
-@required_permissions(["manage_backups"])
+@required_permissions("manage_backups")
 def backup_update(file):
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -728,7 +777,7 @@ def backup_update(file):
 
 
 @app.route("/backup/<file>/<timestamp>/restore")
-@required_permissions(["manage_backups"])
+@required_permissions("manage_backups")
 def backup_restore(file, timestamp):
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
@@ -766,7 +815,7 @@ def backup_restore(file, timestamp):
 
 # Whitelist
 @app.route("/whitelist", methods=["GET"])
-@required_permissions(["manage_ip_whitelist"])
+@required_permissions("manage_ip_whitelist")
 def get_whitelist():
     try:
         whitelist = get_config_value("whitelist")
@@ -776,7 +825,7 @@ def get_whitelist():
 
 
 @app.route("/whitelist/add", methods=["GET", "POST"])
-@required_permissions(["manage_ip_whitelist"])
+@required_permissions("manage_ip_whitelist")
 def whitelist():
     form = forms.WhitelistForm(request.form)
 
@@ -795,7 +844,7 @@ def whitelist():
 
 
 @app.route("/whitelist/delete/<field>", methods=["GET", "POST"])
-@required_permissions(["manage_ip_whitelist"])
+@required_permissions("manage_ip_whitelist")
 def delete_whitelist(field):
     whitelist = get_config_value("whitelist")
     whitelist.remove(field)
@@ -806,7 +855,7 @@ def delete_whitelist(field):
 
 # Requests
 @app.route("/requests/filter=<field>", methods=["GET"])
-@required_permissions(["view_logged_requests"])
+@required_permissions("view_logged_requests")
 def get_requests(field):
     alerts = Alert.query.all()
     request_filter = field
@@ -817,7 +866,7 @@ def get_requests(field):
 
 # Configure Sensitive Fields
 @app.route("/sensitive-fields", methods=["GET"])
-@required_permissions(["manage_sensitive_fields"])
+@required_permissions("manage_sensitive_fields")
 def get_sensitive_fields():
     sensitive_fields = Rule.query.all()
 
@@ -827,7 +876,7 @@ def get_sensitive_fields():
 
 
 @app.route("/sensitive-fields/add", methods=["GET", "POST"])
-@required_permissions(["manage_sensitive_fields"])
+@required_permissions("manage_sensitive_fields")
 def add_sensitive_fields():
     form = forms.SensitiveFieldForm(request.form)
 
@@ -842,7 +891,7 @@ def add_sensitive_fields():
 
 
 @app.route("/sensitive-fields/update/<field>", methods=["GET", "POST"])
-@required_permissions(["manage_sensitive_fields"])
+@required_permissions("manage_sensitive_fields")
 def update_sensitive_fields(field):
     form = forms.SensitiveFieldForm(request.form)
     rule = Rule.query.filter_by(id=field).first_or_404()
@@ -857,7 +906,7 @@ def update_sensitive_fields(field):
 
 
 @app.route("/sensitive-fields/delete/<field>", methods=["GET", "POST"])
-@required_permissions(["manage_sensitive_fields"])
+@required_permissions("manage_sensitive_fields")
 def delete_sensitive_fields(field):
     rule = Rule.query.filter_by(id=field).first_or_404()
     server_db.session.delete(rule)
@@ -868,7 +917,7 @@ def delete_sensitive_fields(field):
 
 # Upload API
 @app.route("/upload-file", methods=["GET", "POST"])
-@required_permissions(["manage_encrypted_files"])
+@required_permissions("manage_encrypted_files")
 def upload_file():
     if request.method == "POST":
         # check if the post request has the file part
@@ -948,13 +997,13 @@ def upload_file():
 
 # Download API
 @app.route("/download-file/<filename>", methods=["GET"])
-@required_permissions(["manage_encrypted_files"])
+@required_permissions("manage_encrypted_files")
 def download_file(filename):
     return render_template("download-file.html", value=filename)
 
 
 @app.route("/return-files/<filename>")
-@required_permissions(["manage_encrypted_files"])
+@required_permissions("manage_encrypted_files")
 def return_files_tut(filename):
     file_path = UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
@@ -962,13 +1011,13 @@ def return_files_tut(filename):
 
 # Download API
 @app.route("/download-file2/<filename>", methods=["GET"])
-@required_permissions(["manage_encrypted_files"])
+@required_permissions("manage_encrypted_files")
 def download_file2(filename):
     return render_template("download-file2.html", value=filename)
 
 
 @app.route("/return-files2/<filename>")
-@required_permissions(["manage_encrypted_files"])
+@required_permissions("manage_encrypted_files")
 def return_files_tut2(filename):
     file_path = UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
@@ -976,7 +1025,7 @@ def return_files_tut2(filename):
 
 # Alert Function
 @app.route("/alert")
-@required_permissions(["manage_alerts"])
+@required_permissions("manage_alerts")
 def alert():
     alert_config = get_config_value("alert")
     print("alert files:", alert_config)
@@ -985,7 +1034,7 @@ def alert():
 
 
 @app.route("/temp-alert-set-default")
-@required_permissions(["manage_alerts"])
+@required_permissions("manage_alerts")
 def alert_set_default():
     path = ".\\server_db.sqlite3"
     interval = 1
@@ -1064,7 +1113,7 @@ def onboarding_review_settings():
 
 # API key management routes
 @app.route("/api/key-management")
-@required_permissions(["manage_api_keys"])
+@required_permissions("manage_api_keys")
 def api_key_management():
     api_keys = get_config_value("api-keys", [])
     current_datetime = datetime.datetime.now()
@@ -1089,7 +1138,7 @@ def api_key_management():
 
 
 @app.route("/api/key-management/rename", methods=["POST"])
-@required_permissions(["manage_api_keys"])
+@required_permissions("manage_api_keys")
 def api_key_rename():
     api_keys = get_config_value("api-keys", [])
 
@@ -1107,7 +1156,7 @@ def api_key_rename():
 
 
 @app.route("/api/key-management/revoke", methods=["POST"])
-@required_permissions(["manage_api_keys"])
+@required_permissions("manage_api_keys")
 def api_key_revoke():
     api_keys = get_config_value("api-keys", [])
 
@@ -1124,7 +1173,7 @@ def api_key_revoke():
 
 
 @app.route("/api/key-management/generate", methods=["POST"])
-@required_permissions(["manage_api_keys"])
+@required_permissions("manage_api_keys")
 def api_key_generate():
     api_key = uuid.uuid4()
     api_keys = get_config_value("api-keys", [])
@@ -1149,7 +1198,7 @@ def api_key_generate():
 
 # API documentation route
 @api.documentation
-@required_permissions(["view_api_documentation"])
+@required_permissions("view_api_documentation")
 def api_documentation():
     return apidoc.ui_for(api)
 
