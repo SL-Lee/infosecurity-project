@@ -1066,6 +1066,22 @@ def onboarding_review_settings():
 @app.route("/api/key-management")
 @required_permissions(["manage_api_keys"])
 def api_key_management():
+    api_keys = get_config_value("api-keys", [])
+    current_datetime = datetime.datetime.now()
+
+    for api_key in api_keys:
+        if current_datetime - datetime.datetime.strptime(
+            api_key["timestamp"], "%Y-%m-%dT%H:%M:%S+08:00"
+        ) > datetime.timedelta(days=60):
+            flash(
+                (
+                    f"The API key named '{api_key['name']}' was generated over "
+                    "60 days ago. Consider revoking the key and generating a "
+                    "new one for increased security."
+                ),
+                "warning",
+            )
+
     return render_template(
         "api-key-management.html",
         api_keys=get_config_value("api-keys"),
