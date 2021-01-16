@@ -11,6 +11,11 @@ import marshmallow
 import sqlalchemy
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
+from crypto import (
+    encrypt_file,
+    decrypt_file,
+    KEY
+)
 from Crypto import Random
 from Crypto.Cipher import AES
 from flask import (
@@ -132,8 +137,9 @@ with app.app_context():
 
 dirname = os.path.dirname(__file__)
 
-# only if backup folder does not exist
-if not os.path.isdir(os.path.join(dirname, "backup")):
+# only if backup folder does not exist,
+# then make a backup folder
+if not os.path.exists(os.path.join(dirname, "backup")):
     os.mkdir(os.path.join(dirname, "backup"))
 
 backup_path = os.path.join(dirname, "backup")
@@ -171,6 +177,16 @@ def schedule_backup(filename):
         )
 
         shutil.copy2(file_settings["path"], file_backup_path)
+        # encrypt the backed up file
+        encrypt_file(file_backup_path, KEY)
+        # after encrypting the copied file,
+        # remove the copied file
+        os.remove(file_backup_path)
+        # set new path name for encrypted file
+        file_backup_path = os.path.join(
+            backup_folder,
+            os.path.basename(file_settings["path"]) + ".enc"
+        )
 
         file_hash = hashlib.md5(
             open(file_settings["path"], "rb").read()
@@ -461,10 +477,11 @@ def backup():
 @required_permissions("manage_backups")
 def backup_set_default():
     path = ".\\client_db.sqlite3"
+    keyname = os.path.basename(path)
     interval = 1
     interval_type = "min"
     client_db_config = {
-        "client_db": {
+        keyname: {
             "path": path,
             "interval": interval,
             "interval_type": interval_type,
@@ -473,8 +490,8 @@ def backup_set_default():
     set_config_value("backup", client_db_config)
     backup_config = get_config_value("backup")
     print("backup files:", backup_config)
-    print(backup_config["client_db"]["path"])
-    print(os.path.isfile(backup_config["client_db"]["path"]))
+    print(backup_config[keyname]["path"])
+    print(os.path.isfile(backup_config[keyname]["path"]))
     return redirect(url_for("backup"))
 
 
@@ -490,17 +507,20 @@ def backup_add():
     if request.method == "POST" and form.validate():
         location = form.source.data
         backup_datetime = datetime.datetime.now()
-        filename = os.path.splitext(os.path.basename(location))[0]
-        filename_folder = os.path.join(backup_path, filename)
 
+        filename = os.path.basename(location)
+        filename_folder = os.path.join(backup_path, filename)
+        # check if the folder with the name exists,
+        # else make a folder for it
         if not os.path.exists(filename_folder):
             os.mkdir(filename_folder)
 
+        # backup folder is timestamp of backup
         backup_folder = os.path.join(
             filename_folder,
             secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
         )
-
+        # check if there is a timestamp for the backup
         if not os.path.exists(backup_folder):
             os.mkdir(backup_folder)
 
@@ -508,17 +528,24 @@ def backup_add():
             backup_folder, os.path.basename(location)
         )
 
-        backup_config = {
-            filename: {
-                "path": location,
-                "interval": form.interval.data,
-                "interval_type": form.interval_type.data,
-            }
+        backup_config[filename] = {
+            "path": location,
+            "interval": form.interval.data,
+            "interval_type": form.interval_type.data,
         }
         print(backup_config)
         set_config_value("backup", backup_config)
-
+        # copy from original location to timestamp
         shutil.copy2(location, file_backup_path)
+        # encrypt the backed up file
+        encrypt_file(file_backup_path, KEY)
+        # after encrypting the copied file,
+        # remove the copied file
+        os.remove(file_backup_path)
+        # set new path name for encrypted file
+        file_backup_path = os.path.join(
+            backup_folder, os.path.basename(location) + ".enc"
+        )
 
         file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
 
@@ -600,6 +627,7 @@ def backup_add():
 def backup_history(file):
     path = os.path.join(backup_path, file)
     timestamp = os.listdir(path)
+    timestamp.reverse()
     print(timestamp)
 
     return render_template(
@@ -616,7 +644,7 @@ def backup_update(file):
 
     form = forms.BackupForm(request.form)
     if request.method == "POST" and form.validate():
-        # only update, nothing else happens, including changes to settings
+        # only backup, nothing else happens, including changes to settings
         if form.manual.data:
             print("manual backup")
 
@@ -638,15 +666,23 @@ def backup_update(file):
             )
 
             shutil.copy2(file_settings["path"], file_backup_path)
+            # encrypt the backed up file
+            encrypt_file(file_backup_path, KEY)
+            # after encrypting the copied file,
+            # remove the copied file
+            os.remove(file_backup_path)
+            # set new path name for encrypted file
+            file_backup_path = os.path.join(
+                backup_folder,
+                os.path.basename(file_settings["path"]) + ".enc"
+            )
 
             file_hash = hashlib.md5(
                 open(file_settings["path"], "rb").read()
             ).hexdigest()
 
             backup_log = BackupLog(
-                filename=os.path.splitext(
-                    os.path.basename(file_settings["path"])
-                )[0],
+                filename=os.path.basename(file_settings["path"]),
                 date_created=backup_datetime,
                 method="Manual Backup",
                 source_path=file_settings["path"],
@@ -709,6 +745,16 @@ def backup_update(file):
             )
 
             shutil.copy2(file_settings["path"], file_backup_path)
+            # encrypt the backed up file
+            encrypt_file(file_backup_path, KEY)
+            # after encrypting the copied file,
+            # remove the copied file
+            os.remove(file_backup_path)
+            # set new path name for encrypted file
+            file_backup_path = os.path.join(
+                backup_folder,
+                os.path.basename(file_settings["path"]) + ".enc"
+            )
 
             file_hash = hashlib.md5(
                 open(file_settings["path"], "rb").read()
@@ -789,9 +835,32 @@ def backup_restore(file, timestamp):
     # path to timestamp dir
     timestamp_folder = os.path.join(file_folder, timestamp)
 
-    # path to backup file
+    # path to encrypted file
+    encrypted = os.path.join(
+        timestamp_folder,
+        os.path.basename(file_settings["path"] + ".enc")
+    )
+
+    # decrypt the encrypted file
+    decrypt_file(encrypted, KEY)
+
+    # path to decrypted file
+    decrypted = os.path.join(
+        timestamp_folder,
+        os.path.basename(file_settings["path"] + ".dec")
+    )
+
+    # name the decrypted file
+    os.rename(
+        decrypted,
+        os.path.join(
+            timestamp_folder,
+            os.path.basename(file_settings["path"])
+        )
+    )
     restore = os.path.join(
-        timestamp_folder, os.path.basename(file_settings["path"])
+        timestamp_folder,
+        os.path.basename(file_settings["path"])
     )
 
     # copy from timestamp to source path
@@ -799,11 +868,14 @@ def backup_restore(file, timestamp):
 
     file_hash = hashlib.md5(open(restore, "rb").read()).hexdigest()
 
+    # remove decrypted file
+    os.remove(restore)
+
     restore_log = BackupLog(
         filename=os.path.splitext(os.path.basename(restore))[0],
         date_created=datetime.datetime.now(),
         method="Restore",
-        source_path=restore,
+        source_path=encrypted,
         backup_path=file_settings["path"],
         md5=file_hash,
     )
