@@ -11,7 +11,6 @@ import marshmallow
 import sqlalchemy
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
-from crypto import encrypt_file, decrypt_file, KEY
 from Crypto import Random
 from Crypto.Cipher import AES
 from flask import (
@@ -39,6 +38,7 @@ from werkzeug.utils import secure_filename
 
 import forms
 from client_models import *
+from crypto import KEY, decrypt_file, encrypt_file
 from helper_functions import (
     get_config_value,
     set_config_value,
@@ -111,7 +111,7 @@ with app.app_context():
         server_permission.name for server_permission in server_permissions
     ]
 
-    # Create missing server permissions
+    # Create missing server permission(s)
     for server_permission_name in [
         valid_server_permission_name
         for valid_server_permission_name in VALID_SERVER_PERMISSION_NAMES
