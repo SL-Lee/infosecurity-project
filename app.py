@@ -11,11 +11,7 @@ import marshmallow
 import sqlalchemy
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
-from crypto import (
-    encrypt_file,
-    decrypt_file,
-    KEY
-)
+from crypto import encrypt_file, decrypt_file, KEY
 from Crypto import Random
 from Crypto.Cipher import AES
 from flask import (
@@ -184,8 +180,7 @@ def schedule_backup(filename):
         os.remove(file_backup_path)
         # set new path name for encrypted file
         file_backup_path = os.path.join(
-            backup_folder,
-            os.path.basename(file_settings["path"]) + ".enc"
+            backup_folder, os.path.basename(file_settings["path"]) + ".enc"
         )
 
         file_hash = hashlib.md5(
@@ -673,8 +668,7 @@ def backup_update(file):
             os.remove(file_backup_path)
             # set new path name for encrypted file
             file_backup_path = os.path.join(
-                backup_folder,
-                os.path.basename(file_settings["path"]) + ".enc"
+                backup_folder, os.path.basename(file_settings["path"]) + ".enc"
             )
 
             file_hash = hashlib.md5(
@@ -752,8 +746,7 @@ def backup_update(file):
             os.remove(file_backup_path)
             # set new path name for encrypted file
             file_backup_path = os.path.join(
-                backup_folder,
-                os.path.basename(file_settings["path"]) + ".enc"
+                backup_folder, os.path.basename(file_settings["path"]) + ".enc"
             )
 
             file_hash = hashlib.md5(
@@ -837,8 +830,7 @@ def backup_restore(file, timestamp):
 
     # path to encrypted file
     encrypted = os.path.join(
-        timestamp_folder,
-        os.path.basename(file_settings["path"] + ".enc")
+        timestamp_folder, os.path.basename(file_settings["path"] + ".enc")
     )
 
     # decrypt the encrypted file
@@ -846,21 +838,16 @@ def backup_restore(file, timestamp):
 
     # path to decrypted file
     decrypted = os.path.join(
-        timestamp_folder,
-        os.path.basename(file_settings["path"] + ".dec")
+        timestamp_folder, os.path.basename(file_settings["path"] + ".dec")
     )
 
     # name the decrypted file
     os.rename(
         decrypted,
-        os.path.join(
-            timestamp_folder,
-            os.path.basename(file_settings["path"])
-        )
+        os.path.join(timestamp_folder, os.path.basename(file_settings["path"])),
     )
     restore = os.path.join(
-        timestamp_folder,
-        os.path.basename(file_settings["path"])
+        timestamp_folder, os.path.basename(file_settings["path"])
     )
 
     # copy from timestamp to source path
