@@ -24,7 +24,9 @@ server_user_permissions = server_db.Table(
 class ServerUser(UserMixin, server_db.Model):
     __bind_key__ = "server"
     id = server_db.Column(server_db.Integer, primary_key=True)
-    username = server_db.Column(server_db.String(32), nullable=False)
+    username = server_db.Column(
+        server_db.String(32), unique=True, nullable=False
+    )
     password_salt = server_db.Column(server_db.LargeBinary(32), nullable=False)
     password_hash = server_db.Column(server_db.LargeBinary(64), nullable=False)
     date_created = server_db.Column(

@@ -374,9 +374,19 @@ def user_management_create():
             if new_server_user_permission is not None:
                 new_server_user.permissions.append(new_server_user_permission)
 
-        server_db.session.add(new_server_user)
-        server_db.session.commit()
-        flash("New user created successfully.", "success")
+        try:
+            server_db.session.add(new_server_user)
+            server_db.session.commit()
+            flash("New user created successfully.", "success")
+        except sqlalchemy.exc.IntegrityError:
+            flash(
+                "Another user account already has the username of '"
+                f"{create_user_form.username.data}'. Please try again with a "
+                "unique username.",
+                "danger",
+            )
+            return redirect(url_for("user_management_create"))
+
         return redirect(url_for("user_management"))
 
     return render_template(
@@ -422,10 +432,20 @@ def user_management_edit(server_user_id):
             if server_user_permission is not None:
                 server_user.permissions.append(server_user_permission)
 
-        print(edit_user_form.username.data)
+        try:
+            server_db.session.commit()
+            flash("User edited successfully.", "success")
+        except sqlalchemy.exc.IntegrityError:
+            flash(
+                "Another user account already has the username of '"
+                f"{edit_user_form.username.data}'. Please try again with a "
+                "unique username.",
+                "danger",
+            )
+            return redirect(
+                url_for("user_management_edit", server_user_id=server_user_id)
+            )
 
-        server_db.session.commit()
-        flash("User edited successfully.", "success")
         return redirect(url_for("user_management"))
 
     edit_user_form.username.data = server_user.username
@@ -1128,10 +1148,8 @@ def onboarding_database_config():
             db_file.save(secure_filename("client_db.sqlite3"))
         else:
             flash(
-                (
-                    "The database file seems to be of an incorrect format. "
-                    "Please try again."
-                ),
+                "The database file seems to be of an incorrect format. Please "
+                "try again.",
                 "danger",
             )
             return render_template("onboarding-database-config.html")
@@ -1142,10 +1160,8 @@ def onboarding_database_config():
             db_models.save(secure_filename("client_models.py"))
         else:
             flash(
-                (
-                    "The database models file seems to be of an incorrect "
-                    "format. Please try again."
-                ),
+                "The database models file seems to be of an incorrect format. "
+                "Please try again.",
                 "danger",
             )
             return render_template("onboarding-database-config.html")
@@ -1182,11 +1198,9 @@ def api_key_management():
             api_key["timestamp"], "%Y-%m-%dT%H:%M:%S+08:00"
         ) > datetime.timedelta(days=60):
             flash(
-                (
-                    f"The API key named '{api_key['name']}' was generated over "
-                    "60 days ago. Consider revoking the key and generating a "
-                    "new one for increased security."
-                ),
+                f"The API key named '{api_key['name']}' was generated over 60 "
+                "days ago. Consider revoking the key and generating a new one "
+                "for increased security.",
                 "warning",
             )
 
