@@ -6,6 +6,7 @@ from wtforms import (
     SelectMultipleField,
     StringField,
     SubmitField,
+    SelectField,
 )
 from wtforms.validators import InputRequired, Length, Optional
 
@@ -95,3 +96,9 @@ class CreateUserForm(FlaskForm):
         "Password", [InputRequired(), Length(min=8, max=32)]
     )
     permissions = SelectMultipleField("Permissions", [InputRequired()])
+
+
+class ChoiceForm(FlaskForm):
+    user = SelectField("user", choices=[])
+    role = SelectField("role", choices=[])
+    credit_card = SelectField("credit_card", choices=[])

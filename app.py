@@ -1102,6 +1102,28 @@ def return_files_tut2(filename):
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
 
+# Individual data fields encryption
+@app.route("/upload-field", methods=["GET", "POST"])
+def upload_field():
+    form = forms.ChoiceForm()
+    form.user.choices = [(user.id) for user in User.query.all()]
+    form.role.choices = [(role.id, role.name) for role in Role.query.all()]
+    form.credit_card.choices = [
+        (credit_card.id) for credit_card in CreditCard.query.all()
+    ]
+
+    if request.method == "POST":
+        user = User.query.filter_by(id=form.user.data).first()
+        role = Role.query.filter_by(id=form.role.data).first()
+        credit_card = CreditCard.query.filter_by(
+            id=form.credit_card.data
+        ).first()
+        return "<h1>User : {}, Email: {}, Status:{}, <br> User Role: {}, Credit Card ID: {}</h1>".format(
+            user.username, user.email, user.status, role.name, credit_card.id
+        )
+    return render_template("upload-field.html", form=form)
+
+
 # Alert Function
 @app.route("/alert")
 @required_permissions("manage_alerts")
