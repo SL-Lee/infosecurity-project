@@ -1118,9 +1118,12 @@ def upload_field():
         credit_card = CreditCard.query.filter_by(
             id=form.credit_card.data
         ).first()
-        return "<h1>User : {}, Email: {}, Status:{}, <br> User Role: {}, Credit Card ID: {}</h1>".format(
-            user.username, user.email, user.status, role.name, credit_card.id
+        return (
+            f"<h1>User: {user.username}, Email: {user.email}, Status: "
+            f"{user.status}, <br> User Role: {role.name}, Credit Card ID: "
+            f"{credit_card.id}</h1>"
         )
+
     return render_template("upload-field.html", form=form)
 
 
