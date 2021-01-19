@@ -3,10 +3,10 @@ from wtforms import (
     IntegerField,
     PasswordField,
     RadioField,
+    SelectField,
     SelectMultipleField,
     StringField,
     SubmitField,
-    SelectField,
 )
 from wtforms.validators import InputRequired, Length, Optional
 
