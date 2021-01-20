@@ -1106,22 +1106,80 @@ def return_files_tut2(filename):
 @app.route("/upload-field", methods=["GET", "POST"])
 def upload_field():
     form = forms.ChoiceForm()
-    form.user.choices = [(user.id) for user in User.query.all()]
-    form.role.choices = [(role.id, role.name) for role in Role.query.all()]
-    form.credit_card.choices = [
-        (credit_card.id) for credit_card in CreditCard.query.all()
-    ]
+    form.user.choices = [User.id, User.username, User.email, User.password, User.date_created, User.status, User.roles, User.reviews, User.orders, User.credit_cards, User.addresses]
+    form.role.choices = [Role.id, Role.name, Role.description]
+    form.credit_card.choices = [CreditCard.id, CreditCard.card_number, CreditCard.expiry, CreditCard.user_id, CreditCard.iv]
+    form.address.choices = [Address.id, Address.address, Address.zip_code, Address.city, Address.state, Address.user_id]
+    form.product.choices = [Product.product_id, Product.product_name, Product.description, Product.image, Product.price, Product.quantity, Product.deleted]
+    form.review.choices = [Review.user_id, Review.product_id, Review.rating, Review.contents, Review.product]
+    form.order.choices = [OrderProduct.order_id, OrderProduct.product_id, OrderProduct.quantity, OrderProduct.product]
 
     if request.method == "POST":
-        user = User.query.filter_by(id=form.user.data).first()
-        role = Role.query.filter_by(id=form.role.data).first()
+        # User class
+        user_id = User.query.with_entities(User.id).all()
+        username = User.query.with_entities(User.username).all()
+        email = User.query.with_entities(User.email).all()
+        password = User.query.with_entities(User.password).all()
+        date_created = User.query.with_entities(User.date_created).all()
+        status = User.query.with_entities(User.status).all()
+        roles = User.query.with_entities(User.roles).all()
+        reviews = User.query.with_entities(User.reviews).all()
+        orders = User.query.with_entities(User.orders).all()
+        credit_cards = User.query.with_entities(User.credit_cards).all()
+        addresses = User.query.with_entities(User.addresses).all()
+
+        # Role class
+        role_id = Role.query.with_entities(Role.id).all()
+        role_name = Role.query.with_entities(Role.name).all()
+        role_description = Role.query.with_entities(Role.description).all()
+        # role = Role.query.filter_by(id=form.role.data).first()
+
+        # Credit Card Class
+        cc_id = CreditCard.query.with_entities(CreditCard.id).all()
+        card_number = CreditCard.query.with_entities(CreditCard.card_number).all()
+        expiry = CreditCard.query.with_entities(CreditCard.expiry).all()
+        cc_user_id = CreditCard.query.with_entities(CreditCard.user_id).all()
+        iv = CreditCard.query.with_entities(CreditCard.iv).all()
+        '''
         credit_card = CreditCard.query.filter_by(
-            id=form.credit_card.data
+           id=form.credit_card.data
         ).first()
+        '''
+
+        # Address Class
+        addr_id = Address.query.with_entities(Address.id).all()
+        address = Address.query.with_entities(Address.address).all()
+        zip_code = Address.query.with_entities(Address.zip_code).all()
+        city = Address.query.with_entities(Address.city).all()
+        state = Address.query.with_entities(Address.state).all()
+        addr_user_id = Address.query.with_entities(Address.user_id).all()
+
+        # Product Class
+        product_id = Product.query.with_entities(Product.product_id).all()
+        product_name = Product.query.with_entities(Product.product_name).all()
+        product_description = Product.query.with_entities(Product.description).all()
+        image = Product.query.with_entities(Product.image).all()
+        price = Product.query.with_entities(Product.price).all()
+        product_quantity = Product.query.with_entities(Product.quantity).all()
+        deleted = Product.query.with_entities(Product.deleted).all()
+
+        # Review Class
+        review_user_id = Review.query.with_entities(Review.user_id).all()
+        review_product_id = Review.query.with_entities(Review.product_id).all()
+        rating = Review.query.with_entities(Review.rating).all()
+        contents = Review.query.with_entities(Review.contents).all()
+        review_product = Review.query.with_entities(Review.product).all()
+
+        # Order Product Class
+        order_id = OrderProduct.query.with_entities(OrderProduct.order_id).all()
+        order_product_id = OrderProduct.query.with_entities(OrderProduct.product_id).all()
+        order_quantity = OrderProduct.query.with_entities(OrderProduct.quantity).all()
+        order_product = OrderProduct.query.with_entities(OrderProduct.product).all()
+
         return (
-            f"<h1>User: {user.username}, Email: {user.email}, Status: "
-            f"{user.status}, <br> User Role: {role.name}, Credit Card ID: "
-            f"{credit_card.id}</h1>"
+            f"<h1>User: {user_id}, Email: {email}, Status: "
+            f"{status}, <br> User Role: {role_name}, Role ID: "
+            f"{role_id}</h1>"
         )
 
     return render_template("upload-field.html", form=form)

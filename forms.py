@@ -102,3 +102,7 @@ class ChoiceForm(FlaskForm):
     user = SelectField("user", choices=[])
     role = SelectField("role", choices=[])
     credit_card = SelectField("credit_card", choices=[])
+    address = SelectField("address", choices=[])
+    product = SelectField("product", choices=[])
+    review = SelectField("review", choices=[])
+    order = SelectField("order", choices=[])
