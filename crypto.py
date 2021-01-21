@@ -47,5 +47,3 @@ KEY = (
     b"{\xa2$\x05(\xd5\x18"
 )
 
-encrypt_file("client_db.sqlite3", KEY)
-decrypt_file("client_db.sqlite3.enc", KEY)
