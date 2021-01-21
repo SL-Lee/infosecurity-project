@@ -1106,13 +1106,57 @@ def return_files_tut2(filename):
 @app.route("/upload-field", methods=["GET", "POST"])
 def upload_field():
     form = forms.ChoiceForm()
-    form.user.choices = [User.id, User.username, User.email, User.password, User.date_created, User.status, User.roles, User.reviews, User.orders, User.credit_cards, User.addresses]
+    form.user.choices = [
+        User.id,
+        User.username,
+        User.email,
+        User.password,
+        User.date_created,
+        User.status,
+        User.roles,
+        User.reviews,
+        User.orders,
+        User.credit_cards,
+        User.addresses,
+    ]
     form.role.choices = [Role.id, Role.name, Role.description]
-    form.credit_card.choices = [CreditCard.id, CreditCard.card_number, CreditCard.expiry, CreditCard.user_id, CreditCard.iv]
-    form.address.choices = [Address.id, Address.address, Address.zip_code, Address.city, Address.state, Address.user_id]
-    form.product.choices = [Product.product_id, Product.product_name, Product.description, Product.image, Product.price, Product.quantity, Product.deleted]
-    form.review.choices = [Review.user_id, Review.product_id, Review.rating, Review.contents, Review.product]
-    form.order.choices = [OrderProduct.order_id, OrderProduct.product_id, OrderProduct.quantity, OrderProduct.product]
+    form.credit_card.choices = [
+        CreditCard.id,
+        CreditCard.card_number,
+        CreditCard.expiry,
+        CreditCard.user_id,
+        CreditCard.iv,
+    ]
+    form.address.choices = [
+        Address.id,
+        Address.address,
+        Address.zip_code,
+        Address.city,
+        Address.state,
+        Address.user_id,
+    ]
+    form.product.choices = [
+        Product.product_id,
+        Product.product_name,
+        Product.description,
+        Product.image,
+        Product.price,
+        Product.quantity,
+        Product.deleted,
+    ]
+    form.review.choices = [
+        Review.user_id,
+        Review.product_id,
+        Review.rating,
+        Review.contents,
+        Review.product,
+    ]
+    form.order.choices = [
+        OrderProduct.order_id,
+        OrderProduct.product_id,
+        OrderProduct.quantity,
+        OrderProduct.product,
+    ]
 
     if request.method == "POST":
         # User class
@@ -1136,15 +1180,17 @@ def upload_field():
 
         # Credit Card Class
         cc_id = CreditCard.query.with_entities(CreditCard.id).all()
-        card_number = CreditCard.query.with_entities(CreditCard.card_number).all()
+        card_number = CreditCard.query.with_entities(
+            CreditCard.card_number
+        ).all()
         expiry = CreditCard.query.with_entities(CreditCard.expiry).all()
         cc_user_id = CreditCard.query.with_entities(CreditCard.user_id).all()
         iv = CreditCard.query.with_entities(CreditCard.iv).all()
-        '''
+        """
         credit_card = CreditCard.query.filter_by(
            id=form.credit_card.data
         ).first()
-        '''
+        """
 
         # Address Class
         addr_id = Address.query.with_entities(Address.id).all()
@@ -1157,7 +1203,9 @@ def upload_field():
         # Product Class
         product_id = Product.query.with_entities(Product.product_id).all()
         product_name = Product.query.with_entities(Product.product_name).all()
-        product_description = Product.query.with_entities(Product.description).all()
+        product_description = Product.query.with_entities(
+            Product.description
+        ).all()
         image = Product.query.with_entities(Product.image).all()
         price = Product.query.with_entities(Product.price).all()
         product_quantity = Product.query.with_entities(Product.quantity).all()
@@ -1172,9 +1220,15 @@ def upload_field():
 
         # Order Product Class
         order_id = OrderProduct.query.with_entities(OrderProduct.order_id).all()
-        order_product_id = OrderProduct.query.with_entities(OrderProduct.product_id).all()
-        order_quantity = OrderProduct.query.with_entities(OrderProduct.quantity).all()
-        order_product = OrderProduct.query.with_entities(OrderProduct.product).all()
+        order_product_id = OrderProduct.query.with_entities(
+            OrderProduct.product_id
+        ).all()
+        order_quantity = OrderProduct.query.with_entities(
+            OrderProduct.quantity
+        ).all()
+        order_product = OrderProduct.query.with_entities(
+            OrderProduct.product
+        ).all()
 
         return (
             f"<h1>User: {user_id}, Email: {email}, Status: "
