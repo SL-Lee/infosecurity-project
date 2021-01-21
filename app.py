@@ -700,6 +700,7 @@ def download_file2(filename):
 def return_files_tut2(filename):
     file_path = UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
+
 # Alert Function
 @app.route("/alert/view", methods=['GET'])
 def alertview():
@@ -712,6 +713,10 @@ def alertemail():
    msg = Message('SecureDB Report on Suspicious Requests', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'])
    msg.body = "This is a report on High Alert Level Requests we have received. Please look through and respond accordingly. Thank you for using SecureDB."
    return "Sent"
+
+def sendalertemail(alertemail):
+
+
 
 # Onboarding routes
 @app.route("/onboarding")
