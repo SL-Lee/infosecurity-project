@@ -98,6 +98,13 @@ class CreateUserForm(FlaskForm):
     permissions = SelectMultipleField("Permissions", [InputRequired()])
 
 
+class CreateAdminUserForm(FlaskForm):
+    username = StringField("Username", [InputRequired(), Length(max=32)])
+    password = PasswordField(
+        "Password", [InputRequired(), Length(min=8, max=32)]
+    )
+
+
 class ChoiceForm(FlaskForm):
     user = SelectField("user", choices=[])
     role = SelectField("role", choices=[])

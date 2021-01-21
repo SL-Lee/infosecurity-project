@@ -6,6 +6,7 @@ import re
 import shutil
 import uuid
 from functools import wraps
+from urllib.parse import urljoin, urlparse
 
 import marshmallow
 import sqlalchemy
@@ -288,6 +289,15 @@ def required_permissions(*required_permission_names):
     return decorator
 
 
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return (
+        test_url.scheme in ("http", "https")
+        and ref_url.netloc == test_url.netloc
+    )
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return server_db.session.query(ServerUser).get(int(user_id))
@@ -295,6 +305,14 @@ def load_user(user_id):
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    server_users = ServerUser.query.all()
+
+    if not any(
+        ServerPermission.query.get("manage_users") in server_user.permissions
+        for server_user in server_users
+    ):
+        return redirect(url_for("onboarding"))
+
     login_form = forms.LoginForm(request.form)
 
     if request.method == "POST" and login_form.validate():
@@ -317,7 +335,12 @@ def index():
             == server_user.password_hash
         ):
             login_user(server_user)
-            flash("Logged in successfully!", "success")
+            flash("Logged in successfully.", "success")
+
+            next_url = request.args.get("next")
+
+            if next_url is not None and is_safe_url(next_url):
+                return redirect(next_url)
         else:
             flash("Invalid username and/or password.", "danger")
 
@@ -422,6 +445,20 @@ def user_management_edit(server_user_id):
         )
         server_user.password_salt = password_salt
         server_user.password_hash = password_hash
+
+        if (
+            ServerUser.query.count() == 1
+            and "manage_users" not in edit_user_form.permissions.data
+        ):
+            flash(
+                "You cannot unassign the 'manage_users' permission from the "
+                "only user that has this permission.",
+                "danger",
+            )
+            return redirect(
+                url_for("user_management_edit", server_user_id=server_user_id)
+            )
+
         server_user.permissions = []
 
         for server_permission in edit_user_form.permissions.data:
@@ -467,6 +504,10 @@ def user_management_edit(server_user_id):
 @app.route("/user-management/delete", methods=["POST"])
 @required_permissions("manage_users")
 def user_management_delete():
+    if ServerUser.query.count() == 1:
+        flash("You cannot delete the only remaining user.", "danger")
+        return redirect(url_for("user_management"))
+
     try:
         server_user = ServerUser.query.get(int(request.form["server-user-id"]))
         server_db.session.delete(server_user)
@@ -1273,10 +1314,44 @@ def alert_set_default():
 # Onboarding routes
 @app.route("/onboarding")
 def onboarding():
-    return redirect(url_for("onboarding_database_config"))
+    return redirect(url_for("onboarding_admin_user_creation"))
+
+
+@app.route("/onboarding/admin-user-creation", methods=["GET", "POST"])
+def onboarding_admin_user_creation():
+    create_admin_user_form = forms.CreateAdminUserForm(request.form)
+
+    if request.method == "POST" and create_admin_user_form.validate():
+        new_admin_user_password_salt = os.urandom(32)
+        new_admin_user_password_hash = hashlib.scrypt(
+            password=create_admin_user_form.password.data.encode("UTF-8"),
+            salt=new_admin_user_password_salt,
+            n=16384,
+            r=8,
+            p=1,
+        )
+        new_admin_user = ServerUser(
+            username=create_admin_user_form.username.data,
+            password_salt=new_admin_user_password_salt,
+            password_hash=new_admin_user_password_hash,
+            date_created=datetime.datetime.now(),
+        )
+
+        for server_permission in ServerPermission.query.all():
+            new_admin_user.permissions.append(server_permission)
+
+        server_db.session.add(new_admin_user)
+        server_db.session.commit()
+        return redirect(url_for("onboarding_database_config"))
+
+    return render_template(
+        "onboarding-admin-user-creation.html", form=create_admin_user_form
+    )
 
 
 @app.route("/onboarding/database-config", methods=["GET", "POST"])
+@login_required
+@required_permissions("manage_users")
 def onboarding_database_config():
     if request.method == "POST":
         db_file = request.files.get("db-file")
@@ -1289,7 +1364,7 @@ def onboarding_database_config():
                 "try again.",
                 "danger",
             )
-            return render_template("onboarding-database-config.html")
+            return redirect(url_for("onboarding_database_config"))
 
         db_models = request.files.get("db-models")
 
@@ -1301,7 +1376,7 @@ def onboarding_database_config():
                 "Please try again.",
                 "danger",
             )
-            return render_template("onboarding-database-config.html")
+            return redirect(url_for("onboarding_database_config"))
 
         return redirect(url_for("onboarding_api_config"))
 
@@ -1309,16 +1384,22 @@ def onboarding_database_config():
 
 
 @app.route("/onboarding/api-config")
+@login_required
+@required_permissions("manage_users")
 def onboarding_api_config():
     return render_template("onboarding-api-config.html")
 
 
 @app.route("/onboarding/backup-config")
+@login_required
+@required_permissions("manage_users")
 def onboarding_backup_config():
     return render_template("onboarding-backup-config.html")
 
 
 @app.route("/onboarding/review-settings")
+@login_required
+@required_permissions("manage_users")
 def onboarding_review_settings():
     return render_template("onboarding-review-settings.html")
 
