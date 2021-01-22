@@ -134,10 +134,10 @@ class CreateAdminUserForm(FlaskForm):
 
 
 class ChoiceForm(FlaskForm):
-    user = SelectField("user", choices=[])
-    role = SelectField("role", choices=[])
-    credit_card = SelectField("credit_card", choices=[])
-    address = SelectField("address", choices=[])
-    product = SelectField("product", choices=[])
-    review = SelectField("review", choices=[])
-    order = SelectField("order", choices=[])
+    user = SelectField("user", choices=[], default="None")
+    role = SelectField("role", choices=[], default="None")
+    credit_card = SelectField("credit_card", choices=[], default="None")
+    address = SelectField("address", choices=[], default="None")
+    product = SelectField("product", choices=[], default="None")
+    review = SelectField("review", choices=[], default="None")
+    order = SelectField("order", choices=[], default="None")
