@@ -1205,6 +1205,7 @@ def upload_field():
             for i in user_id:
                 user_id1 = encrypt(str(i), KEY)
                 print(user_id1)
+                flash()
             print(user_id)
         elif form.user.data == "User.username":
             username = [value for value, in username]
@@ -1442,7 +1443,6 @@ def upload_field():
         else:
             print("not found")
 
-
         # Review Class
         review_user_id = Review.query.with_entities(Review.user_id).all()
         review_product_id = Review.query.with_entities(Review.product_id).all()
@@ -1516,12 +1516,7 @@ def upload_field():
             for i in order_product:
                 order_product1 = encrypt(str(i), KEY)
                 print(order_product1)
-
-        return (
-            f"<h1>User: {user_id}, Email: {email}, Status: "
-            f"{status}, <br> User Role: {role_name}, Role ID: "
-            f"{role_id}</h1>"
-        )
+        return redirect(url_for("index"))
 
     return render_template("upload-field.html", form=form)
 

@@ -35,9 +35,16 @@
     <label for="email">Order Product:</label>
     {{ form.order(class="form-control")}}
    </div>
-    <input type="submit" class="btn btn-primary" btn-lg>
+    <input type="submit" class="btn btn-primary" onclick="confirmUpload()" btn-lg>
   </form>
         </div>
  </div>
 </div>
+<script>
+    function confirmUpload() {
+    var message = confirm("Are you sure you want to upload this file?")
+      ? "You pressed OK!"
+      : "You pressed cancel!";
+  }
+</script>
 {% endblock %}
