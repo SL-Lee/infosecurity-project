@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}{% if current_user.is_authenticated %}Index{% else %}Login{%
+endif %}{% endblock %}
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
 <h1 class="display-3 text-center">SecureDB</h1>

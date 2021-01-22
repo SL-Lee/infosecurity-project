@@ -41,7 +41,7 @@
         "manage_api_keys" in current_user_permissions or
         "manage_sensitive_fields" in current_user_permissions or
         "view_logged_requests" in current_user_permissions or
-        "manage_ip_whitelist" in current_user_permissions or "manage_api_alerts"
+        "manage_ip_whitelist" in current_user_permissions or "manage_alerts"
         in current_user_permissions %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" role="button"
@@ -54,10 +54,12 @@
             <a class="dropdown-item" href="/api/key-management">API Key
               Management</a>
             {% endif %}
-            {% if "manage_sensitive_fields" in current_user_permissions or
+            {% if ("view_api_documentation" in current_user_permissions or
+            "manage_api_keys" in current_user_permissions) and
+            ("manage_sensitive_fields" in current_user_permissions or
             "view_logged_requests" in current_user_permissions or
-            "manage_ip_whitelist" in current_user_permissions or
-            "manage_api_alerts" in current_user_permissions %}
+            "manage_ip_whitelist" in current_user_permissions or "manage_alerts"
+            in current_user_permissions) %}
             <div class="dropdown-divider"></div>
             {% endif %}
             {% if "manage_sensitive_fields" in current_user_permissions %}
@@ -70,7 +72,7 @@
             {% if "manage_ip_whitelist" in current_user_permissions %}
             <a class="dropdown-item" href="/whitelist">Whitelist</a>
             {% endif %}
-            {% if "manage_api_alerts" in current_user_permissions %}
+            {% if "manage_alerts" in current_user_permissions %}
             <a class="dropdown-item" href="/alert">API Alerts</a>
             {% endif %}
           </div>
