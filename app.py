@@ -1204,69 +1204,68 @@ def upload_field():
             user_id = [value for value, in user_id]
             for i in user_id:
                 user_id1 = encrypt(str(i), KEY)
-                print(user_id1)
-                flash()
-            print(user_id)
+                # print(user_id1)
+            # print(user_id)
         elif form.user.data == "User.username":
             username = [value for value, in username]
             for i in username:
                 username1 = encrypt(str(i), KEY)
-                print(username1)
-            print(username)
+                # print(username1)
+            # print(username)
         elif form.user.data == "User.email":
             email = [value for value, in email]
             for i in email:
                 email1 = encrypt(str(i), KEY)
-                print(email1)
-            print(email)
+                # print(email1)
+            # print(email)
         elif form.user.data == "User.password":
             password = [value for value, in password]
             for i in password:
                 password1 = encrypt(str(i), KEY)
-                print(password1)
-            print(password)
+                # print(password1)
+            # print(password)
         elif form.user.data == "User.date_created":
             date_created = [value for value, in date_created]
             for i in date_created:
                 date_created1 = encrypt(str(i), KEY)
-                print(date_created1)
-            print(date_created)
+                # print(date_created1)
+            # print(date_created)
         elif form.user.data == "User.status":
             status = [value for value, in status]
             for i in status:
                 status1 = encrypt(str(i), KEY)
-                print(status1)
-            print(status)
+                # print(status1)
+            # print(status)
         elif form.user.data == "User.roles":
             roles = [value for value, in roles]
             for i in roles:
                 roles1 = encrypt(str(i), KEY)
-                print(roles1)
-            print(roles)
+                # print(roles1)
+            # print(roles)
         elif form.user.data == "User.reviews":
             reviews = [value for value, in reviews]
             for i in reviews:
                 reviews1 = encrypt(str(i), KEY)
-                print(reviews1)
-            print(reviews)
+                # print(reviews1)
+            # print(reviews)
         elif form.user.data == "User.orders":
             orders = [value for value, in orders]
             for i in orders:
                 orders1 = encrypt(str(i), KEY)
-                print(orders1)
-            print(orders)
+                # print(orders1)
+            # print(orders)
         elif form.user.data == "User.credit_cards":
             credit_cards = [value for value, in credit_cards]
             for i in credit_cards:
                 credit_cards1 = encrypt(str(i), KEY)
-                print(credit_cards1)
-            print(credit_cards)
+                # print(credit_cards1)
+            # print(credit_cards)
         elif form.user.data == "User.addresses":
             addresses = [value for value, in addresses]
             for i in addresses:
                 addresses1 = encrypt(str(i), KEY)
-                print(addresses1)
-            print(addresses)
+                # print(addresses1)
+            # print(addresses)
         else:
             print("not found")
 
@@ -1279,20 +1278,20 @@ def upload_field():
             role_id = [value for value, in role_id]
             for i in role_id:
                 role_id1 = encrypt(str(i), KEY)
-                print(role_id1)
-            print(role_id)
+                # print(role_id1)
+            # print(role_id)
         elif form.role.data == "Role.name":
             role_name = [value for value, in role_name]
             for i in role_name:
                 role_name1 = encrypt(str(i), KEY)
-                print(role_name1)
-            print(role_name)
+                # print(role_name1)
+            # print(role_name)
         elif form.role.data == "Role.description":
             role_description = [value for value, in role_description]
             for i in role_description:
                 role_description1 = encrypt(str(i), KEY)
-                print(role_description1)
-            print(role_description)
+                # print(role_description1)
+            # print(role_description)
         else:
             print("not found")
 
@@ -1313,32 +1312,32 @@ def upload_field():
             cc_id = [value for value, in cc_id]
             for i in cc_id:
                 cc_id1 = encrypt(str(i), KEY)
-                print(cc_id1)
-            print(cc_id)
+                # print(cc_id1)
+            # print(cc_id)
         elif form.credit_card.data == "CreditCard.card_number":
             card_number = [value for value, in card_number]
             for i in card_number:
                 card_number1 = encrypt(str(i), KEY)
-                print(card_number1)
-            print(card_number)
+                # print(card_number1)
+            # print(card_number)
         elif form.credit_card.data == "CreditCard.expiry":
             expiry = [value for value, in expiry]
             for i in expiry:
                 expiry1 = encrypt(str(i), KEY)
-                print(expiry1)
-            print(expiry)
+                # print(expiry1)
+            # print(expiry)
         elif form.credit_card.data == "CreditCard.user_id":
             cc_user_id = [value for value, in cc_user_id]
             for i in cc_user_id:
                 cc_user_id1 = encrypt(str(i), KEY)
-                print(cc_user_id1)
-            print(cc_user_id)
+                # print(cc_user_id1)
+            # print(cc_user_id)
         elif form.credit_card.data == "CreditCard.iv":
             iv = [value for value, in iv]
             for i in iv:
                 iv1 = encrypt(str(i), KEY)
-                print(iv1)
-            print(iv)
+                # print(iv1)
+            # print(iv)
         else:
             print("not found")
 
@@ -1353,38 +1352,38 @@ def upload_field():
             addr_id = [value for value, in addr_id]
             for i in addr_id:
                 addr_id1 = encrypt(str(i), KEY)
-                print(addr_id1)
-            print(addr_id)
+                # print(addr_id1)
+            # print(addr_id)
         elif form.address.data == "Address.address":
             address = [value for value, in address]
             for i in address:
                 address1 = encrypt(str(i), KEY)
-                print(address1)
-            print(address)
+                # print(address1)
+            # print(address)
         elif form.address.data == "Address.zip_code":
             zip_code = [value for value, in zip_code]
             for i in zip_code:
                 zip_code1 = encrypt(str(i), KEY)
-                print(zip_code1)
-            print(zip_code)
+                # print(zip_code1)
+            # print(zip_code)
         elif form.address.data == "Address.city":
             city = [value for value, in city]
             for i in city:
                 city1 = encrypt(str(i), KEY)
-                print(city1)
-            print(city)
+                # print(city1)
+            # print(city)
         elif form.address.data == "Address.state":
             state = [value for value, in state]
             for i in state:
                 state1 = encrypt(str(i), KEY)
-                print(state1)
-            print(state)
+                # print(state1)
+            # print(state)
         elif form.address.data == "Address.user_id":
             addr_user_id = [value for value, in addr_user_id]
             for i in addr_user_id:
                 addr_user_id1 = encrypt(str(i), KEY)
-                print(addr_user_id1)
-            print(addr_user_id)
+                # print(addr_user_id1)
+            # print(addr_user_id)
         else:
             print("not found")
 
@@ -1402,44 +1401,44 @@ def upload_field():
             product_id = [value for value, in product_id]
             for i in [product_id]:
                 product_id1 = encrypt(str(i), KEY)
-                print(product_id1)
-            print(product_id)
+                # print(product_id1)
+            # print(product_id)
         elif form.product.data == "Product.product_name":
             product_name = [value for value, in product_name]
             for i in product_name:
                 product_name1 = encrypt(str(i), KEY)
-                print(product_name1)
-            print(product_name)
+                # print(product_name1)
+            # print(product_name)
         elif form.product.data == "Product.description":
             product_description = [value for value, in product_description]
             for i in product_description:
                 product_description1 = encrypt(str(i), KEY)
-                print(product_description1)
-            print(product_description)
+                # print(product_description1)
+            # print(product_description)
         elif form.product.data == "Product.image":
             image = [value for value, in image]
             for i in image:
                 image1 = encrypt(str(i), KEY)
-                print(image1)
-            print(image)
+                # print(image1)
+            # print(image)
         elif form.product.data == "Product.price":
             price = [value for value, in price]
             for i in price:
                 price1 = encrypt(str(i), KEY)
-                print(price1)
-            print(price)
+                # print(price1)
+            # print(price)
         elif form.product.data == "Product.quantity":
             product_quantity = [value for value, in product_quantity]
             for i in product_quantity:
                 product_quantity1 = encrypt(str(i), KEY)
-                print(product_quantity1)
-            print(product_quantity)
+                # print(product_quantity1)
+            # print(product_quantity)
         elif form.product.data == "Product.deleted":
             deleted = [value for value, in deleted]
             for i in deleted:
                 deleted1 = encrypt(str(i), KEY)
-                print(deleted1)
-            print(deleted)
+                # print(deleted1)
+            # print(deleted)
         else:
             print("not found")
 
@@ -1453,32 +1452,32 @@ def upload_field():
             review_user_id = [value for value, in review_user_id]
             for i in review_user_id:
                 review_user_id1 = encrypt(str(i), KEY)
-                print(review_user_id1)
-            print(review_user_id)
+                # print(review_user_id1)
+            # print(review_user_id)
         elif form.review.data == "Review.product_id":
             review_product_id = [value for value, in review_product_id]
             for i in review_product_id:
                 review_product_id1 = encrypt(str(i), KEY)
-                print(review_product_id1)
-            print(review_product_id)
+                # print(review_product_id1)
+            # print(review_product_id)
         elif form.review.data == "Review.rating":
             rating = [value for value, in rating]
             for i in rating:
                 rating1 = encrypt(str(i), KEY)
-                print(rating1)
-            print(rating)
+                # print(rating1)
+            # print(rating)
         elif form.review.data == "Review.contents":
             contents = [value for value, in contents]
             for i in contents:
                 contents1 = encrypt(str(i), KEY)
-                print(contents1)
-            print(contents)
+                # print(contents1)
+            # print(contents)
         elif form.review.data == "Review.product":
             review_product = [value for value, in review_product]
             for i in review_product:
                 review_product1 = encrypt(str(i), KEY)
-                print(review_product1)
-            print(review_product)
+                # print(review_product1)
+            # print(review_product)
         else:
             print("not found")
 
@@ -1497,25 +1496,28 @@ def upload_field():
             order_id = [value for value, in order_id]
             for i in order_id:
                 order_id1 = encrypt(str(i), KEY)
-                print(order_id1)
-            print(order_id)
+                # print(order_id1)
+            # print(order_id)
         elif form.order.data == "OrderProduct.product_id":
             order_product_id = [value for value, in order_product_id]
             for i in order_product_id:
                 order_product_id1 = encrypt(str(i), KEY)
-                print(order_product_id1)
-            print(order_product_id)
+                # print(order_product_id1)
+            # print(order_product_id)
         elif form.order.data == "OrderProduct.quantity":
             order_quantity = [value for value, in order_quantity]
             for i in order_quantity:
                 order_quantity1 = encrypt(str(i), KEY)
-                print(order_quantity1)
-            print(order_quantity)
+                # print(order_quantity1)
+            # print(order_quantity)
         elif form.order.data == "OrderProduct.product":
             order_product = [value for value, in order_product]
             for i in order_product:
                 order_product1 = encrypt(str(i), KEY)
-                print(order_product1)
+                # print(order_product1)
+            # print(order_product)
+        else:
+            print("not found")
         return redirect(url_for("index"))
 
     return render_template("upload-field.html", form=form)
