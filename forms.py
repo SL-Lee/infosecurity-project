@@ -11,6 +11,34 @@ from wtforms import (
 from wtforms.validators import InputRequired, Length, Optional
 
 
+class OnboardingBackupForm(FlaskForm):
+    source = StringField(
+        "Database Source",
+        [Length(max=260), InputRequired()],
+        render_kw={"value": ".\client_db.sqlite3", "readonly": True},
+    )
+    interval = IntegerField(
+        "Interval",
+        [InputRequired()],
+        render_kw={
+            "placeholder": (
+                "Please select the interval type and enter the duration"
+            )
+        },
+    )
+    interval_type = RadioField(
+        "Interval Type",
+        choices=[
+            ("min", "Minute"),
+            ("hr", "Hour"),
+            ("d", "Day"),
+            ("wk", "Week"),
+            ("mth", "Month"),
+        ],
+        default="wk",
+    )
+
+
 class BackupFirstForm(FlaskForm):
     source = StringField(
         "Database Source",
