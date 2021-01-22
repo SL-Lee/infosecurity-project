@@ -459,6 +459,19 @@ def user_management_edit(server_user_id):
                 url_for("user_management_edit", server_user_id=server_user_id)
             )
 
+        if (
+            server_user_id == current_user.id
+            and "manage_users" not in edit_user_form.permissions.data
+        ):
+            flash(
+                "You cannot unassign the 'manage_users' permission from the "
+                "current user.",
+                "danger",
+            )
+            return redirect(
+                url_for("user_management_edit", server_user_id=server_user_id)
+            )
+
         server_user.permissions = []
 
         for server_permission in edit_user_form.permissions.data:
@@ -509,7 +522,13 @@ def user_management_delete():
         return redirect(url_for("user_management"))
 
     try:
-        server_user = ServerUser.query.get(int(request.form["server-user-id"]))
+        server_user_id = int(request.form["server-user-id"])
+
+        if server_user_id == current_user.id:
+            flash("You cannot delete the current user.", "danger")
+            return redirect(url_for("user_management"))
+
+        server_user = ServerUser.query.get(server_user_id)
         server_db.session.delete(server_user)
         server_db.session.commit()
         flash("User deleted successfully.", "success")
