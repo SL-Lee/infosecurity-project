@@ -1390,11 +1390,129 @@ def onboarding_api_config():
     return render_template("onboarding-api-config.html")
 
 
-@app.route("/onboarding/backup-config")
+@app.route("/onboarding/backup-config", methods=["GET", "POST"])
 @login_required
 @required_permissions("manage_users")
 def onboarding_backup_config():
-    return render_template("onboarding-backup-config.html")
+    # onboarding backup form, when there are no settings for the file
+    form = forms.OnboardingBackupForm(request.form)
+    if request.method == "POST" and form.validate():
+        client_db_config = {
+            os.path.basename(form.source.data): {
+                "path": form.source.data,
+                "interval": form.interval.data,
+                "interval_type": form.interval_type.data,
+            }
+        }
+        # set backup information for database
+        set_config_value("backup", client_db_config)
+
+        location = form.source.data
+        backup_datetime = datetime.datetime.now()
+
+        filename = os.path.basename(location)
+        filename_folder = os.path.join(backup_path, filename)
+        # check if the folder with the name exists,
+        # else make a folder for it
+        if not os.path.exists(filename_folder):
+            os.mkdir(filename_folder)
+
+        # backup folder is timestamp of backup
+        backup_folder = os.path.join(
+            filename_folder,
+            secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+        )
+        # check if there is a timestamp for the backup
+        if not os.path.exists(backup_folder):
+            os.mkdir(backup_folder)
+
+        file_backup_path = os.path.join(
+            backup_folder, os.path.basename(location)
+        )
+
+        # copy from original location to timestamp
+        shutil.copy2(location, file_backup_path)
+        # encrypt the backed up file
+        encrypt_file(file_backup_path, KEY)
+        # after encrypting the copied file,
+        # remove the copied file
+        os.remove(file_backup_path)
+        # set new path name for encrypted file
+        file_backup_path = os.path.join(
+            backup_folder, os.path.basename(location) + ".enc"
+        )
+
+        file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
+
+        backup_log = BackupLog(
+            filename=filename,
+            date_created=backup_datetime,
+            method="Manual Backup",
+            source_path=location,
+            backup_path=file_backup_path,
+            md5=file_hash,
+        )
+        update_log = BackupLog(
+            filename=filename,
+            date_created=backup_datetime,
+            method="Update Settings",
+            source_path=location,
+            backup_path=file_backup_path,
+            md5=file_hash,
+        )
+        server_db.session.add(update_log)
+        server_db.session.add(backup_log)
+        server_db.session.commit()
+
+        if form.interval_type.data == "min":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                minutes=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
+        elif form.interval_type.data == "hr":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                hours=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
+        elif form.interval_type.data == "d":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                days=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
+        elif form.interval_type.data == "wk":
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                weeks=form.interval.data,
+                id=filename,
+                replace_existing=True,
+            )
+        elif form.interval_type.data == "mth":
+            months = 31 * form.interval.data
+            schedule.add_job(
+                schedule_backup,
+                args=[filename],
+                trigger="interval",
+                days=months,
+                id=filename,
+                replace_existing=True,
+            )
+        schedule.print_jobs()
+        return redirect(url_for("onboarding_review_settings"))
+    return render_template("onboarding-backup-config.html", form=form)
 
 
 @app.route("/onboarding/review-settings")
