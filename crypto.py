@@ -5,6 +5,8 @@ from Crypto.Cipher import AES
 
 
 def pad(string):
+    if isinstance(string, str):
+        string = string.encode("utf-8")
     return string + b"\0" * (AES.block_size - len(string) % AES.block_size)
 
 
