@@ -12,8 +12,6 @@ import marshmallow
 import sqlalchemy
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
-from Crypto import Random
-from Crypto.Cipher import AES
 from flask import (
     Blueprint,
     Flask,
@@ -39,7 +37,7 @@ from werkzeug.utils import secure_filename
 
 import forms
 from client_models import *
-from crypto import KEY, decrypt_file, encrypt_file, encrypt, decrypt
+from crypto import KEY, decrypt, decrypt_file, encrypt, encrypt_file
 from helper_functions import (
     get_config_value,
     set_config_value,

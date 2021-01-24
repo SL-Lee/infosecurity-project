@@ -215,9 +215,9 @@ class BaseSchema(Schema):
     def remove_null_fields(self, data, **kwargs):
         # pylint: disable=unused-argument
         if isinstance(data, dict):
-            for i in self.__fields_to_skip_none__:
-                if i in data and data[i] is None:
-                    del data[i]
+            for skipped_field in self.__fields_to_skip_none__:
+                if skipped_field in data and data[skipped_field] is None:
+                    del data[skipped_field]
 
         return data
 
