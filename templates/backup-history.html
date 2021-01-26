@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Backup{% endblock %}
 {% from "includes/_form_helper.html" import render_field %}
-
 {% block content %}
 <div class="container-fluid content">
   <div class="row justify-content-center">
@@ -49,23 +48,23 @@
       <nav aria-label="pagination">
         <ul class="pagination justify-content-center">
           <li class="page-item disabled" id="previous">
-            <a class="page-link" href="#" tabindex="-1" onclick="previous_page()">Previous</a>
+            <a class="page-link" href="#" tabindex="-1" onclick="previousPage()">Previous</a>
           </li>
 
           {% set pages = (((timestamp | length)/10) | round(method='ceil') | int) %}
           {% for i in range(pages) %}
-              <li class="page-item">
-                <a class="page-link" href="#" onclick="go_to_page({{ i+1 }})">{{ i+1 }}</a>
-              </li>
+            <li class="page-item">
+              <a class="page-link" href="#" onclick="goToPage({{ i+1 }})">{{ i+1 }}</a>
+            </li>
           {% endfor %}
 
           {% if (pages) == 1 %}
             <li class="page-item disabled" id="next">
-              <a class="page-link" href="#" onclick="next_page()" tabindex="-1">Next</a>
+              <a class="page-link" href="#" onclick="nextPage()" tabindex="-1">Next</a>
             </li>
           {% else %}
             <li class="page-item" id="next">
-              <a class="page-link" href="#" onclick="next_page()">Next</a>
+              <a class="page-link" href="#" onclick="nextPage()">Next</a>
             </li>
           {% endif %}
         </ul>
@@ -81,14 +80,14 @@
 <script>
   function restore(file, time) {
     if (confirm("Are you sure you want to restore file back to time?")) {
-      location.href="/backup/"+(file)+"/"+(time)+"/restore";
+      location.href = "/backup/" + (file) + "/" + (time) + "/restore";
     }
   }
 
   var current = 0;
   var first = 0;
   var last = 10;
-  function next_page() {
+  function nextPage() {
     // numbers are following index
     var i, tbody, tr;
     tbody = document.getElementsByTagName("tbody")[0];
@@ -111,30 +110,28 @@
       }
     }
 
-    if (current+1 == 1) {
+    if (current + 1 == 1) {
       var previous = document.getElementById("previous");
       previous.classList.add("disabled");
       previous.firstChild.tabIndex = "-1";
-    }
-    else {
+    } else {
       var previous = document.getElementById("previous");
       previous.classList.remove("disabled");
       previous.firstChild.tabIndex = "";
     }
 
-    if (current+1 < {{ pages }}) {
+    if (current + 1 < {{ pages }}) {
       var next = document.getElementById("next");
       next.classList.remove("disabled");
       next.firstChild.tabIndex = "";
-    }
-    else {
+    } else {
       var next = document.getElementById("next");
       next.classList.add("disabled");
       next.firstChild.tabIndex = "-1";
     }
   }
 
-  function previous_page() {
+  function previousPage() {
     // numbers are following index
     var i, tbody, tr;
     tbody = document.getElementsByTagName("tbody")[0];
@@ -157,30 +154,28 @@
       }
     }
 
-    if (current+1 == 1) {
+    if (current + 1 == 1) {
       var previous = document.getElementById("previous");
       previous.classList.add("disabled");
       previous.firstChild.tabIndex = "-1";
-    }
-    else {
+    } else {
       var previous = document.getElementById("previous");
       previous.classList.remove("disabled");
       previous.firstChild.tabIndex = "";
     }
 
-    if (current+1 < {{ pages }}) {
+    if (current + 1 < {{ pages }}) {
       var next = document.getElementById("next");
       next.classList.remove("disabled");
       next.firstChild.tabIndex = "";
-    }
-    else {
+    } else {
       var next = document.getElementById("next");
       next.classList.add("disabled");
       next.firstChild.tabIndex = "-1";
     }
   }
 
-  function go_to_page(page) {
+  function goToPage(page) {
     // numbers are following index
     var i, tbody, tr;
     tbody = document.getElementsByTagName("tbody")[0];
@@ -194,7 +189,7 @@
     }
 
     current = page - 1;
-    first = page * 10 -10;
+    first = page * 10 - 10;
     last = page * 10;
 
     for (i = first; i < last; i++) {
@@ -203,23 +198,21 @@
       }
     }
 
-    if (current+1 == 1) {
+    if (current + 1 == 1) {
       var previous = document.getElementById("previous");
       previous.classList.add("disabled");
       previous.firstChild.tabIndex = "-1";
-    }
-    else {
+    } else {
       var previous = document.getElementById("previous");
       previous.classList.remove("disabled");
       previous.firstChild.tabIndex = "";
     }
 
-    if (current+1 < {{ pages }}) {
+    if (current + 1 < {{ pages }}) {
       var next = document.getElementById("next");
       next.classList.remove("disabled");
       next.firstChild.tabIndex = "";
-    }
-    else {
+    } else {
       var next = document.getElementById("next");
       next.classList.add("disabled");
       next.firstChild.tabIndex = "-1";

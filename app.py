@@ -1156,6 +1156,9 @@ def return_files_tut2(filename):
 @app.route("/upload-field", methods=["GET", "POST"])
 @required_permissions("manage_encrypted_fields")
 def upload_field():
+    # pylint: disable=pointless-string-statement
+    # pylint: disable=unused-variable
+
     form = forms.ChoiceForm()
     form.user.choices = [
         None,
