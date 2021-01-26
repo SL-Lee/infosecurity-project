@@ -253,6 +253,21 @@ if len(schedule.get_jobs()) == 0:
             )
 
 
+@app.template_filter()
+def contains_any(items, *required_items):
+    return any(item in required_items for item in items)
+
+
+@app.context_processor
+def inject_current_user_permissions():
+    current_user_permissions = (
+        [user_permission.name for user_permission in current_user.permissions]
+        if current_user.is_authenticated
+        else None
+    )
+    return dict(current_user_permissions=current_user_permissions)
+
+
 def required_permissions(*required_permission_names):
     def decorator(func):
         @wraps(func)
@@ -1583,6 +1598,8 @@ def onboarding_admin_user_creation():
 
         server_db.session.add(new_admin_user)
         server_db.session.commit()
+
+        login_user(ServerUser.query.get(new_admin_user.id))
         return redirect(url_for("onboarding_database_config"))
 
     return render_template(
@@ -1591,7 +1608,6 @@ def onboarding_admin_user_creation():
 
 
 @app.route("/onboarding/database-config", methods=["GET", "POST"])
-@login_required
 @required_permissions("manage_users")
 def onboarding_database_config():
     if request.method == "POST":
@@ -1625,14 +1641,12 @@ def onboarding_database_config():
 
 
 @app.route("/onboarding/api-config")
-@login_required
 @required_permissions("manage_users")
 def onboarding_api_config():
     return render_template("onboarding-api-config.html")
 
 
 @app.route("/onboarding/backup-config", methods=["GET", "POST"])
-@login_required
 @required_permissions("manage_users")
 def onboarding_backup_config():
     # onboarding backup form, when there are no settings for the file
@@ -1757,7 +1771,6 @@ def onboarding_backup_config():
 
 
 @app.route("/onboarding/review-settings")
-@login_required
 @required_permissions("manage_users")
 def onboarding_review_settings():
     return render_template("onboarding-review-settings.html")
