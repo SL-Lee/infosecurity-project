@@ -37,7 +37,7 @@ from werkzeug.utils import secure_filename
 
 import forms
 from client_models import *
-from crypto import KEY, decrypt, decrypt_file, encrypt, encrypt_file
+from crypto import KEY, encrypt, decrypt, encrypt_file, decrypt_file
 from helper_functions import (
     get_config_value,
     set_config_value,
@@ -1080,6 +1080,8 @@ def upload_file():
                 os.path.join(app.config["UPLOAD_FOLDER"], filename), KEY
             )
             print("saved file successfully")
+            # delete uploaded file
+            os.remove(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             # send file name as parameter to download
             return redirect("/download-file/" + filename + ".enc")
 
@@ -1088,6 +1090,7 @@ def upload_file():
                 os.path.join(app.config["UPLOAD_FOLDER"], filename), KEY
             )
             print("saved file2 successfully")
+            os.remove(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             # send file name as parameter to download
             return redirect("/download-file2/" + filename[:-4] + ".dec")
 
@@ -1112,7 +1115,16 @@ def return_files_tut(filename):
 @app.route("/download-file2/<filename>", methods=["GET"])
 @required_permissions("manage_encrypted_files")
 def download_file2(filename):
-    return render_template("download-file2.html", value=filename)
+    file_path = UPLOAD_FOLDER + filename
+
+    def generate():
+        with open(file_path) as f:
+            yield from f
+        os.remove(file_path)
+
+    r = app.response_class(generate())
+    r.headers.set("Content-Disposition", 'attachment', filename=filename)
+    return r
 
 
 @app.route("/return-files2/<filename>")
