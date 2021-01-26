@@ -20,7 +20,7 @@ def encrypt(message, key):
 def decrypt(ciphertext, key):
     iv = ciphertext[: AES.block_size]
     cipher = AES.new(key, AES.MODE_CBC, iv)
-    plaintext = cipher.decrypt(ciphertext[AES.block_size:])
+    plaintext = cipher.decrypt(ciphertext[AES.block_size :])
     return plaintext.rstrip(b"\0")
 
 

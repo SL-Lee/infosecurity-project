@@ -37,7 +37,7 @@ from werkzeug.utils import secure_filename
 
 import forms
 from client_models import *
-from crypto import KEY, encrypt, decrypt, encrypt_file, decrypt_file
+from crypto import KEY, decrypt_file, encrypt, encrypt_file
 from helper_functions import (
     get_config_value,
     set_config_value,
@@ -1133,13 +1133,16 @@ def download_file2(filename):
     file_path = UPLOAD_FOLDER + filename
 
     def generate():
-        with open(file_path) as f:
-            yield from f
+        with open(file_path) as file:
+            yield from file
+
         os.remove(file_path)
 
-    r = app.response_class(generate())
-    r.headers.set("Content-Disposition", 'attachment', filename=filename)
-    return r
+    download_request = app.response_class(generate())
+    download_request.headers.set(
+        "Content-Disposition", "attachment", filename=filename
+    )
+    return download_request
 
 
 @app.route("/return-files2/<filename>")
