@@ -5,8 +5,6 @@ import os
 import re
 import shutil
 import uuid
-from functools import wraps
-from urllib.parse import urljoin, urlparse
 
 import marshmallow
 import sqlalchemy
@@ -15,7 +13,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import (
     Blueprint,
     Flask,
-    abort,
     flash,
     jsonify,
     redirect,
@@ -35,12 +32,15 @@ from flask_restx import Api, Resource, apidoc, inputs, reqparse
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 
+import constants
 import forms
 from client_models import *
 from crypto import KEY, decrypt_file, encrypt, encrypt_file
 from helper_functions import (
     get_config_value,
+    is_safe_url,
     log_request,
+    required_permissions,
     set_config_value,
     validate_api_key,
 )
@@ -61,10 +61,10 @@ app.config["SQLALCHEMY_BINDS"] = {
     "server": "sqlite:///server_db.sqlite3",
 }
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-csrf = CSRFProtect(app)
-UPLOAD_FOLDER = "uploads/"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER"] = constants.UPLOAD_FOLDER
 app.config["ENCRYPTED_FIELDS"] = []
+
+csrf = CSRFProtect(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -89,34 +89,21 @@ csrf.exempt(blueprint)
 client_db.init_app(app)
 server_db.init_app(app)
 
-VALID_SERVER_PERMISSION_NAMES = [
-    "manage_backups",
-    "manage_ip_whitelist",
-    "view_logged_requests",
-    "manage_sensitive_fields",
-    "manage_encrypted_files",
-    "manage_encrypted_fields",
-    "manage_alerts",
-    "manage_api_keys",
-    "manage_users",
-    "view_api_documentation",
-]
-
 with app.app_context():
     client_db.create_all()
     client_db.session.commit()
 
     server_db.create_all(bind="server")
-    server_permissions = ServerPermission.query.all()
     server_permission_names = [
-        server_permission.name for server_permission in server_permissions
+        server_permission.name
+        for server_permission in ServerPermission.query.all()
     ]
 
     # Create missing server permission(s)
     for server_permission_name in [
-        valid_server_permission_name
-        for valid_server_permission_name in VALID_SERVER_PERMISSION_NAMES
-        if valid_server_permission_name not in server_permission_names
+        valid_server_permission
+        for valid_server_permission in constants.VALID_SERVER_PERMISSION_NAMES
+        if valid_server_permission not in server_permission_names
     ]:
         server_db.session.add(ServerPermission(name=server_permission_name))
 
@@ -124,7 +111,7 @@ with app.app_context():
     for server_permission_name in [
         server_permission_name
         for server_permission_name in server_permission_names
-        if server_permission_name not in VALID_SERVER_PERMISSION_NAMES
+        if server_permission_name not in constants.VALID_SERVER_PERMISSION_NAMES
     ]:
         server_db.session.delete(
             ServerPermission.query.get(server_permission_name)
@@ -267,50 +254,6 @@ def inject_current_user_permissions():
         else None
     )
     return dict(current_user_permissions=current_user_permissions)
-
-
-def required_permissions(*required_permission_names):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Abort with a 404 error code if current user is not authenticated
-            if not current_user.is_authenticated:
-                abort(404)
-
-            # Abort with a 500 error code if not all required permissions are
-            # valid
-            if not all(
-                permission in VALID_SERVER_PERMISSION_NAMES
-                for permission in required_permission_names
-            ):
-                abort(500)
-
-            # Abort with a 403 error code if not all required permissions are
-            # found in the current user's list of permissions
-            if not all(
-                required_permission
-                in [
-                    user_permission.name
-                    for user_permission in current_user.permissions
-                ]
-                for required_permission in required_permission_names
-            ):
-                abort(403)
-
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-def is_safe_url(target):
-    ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return (
-        test_url.scheme in ("http", "https")
-        and ref_url.netloc == test_url.netloc
-    )
 
 
 @login_manager.user_loader
@@ -1123,7 +1066,7 @@ def download_file(filename):
 @app.route("/return-files/<filename>")
 @required_permissions("manage_encrypted_files")
 def return_files_tut(filename):
-    file_path = UPLOAD_FOLDER + filename
+    file_path = constants.UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
 
@@ -1131,7 +1074,7 @@ def return_files_tut(filename):
 @app.route("/download-file2/<filename>", methods=["GET"])
 @required_permissions("manage_encrypted_files")
 def download_file2(filename):
-    file_path = UPLOAD_FOLDER + filename
+    file_path = constants.UPLOAD_FOLDER + filename
 
     def generate():
         with open(file_path) as file:
@@ -1149,7 +1092,7 @@ def download_file2(filename):
 @app.route("/return-files2/<filename>")
 @required_permissions("manage_encrypted_files")
 def return_files_tut2(filename):
-    file_path = UPLOAD_FOLDER + filename
+    file_path = constants.UPLOAD_FOLDER + filename
     return send_file(file_path, as_attachment=True, attachment_filename="")
 
 

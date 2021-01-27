@@ -1,7 +1,13 @@
 import datetime
 import hashlib
 import shelve
+from functools import wraps
+from urllib.parse import urlparse, urljoin
 
+from flask import abort, request
+from flask_login import current_user
+
+import constants
 from errors import InvalidAPIKeyError
 from server_models import Alert, Request
 
@@ -48,3 +54,47 @@ def log_request(alert_level, status, status_msg, request_params, response):
     )
     logged_alert = Alert(request=logged_request, alert_level=alert_level)
     return logged_request, logged_alert
+
+
+def required_permissions(*required_permission_names):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Abort with a 404 error code if current user is not authenticated
+            if not current_user.is_authenticated:
+                abort(404)
+
+            # Abort with a 500 error code if not all required permissions are
+            # valid
+            if not all(
+                permission in constants.VALID_SERVER_PERMISSION_NAMES
+                for permission in required_permission_names
+            ):
+                abort(500)
+
+            # Abort with a 403 error code if not all required permissions are
+            # found in the current user's list of permissions
+            if not all(
+                required_permission
+                in [
+                    user_permission.name
+                    for user_permission in current_user.permissions
+                ]
+                for required_permission in required_permission_names
+            ):
+                abort(403)
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return (
+        test_url.scheme in ("http", "https")
+        and ref_url.netloc == test_url.netloc
+    )
