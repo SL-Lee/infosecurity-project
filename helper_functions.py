@@ -2,8 +2,8 @@ import datetime
 import hashlib
 import shelve
 
-from server_models import Alert, Request
 from errors import InvalidAPIKeyError
+from server_models import Alert, Request
 
 
 def get_config_value(key, default_value=None):
