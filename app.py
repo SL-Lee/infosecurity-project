@@ -47,7 +47,6 @@ from helper_functions import (
 from server_models import (
     Alert,
     BackupLog,
-    Request,
     Rule,
     ServerPermission,
     ServerUser,
