@@ -10,6 +10,11 @@ def pad(string):
     return string + b"\0" * (AES.block_size - len(string) % AES.block_size)
 
 
+# This is the encryption algorithm
+# If you just want to encrypt string, then can just use this.
+# Example: encrypt("your string", KEY) <- the KEY is fixed
+
+
 def encrypt(message, key):
     message = pad(message)
     iv = Random.new().read(AES.block_size)
@@ -17,11 +22,23 @@ def encrypt(message, key):
     return iv + cipher.encrypt(message)
 
 
+# This is the decryption algorithm
+# This is just the opposite of the encryption algorithm.
+# Example: decrypt("your encrypted string", KEY) <- the KEY is fixed
+
+
 def decrypt(ciphertext, key):
     iv = ciphertext[: AES.block_size]
     cipher = AES.new(key, AES.MODE_CBC, iv)
     plaintext = cipher.decrypt(ciphertext[AES.block_size :])
     return plaintext.rstrip(b"\0")
+
+
+# This is the encryption algorithm for encrypting files
+# This is used when you want to encrypt files
+# Example: encrypt_file(your file name, KEY) <- the KEY is fixed
+# If your file name cannot be found, or there is error, then use this
+# Example: encrypt_file(os.path.join(app.config[folder name], filename), KEY)
 
 
 def encrypt_file(file_name, key):
@@ -32,6 +49,11 @@ def encrypt_file(file_name, key):
 
     with open(file_name + ".enc", "wb") as file:
         file.write(enc)
+
+
+# This is the decryption algorithm
+# This is used to decrypt encrypted files
+# Example: decrypt_file(your file name, KEY)
 
 
 def decrypt_file(file_name, key):
