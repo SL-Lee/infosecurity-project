@@ -10,4 +10,3 @@ VALID_SERVER_PERMISSION_NAMES = [
     "manage_users",
     "view_api_documentation",
 ]
-UPLOAD_FOLDER = "uploads/"
