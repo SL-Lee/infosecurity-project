@@ -1,6 +1,8 @@
+import datetime
 import hashlib
 import shelve
 
+from server_models import Alert, Request
 from errors import InvalidAPIKeyError
 
 
@@ -34,3 +36,15 @@ def validate_api_key(given_api_key):
             return given_api_key
 
     raise InvalidAPIKeyError
+
+
+def log_request(alert_level, status, status_msg, request_params, response):
+    logged_request = Request(
+        datetime=datetime.datetime.now(),
+        status=status,
+        status_msg=status_msg,
+        request_params=request_params,
+        response=response,
+    )
+    logged_alert = Alert(request=logged_request, alert_level=alert_level)
+    return logged_request, logged_alert
