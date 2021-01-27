@@ -1163,7 +1163,6 @@ def upload_field():
     form = forms.ChoiceForm()
     form.user.choices = [
         None,
-        User.id,
         User.username,
         User.email,
         User.password,
@@ -1175,27 +1174,22 @@ def upload_field():
         User.credit_cards,
         User.addresses,
     ]
-    form.role.choices = [None, Role.id, Role.name, Role.description]
+    form.role.choices = [None, Role.name, Role.description]
     form.credit_card.choices = [
         None,
-        CreditCard.id,
         CreditCard.card_number,
         CreditCard.expiry,
-        CreditCard.user_id,
         CreditCard.iv,
     ]
     form.address.choices = [
         None,
-        Address.id,
         Address.address,
         Address.zip_code,
         Address.city,
         Address.state,
-        Address.user_id,
     ]
     form.product.choices = [
         None,
-        Product.product_id,
         Product.product_name,
         Product.description,
         Product.image,
@@ -1205,433 +1199,201 @@ def upload_field():
     ]
     form.review.choices = [
         None,
-        Review.user_id,
-        Review.product_id,
         Review.rating,
         Review.contents,
         Review.product,
     ]
     form.order.choices = [
         None,
-        OrderProduct.order_id,
-        OrderProduct.product_id,
         OrderProduct.quantity,
         OrderProduct.product,
     ]
 
     if request.method == "POST":
         # User class
-        user_id = User.query.with_entities(User.id).all()
-        username = User.query.with_entities(User.username).all()
-        email = User.query.with_entities(User.email).all()
-        password = User.query.with_entities(User.password).all()
-        date_created = User.query.with_entities(User.date_created).all()
-        status = User.query.with_entities(User.status).all()
-        roles = User.query.with_entities(User.roles).all()
-        reviews = User.query.with_entities(User.reviews).all()
-        orders = User.query.with_entities(User.orders).all()
-        credit_cards = User.query.with_entities(User.credit_cards).all()
-        addresses = User.query.with_entities(User.addresses).all()
-        if form.user.data == "User.id":
-            user_id = [value for value, in user_id]
-            for i in user_id:
-                user_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("User.id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(user_id1)
-            # print(user_id)
-        elif form.user.data == "User.username":
-            username = [value for value, in username]
-            for i in username:
-                username1 = encrypt(str(i), KEY)
+        for user in User.query.all():
+            if form.user.data == "User.username":
+                user.username = encrypt(str(user.username), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.username")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(username1)
-            # print(username)
-        elif form.user.data == "User.email":
-            email = [value for value, in email]
-            for i in email:
-                email1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.email":
+                user.email = encrypt(str(user.email), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.email")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(email1)
-            # print(email)
-        elif form.user.data == "User.password":
-            password = [value for value, in password]
-            for i in password:
-                password1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.password":
+                user.password = encrypt(str(user.password), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.password")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(password1)
-            # print(password)
-        elif form.user.data == "User.date_created":
-            date_created = [value for value, in date_created]
-            for i in date_created:
-                date_created1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.date_created":
+                user.date_created = encrypt(str(user.date_created), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.date_created")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(date_created1)
-            # print(date_created)
-        elif form.user.data == "User.status":
-            status = [value for value, in status]
-            for i in status:
-                status1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.status":
+                user.status = encrypt(str(user.status), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.status")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(status1)
-            # print(status)
-        elif form.user.data == "User.roles":
-            roles = [value for value, in roles]
-            for i in roles:
-                roles1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.roles":
+                user.roles = encrypt(str(user.roles), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.roles")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(roles1)
-            # print(roles)
-        elif form.user.data == "User.reviews":
-            reviews = [value for value, in reviews]
-            for i in reviews:
-                reviews1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.reviews":
+                user.reviews = encrypt(str(user.reviews), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.reviews")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(reviews1)
-            # print(reviews)
-        elif form.user.data == "User.orders":
-            orders = [value for value, in orders]
-            for i in orders:
-                orders1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.orders":
+                user.orders = encrypt(str(user.orders), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.orders")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(orders1)
-            # print(orders)
-        elif form.user.data == "User.credit_cards":
-            credit_cards = [value for value, in credit_cards]
-            for i in credit_cards:
-                credit_cards1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.credit_cards":
+                user.credit_cards = encrypt(str(user.credit_cards), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.credit_cards")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(credit_cards1)
-            # print(credit_cards)
-        elif form.user.data == "User.addresses":
-            addresses = [value for value, in addresses]
-            for i in addresses:
-                addresses1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.user.data == "User.addresses":
+                user.addresses = encrypt(str(user.addresses), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.addresses")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(addresses1)
-            # print(addresses)
-        else:
-            print("not found")
+                # print(app.config["ENCRYPTED_FIELDS"])
+            else:
+                print("not found")
 
         # Role class
-        role_id = Role.query.with_entities(Role.id).all()
-        role_name = Role.query.with_entities(Role.name).all()
-        role_description = Role.query.with_entities(Role.description).all()
-        # role = Role.query.filter_by(id=form.role.data).first()
-        if form.role.data == "Role.id":
-            role_id = [value for value, in role_id]
-            for i in role_id:
-                role_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("Role.id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(role_id1)
-            # print(role_id)
-        elif form.role.data == "Role.name":
-            role_name = [value for value, in role_name]
-            for i in role_name:
-                role_name1 = encrypt(str(i), KEY)
+        for role in Role.query.all():
+            if form.role.data == "Role.name":
+                role.name = encrypt(str(role.name), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Role.name")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(role_name1)
-            # print(role_name)
-        elif form.role.data == "Role.description":
-            role_description = [value for value, in role_description]
-            for i in role_description:
-                role_description1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.role.data == "Role.description":
+                role.description = encrypt(str(role.description), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Role.description")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(role_description1)
-            # print(role_description)
-        else:
-            print("not found")
+                # print(app.config["ENCRYPTED_FIELDS"])
+            else:
+                print("not found")
 
         # Credit Card Class
-        cc_id = CreditCard.query.with_entities(CreditCard.id).all()
-        card_number = CreditCard.query.with_entities(
-            CreditCard.card_number
-        ).all()
-        expiry = CreditCard.query.with_entities(CreditCard.expiry).all()
-        cc_user_id = CreditCard.query.with_entities(CreditCard.user_id).all()
-        iv = CreditCard.query.with_entities(CreditCard.iv).all()
-        """
-        credit_card = CreditCard.query.filter_by(
-           id=form.credit_card.data
-        ).first()
-        """
-        if form.credit_card.data == "CreditCard.id":
-            cc_id = [value for value, in cc_id]
-            for i in cc_id:
-                cc_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("CreditCard.id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(cc_id1)
-            # print(cc_id)
-        elif form.credit_card.data == "CreditCard.card_number":
-            card_number = [value for value, in card_number]
-            for i in card_number:
-                card_number1 = encrypt(str(i), KEY)
+        for credit in CreditCard.query.all():
+            if form.credit_card.data == "CreditCard.card_number":
+                credit.card_number = encrypt(str(credit.card_number), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("CreditCard.card_number")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(card_number1)
-            # print(card_number)
-        elif form.credit_card.data == "CreditCard.expiry":
-            expiry = [value for value, in expiry]
-            for i in expiry:
-                expiry1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.credit_card.data == "CreditCard.expiry":
+                credit.expiry = encrypt(str(credit.expiry), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("CreditCard.expiry")
                 print(app.config["ENCRYPTED_FIELDS"])
-                # print(expiry1)
-            # print(expiry)
-        elif form.credit_card.data == "CreditCard.user_id":
-            cc_user_id = [value for value, in cc_user_id]
-            for i in cc_user_id:
-                cc_user_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("CreditCard.user_id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(cc_user_id1)
-            # print(cc_user_id)
-        elif form.credit_card.data == "CreditCard.iv":
-            iv = [value for value, in iv]
-            for i in iv:
-                iv1 = encrypt(str(i), KEY)
+            elif form.credit_card.data == "CreditCard.iv":
+                credit.iv = encrypt(str(credit.iv), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("CreditCard.iv")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(iv1)
-            # print(iv)
-        else:
-            print("not found")
+                # print(app.config["ENCRYPTED_FIELDS"])
+            else:
+                print("not found")
 
         # Address Class
-        addr_id = Address.query.with_entities(Address.id).all()
-        address = Address.query.with_entities(Address.address).all()
-        zip_code = Address.query.with_entities(Address.zip_code).all()
-        city = Address.query.with_entities(Address.city).all()
-        state = Address.query.with_entities(Address.state).all()
-        addr_user_id = Address.query.with_entities(Address.user_id).all()
-        if form.address.data == "Address.id":
-            addr_id = [value for value, in addr_id]
-            for i in addr_id:
-                addr_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("Address.id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(addr_id1)
-            # print(addr_id)
-        elif form.address.data == "Address.address":
-            address = [value for value, in address]
-            for i in address:
-                address1 = encrypt(str(i), KEY)
+        for address in Address.query.all():
+            if form.address.data == "Address.address":
+                address.address = encrypt(str(address.address), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Address.address")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(address1)
-            # print(address)
-        elif form.address.data == "Address.zip_code":
-            zip_code = [value for value, in zip_code]
-            for i in zip_code:
-                zip_code1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.address.data == "Address.zip_code":
+                address.zip_code = encrypt(str(address.zip_code), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Address.zip_code")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(zip_code1)
-            # print(zip_code)
-        elif form.address.data == "Address.city":
-            city = [value for value, in city]
-            for i in city:
-                city1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.address.data == "Address.city":
+                address.city = encrypt(str(address.city), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Address.city")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(city1)
-            # print(city)
-        elif form.address.data == "Address.state":
-            state = [value for value, in state]
-            for i in state:
-                state1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.address.data == "Address.state":
+                address.state = encrypt(str(address.state), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Address.state")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(state1)
-            # print(state)
-        elif form.address.data == "Address.user_id":
-            addr_user_id = [value for value, in addr_user_id]
-            for i in addr_user_id:
-                addr_user_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("Address.user_id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(addr_user_id1)
-            # print(addr_user_id)
-        else:
-            print("not found")
+                # print(app.config["ENCRYPTED_FIELDS"])
+            else:
+                print("not found")
 
         # Product Class
-        product_id = Product.query.with_entities(Product.product_id).all()
-        product_name = Product.query.with_entities(Product.product_name).all()
-        product_description = Product.query.with_entities(
-            Product.description
-        ).all()
-        image = Product.query.with_entities(Product.image).all()
-        price = Product.query.with_entities(Product.price).all()
-        product_quantity = Product.query.with_entities(Product.quantity).all()
-        deleted = Product.query.with_entities(Product.deleted).all()
-        if form.product.data == "Product.product_id":
-            product_id = [value for value, in product_id]
-            for i in [product_id]:
-                product_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("Product.product_id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(product_id1)
-            # print(product_id)
-        elif form.product.data == "Product.product_name":
-            product_name = [value for value, in product_name]
-            for i in product_name:
-                product_name1 = encrypt(str(i), KEY)
+        for product in Product.query.all():
+            if form.product.data == "Product.product_name":
+                product.product_name = encrypt(str(product.product_name), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Product.product_name")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(product_name1)
-            # print(product_name)
-        elif form.product.data == "Product.description":
-            product_description = [value for value, in product_description]
-            for i in product_description:
-                product_description1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.product.data == "Product.description":
+                product.description = encrypt(str(product.description), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Product.description")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(product_description1)
-            # print(product_description)
-        elif form.product.data == "Product.image":
-            image = [value for value, in image]
-            for i in image:
-                image1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.product.data == "Product.image":
+                product.image = encrypt(str(product.image), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Product.image")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(image1)
-            # print(image)
-        elif form.product.data == "Product.price":
-            price = [value for value, in price]
-            for i in price:
-                price1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.product.data == "Product.price":
+                product.price = encrypt(str(product.price), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Product.price")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(price1)
-            # print(price)
-        elif form.product.data == "Product.quantity":
-            product_quantity = [value for value, in product_quantity]
-            for i in product_quantity:
-                product_quantity1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.product.data == "Product.quantity":
+                product.quantity = encrypt(str(product.quantity), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Product.quantity")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(product_quantity1)
-            # print(product_quantity)
-        elif form.product.data == "Product.deleted":
-            deleted = [value for value, in deleted]
-            for i in deleted:
-                deleted1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.product.data == "Product.deleted":
+                product.deleted = encrypt(str(product.deleted), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Product.deleted")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(deleted1)
-            # print(deleted)
-        else:
-            print("not found")
+                # print(app.config["ENCRYPTED_FIELDS"])
+            else:
+                print("not found")
 
         # Review Class
-        review_user_id = Review.query.with_entities(Review.user_id).all()
-        review_product_id = Review.query.with_entities(Review.product_id).all()
-        rating = Review.query.with_entities(Review.rating).all()
-        contents = Review.query.with_entities(Review.contents).all()
-        review_product = Review.query.with_entities(Review.product).all()
-        if form.review.data == "Review.user_id":
-            review_user_id = [value for value, in review_user_id]
-            for i in review_user_id:
-                review_user_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("Review.user_id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(review_user_id1)
-            # print(review_user_id)
-        elif form.review.data == "Review.product_id":
-            review_product_id = [value for value, in review_product_id]
-            for i in review_product_id:
-                review_product_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("Review.product_id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(review_product_id1)
-            # print(review_product_id)
-        elif form.review.data == "Review.rating":
-            rating = [value for value, in rating]
-            for i in rating:
-                rating1 = encrypt(str(i), KEY)
+        for review in Review.query.all():
+            if form.review.data == "Review.rating":
+                review.rating = encrypt(str(review.rating), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Review.rating")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(rating1)
-            # print(rating)
-        elif form.review.data == "Review.contents":
-            contents = [value for value, in contents]
-            for i in contents:
-                contents1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.review.data == "Review.contents":
+                review.contents = encrypt(str(review.contents), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Review.contents")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(contents1)
-            # print(contents)
-        elif form.review.data == "Review.product":
-            review_product = [value for value, in review_product]
-            for i in review_product:
-                review_product1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.review.data == "Review.product":
+                review.product = encrypt(str(review.product), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Review.product")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(review_product1)
-            # print(review_product)
-        else:
-            print("not found")
+                # print(app.config["ENCRYPTED_FIELDS"])
+            else:
+                print("not found")
 
         # Order Product Class
-        order_id = OrderProduct.query.with_entities(OrderProduct.order_id).all()
-        order_product_id = OrderProduct.query.with_entities(
-            OrderProduct.product_id
-        ).all()
-        order_quantity = OrderProduct.query.with_entities(
-            OrderProduct.quantity
-        ).all()
-        order_product = OrderProduct.query.with_entities(
-            OrderProduct.product
-        ).all()
-        if form.order.data == "OrderProduct.order_id":
-            order_id = [value for value, in order_id]
-            for i in order_id:
-                order_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("OrderProduct.order_id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(order_id1)
-            # print(order_id)
-        elif form.order.data == "OrderProduct.product_id":
-            order_product_id = [value for value, in order_product_id]
-            for i in order_product_id:
-                order_product_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append("OrderProduct.product_id")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(order_product_id1)
-            # print(order_product_id)
-        elif form.order.data == "OrderProduct.quantity":
-            order_quantity = [value for value, in order_quantity]
-            for i in order_quantity:
-                order_quantity1 = encrypt(str(i), KEY)
+        for order in OrderProduct.query.all():
+            if form.order.data == "OrderProduct.quantity":
+                order.quantity = encrypt(str(order.quantity), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("OrderProduct.quantity")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(order_quantity1)
-            # print(order_quantity)
-        elif form.order.data == "OrderProduct.product":
-            order_product = [value for value, in order_product]
-            for i in order_product:
-                order_product1 = encrypt(str(i), KEY)
+                # print(app.config["ENCRYPTED_FIELDS"])
+            elif form.order.data == "OrderProduct.product":
+                order.product = encrypt(str(order.product), KEY)
+                client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("OrderProduct.product")
-                print(app.config["ENCRYPTED_FIELDS"])
-                # print(order_product1)
-            # print(order_product)
-        else:
-            print("not found")
+                # print(app.config["ENCRYPTED_FIELDS"])
+            else:
+                print("not found")
         return redirect(url_for("index"))
 
     return render_template("upload-field.html", form=form)
