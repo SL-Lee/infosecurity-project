@@ -1236,7 +1236,7 @@ def upload_field():
             user_id = [value for value, in user_id]
             for i in user_id:
                 user_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(user_id1)
+                app.config["ENCRYPTED_FIELDS"].append("User.id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(user_id1)
             # print(user_id)
@@ -1244,7 +1244,7 @@ def upload_field():
             username = [value for value, in username]
             for i in username:
                 username1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(username1)
+                app.config["ENCRYPTED_FIELDS"].append("User.username")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(username1)
             # print(username)
@@ -1252,7 +1252,7 @@ def upload_field():
             email = [value for value, in email]
             for i in email:
                 email1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(email1)
+                app.config["ENCRYPTED_FIELDS"].append("User.email")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(email1)
             # print(email)
@@ -1260,7 +1260,7 @@ def upload_field():
             password = [value for value, in password]
             for i in password:
                 password1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(password1)
+                app.config["ENCRYPTED_FIELDS"].append("User.password")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(password1)
             # print(password)
@@ -1268,7 +1268,7 @@ def upload_field():
             date_created = [value for value, in date_created]
             for i in date_created:
                 date_created1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(date_created1)
+                app.config["ENCRYPTED_FIELDS"].append("User.date_created")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(date_created1)
             # print(date_created)
@@ -1276,7 +1276,7 @@ def upload_field():
             status = [value for value, in status]
             for i in status:
                 status1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(status1)
+                app.config["ENCRYPTED_FIELDS"].append("User.status")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(status1)
             # print(status)
@@ -1284,7 +1284,7 @@ def upload_field():
             roles = [value for value, in roles]
             for i in roles:
                 roles1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(roles1)
+                app.config["ENCRYPTED_FIELDS"].append("User.roles")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(roles1)
             # print(roles)
@@ -1292,7 +1292,7 @@ def upload_field():
             reviews = [value for value, in reviews]
             for i in reviews:
                 reviews1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(reviews1)
+                app.config["ENCRYPTED_FIELDS"].append("User.reviews")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(reviews1)
             # print(reviews)
@@ -1300,7 +1300,7 @@ def upload_field():
             orders = [value for value, in orders]
             for i in orders:
                 orders1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(orders1)
+                app.config["ENCRYPTED_FIELDS"].append("User.orders")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(orders1)
             # print(orders)
@@ -1308,7 +1308,7 @@ def upload_field():
             credit_cards = [value for value, in credit_cards]
             for i in credit_cards:
                 credit_cards1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(credit_cards1)
+                app.config["ENCRYPTED_FIELDS"].append("User.credit_cards")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(credit_cards1)
             # print(credit_cards)
@@ -1316,7 +1316,7 @@ def upload_field():
             addresses = [value for value, in addresses]
             for i in addresses:
                 addresses1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(addresses1)
+                app.config["ENCRYPTED_FIELDS"].append("User.addresses")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(addresses1)
             # print(addresses)
@@ -1332,7 +1332,7 @@ def upload_field():
             role_id = [value for value, in role_id]
             for i in role_id:
                 role_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(role_id1)
+                app.config["ENCRYPTED_FIELDS"].append("Role.id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(role_id1)
             # print(role_id)
@@ -1340,7 +1340,7 @@ def upload_field():
             role_name = [value for value, in role_name]
             for i in role_name:
                 role_name1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(role_name1)
+                app.config["ENCRYPTED_FIELDS"].append("Role.name")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(role_name1)
             # print(role_name)
@@ -1348,7 +1348,7 @@ def upload_field():
             role_description = [value for value, in role_description]
             for i in role_description:
                 role_description1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(role_description1)
+                app.config["ENCRYPTED_FIELDS"].append("Role.description")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(role_description1)
             # print(role_description)
@@ -1372,7 +1372,7 @@ def upload_field():
             cc_id = [value for value, in cc_id]
             for i in cc_id:
                 cc_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(cc_id1)
+                app.config["ENCRYPTED_FIELDS"].append("CreditCard.id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(cc_id1)
             # print(cc_id)
@@ -1380,7 +1380,7 @@ def upload_field():
             card_number = [value for value, in card_number]
             for i in card_number:
                 card_number1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(card_number1)
+                app.config["ENCRYPTED_FIELDS"].append("CreditCard.card_number")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(card_number1)
             # print(card_number)
@@ -1388,7 +1388,7 @@ def upload_field():
             expiry = [value for value, in expiry]
             for i in expiry:
                 expiry1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(expiry1)
+                app.config["ENCRYPTED_FIELDS"].append("CreditCard.expiry")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(expiry1)
             # print(expiry)
@@ -1396,7 +1396,7 @@ def upload_field():
             cc_user_id = [value for value, in cc_user_id]
             for i in cc_user_id:
                 cc_user_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(cc_user_id1)
+                app.config["ENCRYPTED_FIELDS"].append("CreditCard.user_id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(cc_user_id1)
             # print(cc_user_id)
@@ -1404,7 +1404,7 @@ def upload_field():
             iv = [value for value, in iv]
             for i in iv:
                 iv1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(iv1)
+                app.config["ENCRYPTED_FIELDS"].append("CreditCard.iv")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(iv1)
             # print(iv)
@@ -1422,7 +1422,7 @@ def upload_field():
             addr_id = [value for value, in addr_id]
             for i in addr_id:
                 addr_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(addr_id1)
+                app.config["ENCRYPTED_FIELDS"].append("Address.id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(addr_id1)
             # print(addr_id)
@@ -1430,7 +1430,7 @@ def upload_field():
             address = [value for value, in address]
             for i in address:
                 address1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(address1)
+                app.config["ENCRYPTED_FIELDS"].append("Address.address")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(address1)
             # print(address)
@@ -1438,7 +1438,7 @@ def upload_field():
             zip_code = [value for value, in zip_code]
             for i in zip_code:
                 zip_code1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(zip_code1)
+                app.config["ENCRYPTED_FIELDS"].append("Address.zip_code")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(zip_code1)
             # print(zip_code)
@@ -1446,7 +1446,7 @@ def upload_field():
             city = [value for value, in city]
             for i in city:
                 city1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(city1)
+                app.config["ENCRYPTED_FIELDS"].append("Address.city")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(city1)
             # print(city)
@@ -1454,7 +1454,7 @@ def upload_field():
             state = [value for value, in state]
             for i in state:
                 state1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(state1)
+                app.config["ENCRYPTED_FIELDS"].append("Address.state")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(state1)
             # print(state)
@@ -1462,7 +1462,7 @@ def upload_field():
             addr_user_id = [value for value, in addr_user_id]
             for i in addr_user_id:
                 addr_user_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(addr_user_id1)
+                app.config["ENCRYPTED_FIELDS"].append("Address.user_id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(addr_user_id1)
             # print(addr_user_id)
@@ -1483,7 +1483,7 @@ def upload_field():
             product_id = [value for value, in product_id]
             for i in [product_id]:
                 product_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(product_id1)
+                app.config["ENCRYPTED_FIELDS"].append("Product.product_id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(product_id1)
             # print(product_id)
@@ -1491,7 +1491,7 @@ def upload_field():
             product_name = [value for value, in product_name]
             for i in product_name:
                 product_name1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(product_name1)
+                app.config["ENCRYPTED_FIELDS"].append("Product.product_name")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(product_name1)
             # print(product_name)
@@ -1499,7 +1499,7 @@ def upload_field():
             product_description = [value for value, in product_description]
             for i in product_description:
                 product_description1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(product_description1)
+                app.config["ENCRYPTED_FIELDS"].append("Product.description")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(product_description1)
             # print(product_description)
@@ -1507,7 +1507,7 @@ def upload_field():
             image = [value for value, in image]
             for i in image:
                 image1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(image1)
+                app.config["ENCRYPTED_FIELDS"].append("Product.image")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(image1)
             # print(image)
@@ -1515,7 +1515,7 @@ def upload_field():
             price = [value for value, in price]
             for i in price:
                 price1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(price1)
+                app.config["ENCRYPTED_FIELDS"].append("Product.price")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(price1)
             # print(price)
@@ -1523,7 +1523,7 @@ def upload_field():
             product_quantity = [value for value, in product_quantity]
             for i in product_quantity:
                 product_quantity1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(product_quantity1)
+                app.config["ENCRYPTED_FIELDS"].append("Product.quantity")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(product_quantity1)
             # print(product_quantity)
@@ -1531,7 +1531,7 @@ def upload_field():
             deleted = [value for value, in deleted]
             for i in deleted:
                 deleted1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(deleted1)
+                app.config["ENCRYPTED_FIELDS"].append("Product.deleted")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(deleted1)
             # print(deleted)
@@ -1548,7 +1548,7 @@ def upload_field():
             review_user_id = [value for value, in review_user_id]
             for i in review_user_id:
                 review_user_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(review_user_id1)
+                app.config["ENCRYPTED_FIELDS"].append("Review.user_id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(review_user_id1)
             # print(review_user_id)
@@ -1556,7 +1556,7 @@ def upload_field():
             review_product_id = [value for value, in review_product_id]
             for i in review_product_id:
                 review_product_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(review_product_id1)
+                app.config["ENCRYPTED_FIELDS"].append("Review.product_id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(review_product_id1)
             # print(review_product_id)
@@ -1564,7 +1564,7 @@ def upload_field():
             rating = [value for value, in rating]
             for i in rating:
                 rating1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(rating1)
+                app.config["ENCRYPTED_FIELDS"].append("Review.rating")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(rating1)
             # print(rating)
@@ -1572,7 +1572,7 @@ def upload_field():
             contents = [value for value, in contents]
             for i in contents:
                 contents1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(contents1)
+                app.config["ENCRYPTED_FIELDS"].append("Review.contents")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(contents1)
             # print(contents)
@@ -1580,7 +1580,7 @@ def upload_field():
             review_product = [value for value, in review_product]
             for i in review_product:
                 review_product1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(review_product1)
+                app.config["ENCRYPTED_FIELDS"].append("Review.product")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(review_product1)
             # print(review_product)
@@ -1602,7 +1602,7 @@ def upload_field():
             order_id = [value for value, in order_id]
             for i in order_id:
                 order_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(order_id1)
+                app.config["ENCRYPTED_FIELDS"].append("OrderProduct.order_id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(order_id1)
             # print(order_id)
@@ -1610,7 +1610,7 @@ def upload_field():
             order_product_id = [value for value, in order_product_id]
             for i in order_product_id:
                 order_product_id1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(order_product_id1)
+                app.config["ENCRYPTED_FIELDS"].append("OrderProduct.product_id")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(order_product_id1)
             # print(order_product_id)
@@ -1618,7 +1618,7 @@ def upload_field():
             order_quantity = [value for value, in order_quantity]
             for i in order_quantity:
                 order_quantity1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(order_quantity1)
+                app.config["ENCRYPTED_FIELDS"].append("OrderProduct.quantity")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(order_quantity1)
             # print(order_quantity)
@@ -1626,7 +1626,7 @@ def upload_field():
             order_product = [value for value, in order_product]
             for i in order_product:
                 order_product1 = encrypt(str(i), KEY)
-                app.config["ENCRYPTED_FIELDS"].append(order_product1)
+                app.config["ENCRYPTED_FIELDS"].append("OrderProduct.product")
                 print(app.config["ENCRYPTED_FIELDS"])
                 # print(order_product1)
             # print(order_product)
