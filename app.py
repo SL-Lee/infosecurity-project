@@ -1109,19 +1109,11 @@ def upload_field():
         User.username,
         User.email,
         User.password,
-        User.date_created,
-        User.status,
-        User.roles,
-        User.reviews,
-        User.orders,
-        User.credit_cards,
-        User.addresses,
     ]
     form.role.choices = [None, Role.name, Role.description]
     form.credit_card.choices = [
         None,
         CreditCard.card_number,
-        CreditCard.expiry,
         CreditCard.iv,
     ]
     form.address.choices = [
@@ -1136,20 +1128,16 @@ def upload_field():
         Product.product_name,
         Product.description,
         Product.image,
-        Product.price,
         Product.quantity,
-        Product.deleted,
     ]
     form.review.choices = [
         None,
         Review.rating,
         Review.contents,
-        Review.product,
     ]
     form.order.choices = [
         None,
         OrderProduct.quantity,
-        OrderProduct.product,
     ]
 
     if request.method == "POST":
@@ -1169,41 +1157,6 @@ def upload_field():
                 user.password = encrypt(str(user.password), KEY)
                 client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("User.password")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.user.data == "User.date_created":
-                user.date_created = encrypt(str(user.date_created), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("User.date_created")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.user.data == "User.status":
-                user.status = encrypt(str(user.status), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("User.status")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.user.data == "User.roles":
-                user.roles = encrypt(str(user.roles), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("User.roles")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.user.data == "User.reviews":
-                user.reviews = encrypt(str(user.reviews), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("User.reviews")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.user.data == "User.orders":
-                user.orders = encrypt(str(user.orders), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("User.orders")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.user.data == "User.credit_cards":
-                user.credit_cards = encrypt(str(user.credit_cards), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("User.credit_cards")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.user.data == "User.addresses":
-                user.addresses = encrypt(str(user.addresses), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("User.addresses")
                 # print(app.config["ENCRYPTED_FIELDS"])
             else:
                 print("not found")
@@ -1230,11 +1183,6 @@ def upload_field():
                 client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("CreditCard.card_number")
                 # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.credit_card.data == "CreditCard.expiry":
-                credit.expiry = encrypt(str(credit.expiry), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("CreditCard.expiry")
-                print(app.config["ENCRYPTED_FIELDS"])
             elif form.credit_card.data == "CreditCard.iv":
                 credit.iv = encrypt(str(credit.iv), KEY)
                 client_db.session.commit()
@@ -1285,20 +1233,10 @@ def upload_field():
                 client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Product.image")
                 # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.product.data == "Product.price":
-                product.price = encrypt(str(product.price), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("Product.price")
-                # print(app.config["ENCRYPTED_FIELDS"])
             elif form.product.data == "Product.quantity":
                 product.quantity = encrypt(str(product.quantity), KEY)
                 client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Product.quantity")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.product.data == "Product.deleted":
-                product.deleted = encrypt(str(product.deleted), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("Product.deleted")
                 # print(app.config["ENCRYPTED_FIELDS"])
             else:
                 print("not found")
@@ -1315,11 +1253,6 @@ def upload_field():
                 client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("Review.contents")
                 # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.review.data == "Review.product":
-                review.product = encrypt(str(review.product), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("Review.product")
-                # print(app.config["ENCRYPTED_FIELDS"])
             else:
                 print("not found")
 
@@ -1329,11 +1262,6 @@ def upload_field():
                 order.quantity = encrypt(str(order.quantity), KEY)
                 client_db.session.commit()
                 app.config["ENCRYPTED_FIELDS"].append("OrderProduct.quantity")
-                # print(app.config["ENCRYPTED_FIELDS"])
-            elif form.order.data == "OrderProduct.product":
-                order.product = encrypt(str(order.product), KEY)
-                client_db.session.commit()
-                app.config["ENCRYPTED_FIELDS"].append("OrderProduct.product")
                 # print(app.config["ENCRYPTED_FIELDS"])
             else:
                 print("not found")
