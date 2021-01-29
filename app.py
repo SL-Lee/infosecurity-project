@@ -1103,14 +1103,11 @@ def upload_field():
         User.username,
         User.email,
         User.password,
-        User.date_created,
-        User.status,
     ]
     form.role.choices = [None, Role.name, Role.description]
     form.credit_card.choices = [
         None,
         CreditCard.card_number,
-        CreditCard.expiry,
         CreditCard.iv,
     ]
     form.address.choices = [
@@ -1125,9 +1122,7 @@ def upload_field():
         Product.product_name,
         Product.description,
         Product.image,
-        Product.price,
         Product.quantity,
-        Product.deleted,
     ]
     form.review.choices = [None, Review.rating, Review.contents]
     form.order.choices = [None, OrderProduct.quantity]
@@ -1172,22 +1167,6 @@ def upload_field():
                     encrypted_fields["User"].append("password")
 
                 # print(encrypted_fields)
-            elif form.user.data == "User.date_created":
-                user.date_created = encrypt(str(user.date_created), KEY)
-                client_db.session.commit()
-
-                if "date_created" not in encrypted_fields["User"]:
-                    encrypted_fields["User"].append("date_created")
-
-                # print(encrypted_fields)
-            elif form.user.data == "User.status":
-                user.status = encrypt(str(user.status), KEY)
-                client_db.session.commit()
-
-                if "status" not in encrypted_fields["User"]:
-                    encrypted_fields["User"].append("status")
-
-                # print(encrypted_fields)
             else:
                 print("not found")
 
@@ -1213,25 +1192,19 @@ def upload_field():
                 print("not found")
 
         # Credit Card Class
-        for credit in CreditCard.query.all():
+        for credit_card in CreditCard.query.all():
             if form.credit_card.data == "CreditCard.card_number":
-                credit.card_number = encrypt(str(credit.card_number), KEY)
+                credit_card.card_number = encrypt(
+                    str(credit_card.card_number), KEY
+                )
                 client_db.session.commit()
 
                 if "card_number" not in encrypted_fields["CreditCard"]:
                     encrypted_fields["CreditCard"].append("card_number")
 
                 # print(encrypted_fields)
-            elif form.credit_card.data == "CreditCard.expiry":
-                credit.expiry = encrypt(str(credit.expiry), KEY)
-                client_db.session.commit()
-
-                if "expiry" not in encrypted_fields["CreditCard"]:
-                    encrypted_fields["CreditCard"].append("expiry")
-
-                # print(encrypted_fields)
             elif form.credit_card.data == "CreditCard.iv":
-                credit.iv = encrypt(str(credit.iv), KEY)
+                credit_card.iv = encrypt(str(credit_card.iv), KEY)
                 client_db.session.commit()
 
                 if "iv" not in encrypted_fields["CreditCard"]:
@@ -1304,28 +1277,12 @@ def upload_field():
                     encrypted_fields["Product"].append("image")
 
                 # print(encrypted_fields)
-            elif form.product.data == "Product.price":
-                product.price = encrypt(str(product.price), KEY)
-                client_db.session.commit()
-
-                if "price" not in encrypted_fields["Product"]:
-                    encrypted_fields["Product"].append("price")
-
-                # print(encrypted_fields)
             elif form.product.data == "Product.quantity":
                 product.quantity = encrypt(str(product.quantity), KEY)
                 client_db.session.commit()
 
                 if "quantity" not in encrypted_fields["Product"]:
                     encrypted_fields["Product"].append("quantity")
-
-                # print(encrypted_fields)
-            elif form.product.data == "Product.deleted":
-                product.deleted = encrypt(str(product.deleted), KEY)
-                client_db.session.commit()
-
-                if "deleted" not in encrypted_fields["Product"]:
-                    encrypted_fields["Product"].append("deleted")
 
                 # print(encrypted_fields)
             else:
