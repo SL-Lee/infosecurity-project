@@ -1,6 +1,42 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, RadioField, StringField, SubmitField
+from wtforms import (
+    IntegerField,
+    PasswordField,
+    RadioField,
+    SelectField,
+    SelectMultipleField,
+    StringField,
+    SubmitField,
+)
 from wtforms.validators import InputRequired, Length, Optional
+
+
+class OnboardingBackupForm(FlaskForm):
+    source = StringField(
+        "Database Source",
+        [Length(max=260), InputRequired()],
+        render_kw={"value": ".\client_db.sqlite3", "readonly": True},
+    )
+    interval = IntegerField(
+        "Interval",
+        [InputRequired()],
+        render_kw={
+            "placeholder": (
+                "Please select the interval type and enter the duration"
+            )
+        },
+    )
+    interval_type = RadioField(
+        "Interval Type",
+        choices=[
+            ("min", "Minute"),
+            ("hr", "Hour"),
+            ("d", "Day"),
+            ("wk", "Week"),
+            ("mth", "Month"),
+        ],
+        default="wk",
+    )
 
 
 class BackupFirstForm(FlaskForm):
@@ -73,3 +109,35 @@ class WhitelistForm(FlaskForm):
     ip_address = StringField(
         "IP address", [InputRequired(), Length(min=7, max=15)]
     )
+
+
+class LoginForm(FlaskForm):
+    username = StringField("Username", [InputRequired(), Length(max=32)])
+    password = PasswordField(
+        "Password", [InputRequired(), Length(min=8, max=32)]
+    )
+
+
+class CreateUserForm(FlaskForm):
+    username = StringField("Username", [InputRequired(), Length(max=32)])
+    password = PasswordField(
+        "Password", [InputRequired(), Length(min=8, max=32)]
+    )
+    permissions = SelectMultipleField("Permissions", [InputRequired()])
+
+
+class CreateAdminUserForm(FlaskForm):
+    username = StringField("Username", [InputRequired(), Length(max=32)])
+    password = PasswordField(
+        "Password", [InputRequired(), Length(min=8, max=32)]
+    )
+
+
+class ChoiceForm(FlaskForm):
+    user = SelectField("user", choices=[], default="None")
+    role = SelectField("role", choices=[], default="None")
+    credit_card = SelectField("credit_card", choices=[], default="None")
+    address = SelectField("address", choices=[], default="None")
+    product = SelectField("product", choices=[], default="None")
+    review = SelectField("review", choices=[], default="None")
+    order = SelectField("order", choices=[], default="None")
