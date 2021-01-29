@@ -64,7 +64,7 @@ Use `camelCase` for most names, except:
 
 You **DO NOT** use `snake_case` in JavaScript.
 
-### CSS (e.g. `background-color`), HTML attribute names and values (e.g. `<button data-target="#generate-new-api-key-prompt">Generate New API Key</button>`), and URLs (e.g. `/api/key-management`)
+#### CSS (e.g. `background-color`), HTML attribute names and values (e.g. `<button data-target="#generate-new-api-key-prompt">Generate New API Key</button>`), and URLs (e.g. `/api/key-management`)
 
 Use `kebab-case` for all names.
 
