@@ -7,6 +7,8 @@ from wtforms import (
     SelectMultipleField,
     StringField,
     SubmitField,
+    DateField,
+    validators,
 )
 from wtforms.validators import InputRequired, Length, Optional
 
@@ -99,10 +101,20 @@ class BackupForm(FlaskForm):
     update = SubmitField("Backup & Update Settings")
 
 
+# Leave the comma after Optional, else it will not work
+class RequestFilter(FlaskForm):
+    query = StringField("Search", [Length(min=1, max=100), Optional()])
+    alert_level = SelectField("Alert Level", [InputRequired()], choices=[("None", "None"), ("High", "High"), ("Medium", "Medium"), ("Low", "Low")])
+    date = DateField("Date", format='%Y-%m-%d', validators=(validators.Optional(),))
+
+
 class SensitiveFieldForm(FlaskForm):
     sensitive_field = StringField(
         "Sensitive Field", [InputRequired(), Length(min=1, max=100)]
     )
+    action = SelectField("Action taken when conditions meet", [InputRequired()], choices=[("deny_and_alert", "Deny and Alert"), ("alert_only", "Alert Only")])
+    occurrence_threshold = IntegerField("Occurrence Threshold", [InputRequired()])
+    alert_level = SelectField("Alert Level", [InputRequired()], choices=[("High", "High"), ("Medium", "Medium"), ("Low", "Low")])
 
 
 class WhitelistForm(FlaskForm):

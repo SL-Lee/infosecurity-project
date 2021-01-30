@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import shelve
+import re
 from functools import wraps
 from urllib.parse import urlparse, urljoin
 
@@ -44,16 +45,31 @@ def validate_api_key(given_api_key):
     raise InvalidAPIKeyError
 
 
-def log_request(alert_level, status, status_msg, request_params, response):
+def log_request(alert_level, status, status_msg, request_params, response, ip_address):
     logged_request = Request(
         datetime=datetime.datetime.now(),
         status=status,
         status_msg=status_msg,
         request_params=request_params,
         response=response,
+        ip_address=ip_address,
     )
     logged_alert = Alert(request=logged_request, alert_level=alert_level)
     return logged_request, logged_alert
+
+
+def request_filter(alerts, date, query):
+    alert_list = list()
+    for i in alerts:
+        if date == str(i.request.datetime.date()) or date == "<date>" or date == "None":
+            if query != "<query>":
+                search_list = i.alert_level, i.request.id, str(i.request.datetime), i.request.ip_address, i.request.status, i.request.status_msg, i.request.request_params, i.request.response
+                query_count = re.findall(query, str(search_list))
+                if len(query_count) >= 1:
+                    alert_list.append(i)
+            else:
+                alert_list.append(i)
+    return alert_list
 
 
 def required_permissions(*required_permission_names):
