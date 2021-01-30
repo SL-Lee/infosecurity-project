@@ -1015,6 +1015,7 @@ def delete_sensitive_fields(field):
 @required_permissions("manage_encrypted_files")
 def upload_file():
     if request.method == "POST":
+        encrypt_key = get_config_value("encrypt-key")
         # check if the post request has the file part
         if "file" not in request.files:
             print("no file")
@@ -1033,20 +1034,22 @@ def upload_file():
         file.save(os.path.join("uploads/", filename))
 
         if "encrypt" in request.form:
-            encrypt_file(os.path.join("uploads/", filename), KEY)
+            encrypt_file(os.path.join("uploads/", filename), encrypt_key)
             print("saved file successfully")
             # delete uploaded file
             os.remove(os.path.join("uploads/", filename))
+            print(get_config_value("encrypt-key"))
             # send file name as parameter to download
             return redirect("/download-file/" + filename + ".enc")
 
         if "decrypt" in request.form:
-            decrypt_file(os.path.join("uploads/", filename), KEY)
+            decrypt_file(os.path.join("uploads/", filename), encrypt_key)
             print("saved file2 successfully")
             os.remove(os.path.join("uploads/", filename))
+            print(get_config_value("encrypt-key"))
             # send file name as parameter to download
             return redirect("/download-file2/" + filename[:-4] + ".dec")
-
+    set_config_value("encrypt-key", b"encrypted__files")
     return render_template("upload-file.html")
 
 
@@ -1128,6 +1131,7 @@ def upload_field():
     form.order.choices = [None, OrderProduct.quantity]
 
     if request.method == "POST":
+        encrypt_key = get_config_value("encrypt-key")
         encrypted_fields = get_config_value(
             "encrypted-fields",
             {
@@ -1144,15 +1148,15 @@ def upload_field():
         # User class
         for user in User.query.all():
             if form.user.data == "User.username":
-                user.username = encrypt(str(user.username), KEY)
+                user.username = encrypt(str(user.username), encrypt_key)
                 client_db.session.commit()
 
                 if "username" not in encrypted_fields["User"]:
                     encrypted_fields["User"].append("username")
-
+                print(get_config_value("encrypt-key"))
                 # print(encrypted_fields)
             elif form.user.data == "User.email":
-                user.email = encrypt(str(user.email), KEY)
+                user.email = encrypt(str(user.email), encrypt_key)
                 client_db.session.commit()
 
                 if "email" not in encrypted_fields["User"]:
@@ -1160,7 +1164,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.user.data == "User.password":
-                user.password = encrypt(str(user.password), KEY)
+                user.password = encrypt(str(user.password), encrypt_key)
                 client_db.session.commit()
 
                 if "password" not in encrypted_fields["User"]:
@@ -1173,7 +1177,7 @@ def upload_field():
         # Role class
         for role in Role.query.all():
             if form.role.data == "Role.name":
-                role.name = encrypt(str(role.name), KEY)
+                role.name = encrypt(str(role.name), encrypt_key)
                 client_db.session.commit()
 
                 if "name" not in encrypted_fields["Role"]:
@@ -1181,7 +1185,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.role.data == "Role.description":
-                role.description = encrypt(str(role.description), KEY)
+                role.description = encrypt(str(role.description), encrypt_key)
                 client_db.session.commit()
 
                 if "description" not in encrypted_fields["Role"]:
@@ -1195,7 +1199,7 @@ def upload_field():
         for credit_card in CreditCard.query.all():
             if form.credit_card.data == "CreditCard.card_number":
                 credit_card.card_number = encrypt(
-                    str(credit_card.card_number), KEY
+                    str(credit_card.card_number), encrypt_key
                 )
                 client_db.session.commit()
 
@@ -1204,7 +1208,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.credit_card.data == "CreditCard.iv":
-                credit_card.iv = encrypt(str(credit_card.iv), KEY)
+                credit_card.iv = encrypt(str(credit_card.iv), encrypt_key)
                 client_db.session.commit()
 
                 if "iv" not in encrypted_fields["CreditCard"]:
@@ -1217,7 +1221,7 @@ def upload_field():
         # Address Class
         for address in Address.query.all():
             if form.address.data == "Address.address":
-                address.address = encrypt(str(address.address), KEY)
+                address.address = encrypt(str(address.address), encrypt_key)
                 client_db.session.commit()
 
                 if "address" not in encrypted_fields["Address"]:
@@ -1225,7 +1229,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.address.data == "Address.zip_code":
-                address.zip_code = encrypt(str(address.zip_code), KEY)
+                address.zip_code = encrypt(str(address.zip_code), encrypt_key)
                 client_db.session.commit()
 
                 if "zip_code" not in encrypted_fields["Address"]:
@@ -1233,7 +1237,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.address.data == "Address.city":
-                address.city = encrypt(str(address.city), KEY)
+                address.city = encrypt(str(address.city), encrypt_key)
                 client_db.session.commit()
 
                 if "city" not in encrypted_fields["Address"]:
@@ -1241,7 +1245,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.address.data == "Address.state":
-                address.state = encrypt(str(address.state), KEY)
+                address.state = encrypt(str(address.state), encrypt_key)
                 client_db.session.commit()
 
                 if "state" not in encrypted_fields["Address"]:
@@ -1254,7 +1258,7 @@ def upload_field():
         # Product Class
         for product in Product.query.all():
             if form.product.data == "Product.product_name":
-                product.product_name = encrypt(str(product.product_name), KEY)
+                product.product_name = encrypt(str(product.product_name), encrypt_key)
                 client_db.session.commit()
 
                 if "product_name" not in encrypted_fields["Product"]:
@@ -1262,7 +1266,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.product.data == "Product.description":
-                product.description = encrypt(str(product.description), KEY)
+                product.description = encrypt(str(product.description), encrypt_key)
                 client_db.session.commit()
 
                 if "description" not in encrypted_fields["Product"]:
@@ -1270,7 +1274,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.product.data == "Product.image":
-                product.image = encrypt(str(product.image), KEY)
+                product.image = encrypt(str(product.image), encrypt_key)
                 client_db.session.commit()
 
                 if "image" not in encrypted_fields["Product"]:
@@ -1278,7 +1282,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.product.data == "Product.quantity":
-                product.quantity = encrypt(str(product.quantity), KEY)
+                product.quantity = encrypt(str(product.quantity), encrypt_key)
                 client_db.session.commit()
 
                 if "quantity" not in encrypted_fields["Product"]:
@@ -1291,7 +1295,7 @@ def upload_field():
         # Review Class
         for review in Review.query.all():
             if form.review.data == "Review.rating":
-                review.rating = encrypt(str(review.rating), KEY)
+                review.rating = encrypt(str(review.rating), encrypt_key)
                 client_db.session.commit()
 
                 if "rating" not in encrypted_fields["Review"]:
@@ -1299,7 +1303,7 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.review.data == "Review.contents":
-                review.contents = encrypt(str(review.contents), KEY)
+                review.contents = encrypt(str(review.contents), encrypt_key)
                 client_db.session.commit()
 
                 if "contents" not in encrypted_fields["Review"]:
@@ -1312,7 +1316,7 @@ def upload_field():
         # Order Product Class
         for order in OrderProduct.query.all():
             if form.order.data == "OrderProduct.quantity":
-                order.quantity = encrypt(str(order.quantity), KEY)
+                order.quantity = encrypt(str(order.quantity), encrypt_key)
                 client_db.session.commit()
 
                 if "quantity" not in encrypted_fields["OrderProduct"]:
@@ -1323,6 +1327,7 @@ def upload_field():
                 print("not found")
 
         set_config_value("encrypted-fields", encrypted_fields)
+        set_config_value("encrypt-key", b'encrypted_fields')
         return redirect(url_for("index"))
 
     return render_template("upload-field.html", form=form)
