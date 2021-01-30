@@ -958,7 +958,11 @@ def get_requests(query, alert_level, date):
     if request.method == "POST" and form.validate():
         if form.query.data == "":
             form.query.data = "<query>"
-        return redirect("/requests/{}/{}/{}".format(form.alert_level.data, form.date.data, form.query.data))
+        return redirect(
+            "/requests/{}/{}/{}".format(
+                form.alert_level.data, form.date.data, form.query.data
+            )
+        )
 
     # Filter alert list according to alert_level
     if alert_level == "None":
@@ -980,7 +984,6 @@ def get_requests(query, alert_level, date):
     )
 
 
-
 # Configure Sensitive Fields
 @app.route("/sensitive-fields", methods=["GET"])
 @required_permissions("manage_sensitive_fields")
@@ -997,7 +1000,12 @@ def add_sensitive_fields():
     form = forms.SensitiveFieldForm(request.form)
 
     if request.method == "POST" and form.validate():
-        rule = Rule(contents=form.sensitive_field.data, action=form.action.data, alert_level=form.alert_level.data, occurrence_threshold=form.occurrence_threshold.data)
+        rule = Rule(
+            contents=form.sensitive_field.data,
+            action=form.action.data,
+            alert_level=form.alert_level.data,
+            occurrence_threshold=form.occurrence_threshold.data,
+        )
         server_db.session.add(rule)
         server_db.session.commit()
 
@@ -1286,7 +1294,9 @@ def upload_field():
         # Product Class
         for product in Product.query.all():
             if form.product.data == "Product.product_name":
-                product.product_name = encrypt(str(product.product_name), encrypt_key)
+                product.product_name = encrypt(
+                    str(product.product_name), encrypt_key
+                )
                 client_db.session.commit()
 
                 if "product_name" not in encrypted_fields["Product"]:
@@ -1294,7 +1304,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.product.data == "Product.description":
-                product.description = encrypt(str(product.description), encrypt_key)
+                product.description = encrypt(
+                    str(product.description), encrypt_key
+                )
                 client_db.session.commit()
 
                 if "description" not in encrypted_fields["Product"]:
@@ -1355,7 +1367,7 @@ def upload_field():
                 print("not found")
 
         set_config_value("encrypted-fields", encrypted_fields)
-        set_config_value("encrypt-key", b'encrypted_fields')
+        set_config_value("encrypt-key", b"encrypted_fields")
         return redirect(url_for("index"))
 
     return render_template("upload-field.html", form=form)
@@ -1969,7 +1981,11 @@ class Database(Resource):
                     if len(pattern_occurrence_count) > i.occurrence_threshold:
                         print("exceed")
                         if i.action == "deny_and_alert":
-                            status, status_msg, status_code = "ERROR", "Denied", 403
+                            status, status_msg, status_code = (
+                                "ERROR",
+                                "Denied",
+                                403,
+                            )
                             logged_request, logged_alert = log_request(
                                 alert_level=i.alert_level,
                                 status=status,
@@ -1986,7 +2002,11 @@ class Database(Resource):
                                 "status_msg": status_msg,
                             }, status_code
                         else:
-                            status, status_msg, status_code = "OK", "Sensitive Field Triggered - " + i.contents, 200
+                            status, status_msg, status_code = (
+                                "OK",
+                                "Sensitive Field Triggered - " + i.contents,
+                                200,
+                            )
                             logged_request, logged_alert = log_request(
                                 alert_level=i.alert_level,
                                 status=status,
