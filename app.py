@@ -40,6 +40,7 @@ from helper_functions import (
     get_config_value,
     is_safe_url,
     log_request,
+    request_filter,
     required_permissions,
     set_config_value,
     validate_api_key,
@@ -949,14 +950,35 @@ def delete_whitelist(field):
 
 
 # Requests
-@app.route("/requests/filter=<field>", methods=["GET"])
+@app.route("/requests/<alert_level>/<date>/<query>", methods=["GET", "POST"])
 @required_permissions("view_logged_requests")
-def get_requests(field):
-    alerts = Alert.query.all()
-    request_filter = field
+def get_requests(query, alert_level, date):
+    form = forms.RequestFilter(request.form)
+
+    if request.method == "POST" and form.validate():
+        if form.query.data == "":
+            form.query.data = "<query>"
+        return redirect("/requests/{}/{}/{}".format(form.alert_level.data, form.date.data, form.query.data))
+
+    # Filter alert list according to alert_level
+    if alert_level == "None":
+        alerts = Alert.query.all()
+    else:
+        alerts = Alert.query.filter_by(alert_level=alert_level).all()
+    alert_list = request_filter(alerts, date, query)
+
+    form.alert_level.data = alert_level
+
+    # if query is empty, display in form empty string
+    if query == "<query>":
+        form.query.data = ""
+    else:
+        form.query.data = query
+
     return render_template(
-        "requests.html", alerts=alerts, filter=request_filter
+        "requests.html", alerts=alert_list, filter=alert_level, form=form
     )
+
 
 
 # Configure Sensitive Fields
@@ -964,7 +986,6 @@ def get_requests(field):
 @required_permissions("manage_sensitive_fields")
 def get_sensitive_fields():
     sensitive_fields = Rule.query.all()
-
     return render_template(
         "sensitive-fields.html", sensitive_fields=sensitive_fields
     )
@@ -976,7 +997,7 @@ def add_sensitive_fields():
     form = forms.SensitiveFieldForm(request.form)
 
     if request.method == "POST" and form.validate():
-        rule = Rule(contents=form.sensitive_field.data)
+        rule = Rule(contents=form.sensitive_field.data, action=form.action.data, alert_level=form.alert_level.data, occurrence_threshold=form.occurrence_threshold.data)
         server_db.session.add(rule)
         server_db.session.commit()
 
@@ -993,9 +1014,16 @@ def update_sensitive_fields(field):
 
     if request.method == "POST" and form.validate():
         rule.contents = form.sensitive_field.data
+        rule.action = form.action.data
+        rule.alert_level = form.alert_level.data
+        rule.occurrence_threshold = form.occurrence_threshold.data
         server_db.session.commit()
 
         return redirect(url_for("get_sensitive_fields"))
+
+    form.sensitive_field.data = rule.contents
+    form.action.data = rule.action
+    form.occurrence_threshold.data = rule.occurrence_threshold
 
     return render_template("sensitive-fields-update.html", form=form, rule=rule)
 
@@ -1721,16 +1749,17 @@ class Database(Resource):
     def post(self):
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
+        args = self.post_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
-            args = self.post_parser.parse_args()
         except:
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status="ERROR",
                 status_msg="Authentication Failed",
                 request_params="",
                 response="",
+                ip_address=args["ip"],
             )
             server_db.session.add(logged_alert)
             server_db.session.add(logged_request)
@@ -1783,11 +1812,12 @@ class Database(Resource):
             serialized_created_object = schema.dump(created_object)
             status, status_msg, status_code = "OK", "OK", 200
             logged_request, logged_alert = log_request(
-                alert_level="low",
+                alert_level="Low",
                 status=status,
                 status_msg=status_msg,
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
+                ip_address=args["ip"],
             )
         except marshmallow.exceptions.ValidationError:
             serialized_created_object = None
@@ -1797,11 +1827,12 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
+                ip_address=args["ip"],
             )
         except (NameError, SyntaxError):
             serialized_created_object = None
@@ -1811,11 +1842,12 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
+                ip_address=args["ip"],
             )
         except sqlalchemy.exc.IntegrityError:
             serialized_created_object = None
@@ -1825,11 +1857,12 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
+                ip_address=args["ip"],
             )
         except:
             serialized_created_object = None
@@ -1839,11 +1872,12 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=f"Model: {args['model']}",
                 response=str(args["object"]),
+                ip_address=args["ip"],
             )
         finally:
             server_db.session.add(logged_alert)
@@ -1864,16 +1898,17 @@ class Database(Resource):
     def get(self):
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
+        args = self.get_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
-            args = self.get_parser.parse_args()
         except:
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status="ERROR",
                 status_msg="Authentication Failed",
                 request_params="",
                 response="",
+                ip_address=args["ip"],
             )
             server_db.session.add(logged_alert)
             server_db.session.add(logged_request)
@@ -1916,43 +1951,65 @@ class Database(Resource):
 
             sensitive_fields = Rule.query.all()
             whitelist = get_config_value("whitelist")
-
             if args.get("ip") not in whitelist:
                 for i in sensitive_fields:
                     pattern = f"'{i.contents}',"
                     pattern_occurrence_count = re.findall(
                         pattern, str(query_results)
                     )
-
+                    print(i.action)
                     # If pattern occurs more than once, that means there is
                     # more than 1 occurrence of sensitive data, so deny this
                     # request and log it as a high alert
-                    if len(pattern_occurrence_count) > 1:
-                        status, status_msg, status_code = "ERROR", "Denied", 403
-                        logged_request, logged_alert = log_request(
-                            alert_level="high",
-                            status=status,
-                            status_msg=status_msg,
-                            request_params=(
-                                f"Model: {args['model']}, Filter: "
-                                f"{args['filter']}"
-                            ),
-                            response=str(query_results),
-                        )
-                        return {
-                            "status": status,
-                            "status_msg": status_msg,
-                        }, status_code
+                    if len(pattern_occurrence_count) > i.occurrence_threshold:
+                        print("exceed")
+                        if i.action == "deny_and_alert":
+                            status, status_msg, status_code = "ERROR", "Denied", 403
+                            logged_request, logged_alert = log_request(
+                                alert_level=i.alert_level,
+                                status=status,
+                                status_msg=status_msg,
+                                request_params=(
+                                    f"Model: {args['model']}, Filter: "
+                                    f"{args['filter']}"
+                                ),
+                                response=str(query_results),
+                                ip_address=args["ip"],
+                            )
+                            return {
+                                "status": status,
+                                "status_msg": status_msg,
+                            }, status_code
+                        else:
+                            status, status_msg, status_code = "OK", "Sensitive Field Triggered - " + i.contents, 200
+                            logged_request, logged_alert = log_request(
+                                alert_level=i.alert_level,
+                                status=status,
+                                status_msg=status_msg,
+                                request_params=(
+                                    f"Model: {args['model']}, Filter: "
+                                    f"{args['filter']}"
+                                ),
+                                response=str(query_results),
+                                ip_address=args["ip"],
+                            )
+                            # need a diff return statement as this is alert only, so request should still be allowed
+                            return {
+                                "status": status,
+                                "status_msg": status_msg,
+                                "query_results": query_results,
+                            }, status_code
 
             status, status_msg, status_code = "OK", "OK", 200
             logged_request, logged_alert = log_request(
-                alert_level="low",
+                alert_level="Low",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response=str(query_results),
+                ip_address=args["ip"],
             )
         except (
             sqlalchemy.exc.InvalidRequestError,
@@ -1967,13 +2024,14 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response=str(query_results),
+                ip_address=args["ip"],
             )
         except:
             query_results = None
@@ -1983,13 +2041,14 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response=str(query_results),
+                ip_address=args["ip"],
             )
         finally:
             server_db.session.add(logged_request)
@@ -2009,16 +2068,17 @@ class Database(Resource):
     def patch(self):
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
+        args = self.patch_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
-            args = self.patch_parser.parse_args()
         except:
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status="ERROR",
                 status_msg="Authentication Failed",
                 request_params="",
                 response="",
+                ip_address=args["ip"],
             )
             server_db.session.add(logged_alert)
             server_db.session.add(logged_request)
@@ -2065,13 +2125,14 @@ class Database(Resource):
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
             logged_request, logged_alert = log_request(
-                alert_level="low",
+                alert_level="Low",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response=str(args["values"]),
+                ip_address=args["ip"],
             )
         except (
             NameError,
@@ -2085,13 +2146,14 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response=str(args["values"]),
+                ip_address=args["ip"],
             )
         except:
             status, status_msg, status_code = (
@@ -2100,13 +2162,14 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response=str(args["values"]),
+                ip_address=args["ip"],
             )
 
         server_db.session.add(logged_alert)
@@ -2121,16 +2184,17 @@ class Database(Resource):
     def delete(self):
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
+        args = self.delete_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
-            args = self.delete_parser.parse_args()
         except:
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status="ERROR",
                 status_msg="Authentication Failed",
                 request_params="",
                 response="",
+                ip_address=args["ip"],
             )
             server_db.session.add(logged_alert)
             server_db.session.add(logged_request)
@@ -2147,13 +2211,14 @@ class Database(Resource):
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
             logged_request, logged_alert = log_request(
-                alert_level="low",
+                alert_level="Low",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response="",
+                ip_address=args["ip"],
             )
         except (NameError, sqlalchemy.exc.InvalidRequestError, SyntaxError):
             status, status_msg, status_code = (
@@ -2162,13 +2227,14 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response="",
+                ip_address=args["ip"],
             )
         except:
             status, status_msg, status_code = (
@@ -2177,13 +2243,14 @@ class Database(Resource):
                 400,
             )
             logged_request, logged_alert = log_request(
-                alert_level="medium",
+                alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
                 request_params=(
                     f"Model: {args['model']}, Filter: {args['filter']}"
                 ),
                 response="",
+                ip_address=args["ip"],
             )
 
         server_db.session.add(logged_alert)
