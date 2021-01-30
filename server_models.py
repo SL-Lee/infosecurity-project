@@ -48,6 +48,7 @@ class Request(server_db.Model):
     __bind_key__ = "server"
     id = server_db.Column(server_db.Integer, primary_key=True)
     datetime = server_db.Column(server_db.DateTime, nullable=False)
+    ip_address = server_db.Column(server_db.String(15), nullable=False)
     status = server_db.Column(server_db.String(10), nullable=False)
     status_msg = server_db.Column(server_db.String(100), nullable=False)
     request_params = server_db.Column(
@@ -61,6 +62,9 @@ class Rule(server_db.Model):
     __bind_key__ = "server"
     id = server_db.Column(server_db.Integer, primary_key=True)
     contents = server_db.Column(server_db.String(100), nullable=False)
+    action = server_db.Column(server_db.String(100), nullable=False)
+    alert_level = server_db.Column(server_db.String(6), nullable=False)
+    occurrence_threshold = server_db.Column(server_db.Integer, nullable=False)
 
 
 class Alert(server_db.Model):
