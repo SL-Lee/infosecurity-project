@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import (
+    DateField,
     IntegerField,
     PasswordField,
     RadioField,
@@ -7,7 +8,6 @@ from wtforms import (
     SelectMultipleField,
     StringField,
     SubmitField,
-    DateField,
     validators,
 )
 from wtforms.validators import InputRequired, Length, Optional
@@ -17,7 +17,7 @@ class OnboardingBackupForm(FlaskForm):
     source = StringField(
         "Database Source",
         [Length(max=260), InputRequired()],
-        render_kw={"value": ".\client_db.sqlite3", "readonly": True},
+        render_kw={"value": ".\\client_db.sqlite3", "readonly": True},
     )
     interval = IntegerField(
         "Interval",

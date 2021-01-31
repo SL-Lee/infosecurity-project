@@ -1,9 +1,9 @@
 import datetime
 import hashlib
-import shelve
 import re
+import shelve
 from functools import wraps
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urljoin, urlparse
 
 from flask import abort, request
 from flask_login import current_user

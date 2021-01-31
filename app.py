@@ -1764,9 +1764,10 @@ class Database(Resource):
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def post(self):
+        args = self.post_parser.parse_args()
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
-        args = self.post_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
@@ -1913,9 +1914,10 @@ class Database(Resource):
     @api.response(401, "Authentication failed")
     @api.response(403, "Forbidden")
     def get(self):
+        args = self.get_parser.parse_args()
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
-        args = self.get_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
@@ -1980,6 +1982,7 @@ class Database(Resource):
                     # request and log it as a high alert
                     if len(pattern_occurrence_count) > i.occurrence_threshold:
                         print("exceed")
+
                         if i.action == "deny_and_alert":
                             status, status_msg, status_code = (
                                 "ERROR",
@@ -2001,29 +2004,30 @@ class Database(Resource):
                                 "status": status,
                                 "status_msg": status_msg,
                             }, status_code
-                        else:
-                            status, status_msg, status_code = (
-                                "OK",
-                                "Sensitive Field Triggered - " + i.contents,
-                                200,
-                            )
-                            logged_request, logged_alert = log_request(
-                                alert_level=i.alert_level,
-                                status=status,
-                                status_msg=status_msg,
-                                request_params=(
-                                    f"Model: {args['model']}, Filter: "
-                                    f"{args['filter']}"
-                                ),
-                                response=str(query_results),
-                                ip_address=args["ip"],
-                            )
-                            # need a diff return statement as this is alert only, so request should still be allowed
-                            return {
-                                "status": status,
-                                "status_msg": status_msg,
-                                "query_results": query_results,
-                            }, status_code
+
+                        status, status_msg, status_code = (
+                            "OK",
+                            "Sensitive Field Triggered - " + i.contents,
+                            200,
+                        )
+                        logged_request, logged_alert = log_request(
+                            alert_level=i.alert_level,
+                            status=status,
+                            status_msg=status_msg,
+                            request_params=(
+                                f"Model: {args['model']}, Filter: "
+                                f"{args['filter']}"
+                            ),
+                            response=str(query_results),
+                            ip_address=args["ip"],
+                        )
+                        # need a diff return statement as this is alert only,
+                        # so request should still be allowed
+                        return {
+                            "status": status,
+                            "status_msg": status_msg,
+                            "query_results": query_results,
+                        }, status_code
 
             status, status_msg, status_code = "OK", "OK", 200
             logged_request, logged_alert = log_request(
@@ -2091,9 +2095,10 @@ class Database(Resource):
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def patch(self):
+        args = self.patch_parser.parse_args()
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
-        args = self.patch_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
@@ -2207,9 +2212,10 @@ class Database(Resource):
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def delete(self):
+        args = self.delete_parser.parse_args()
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
-        args = self.delete_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
