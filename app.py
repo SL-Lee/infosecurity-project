@@ -718,7 +718,9 @@ def alertview():
 def sendalertemail(id):
     rs = Alert.query.filter_by(request_id=id).all()
     print("Sent",rs[0].__dict__)
-    msg = Message('SecureDB Report on Suspicious Requests.', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'], html="<h1><b>Request ID : {}\nAlert Level : {}\nDatetime : {}\nRequest Parameters : {}\nStatus : {}\nMessage : {}\nResponse : {}</h1></b>".format(rs[0].request_id,rs[0].alert_level,rs[0].request.datetime,rs[0].request.request_params,rs[0].request.status,rs[0].request.status_msg,rs[0].request.response))
+    msg = Message('SecureDB Report on Suspicious Requests.', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'],
+             html="<h1><b>Request ID : {}\nAlert Level : {}\nDatetime : {}\nRequest Parameters : {}\nStatus : {}\nMessage : {}\nResponse : {}</h1></b>"
+            .format(rs[0].request_id,rs[0].alert_level,rs[0].request.datetime,rs[0].request.request_params,rs[0].request.status,rs[0].request.status_msg,rs[0].request.response))
     mail.send(msg)
     return redirect(url_for("sendalertemail"))
 
