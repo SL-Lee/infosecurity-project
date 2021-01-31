@@ -34,6 +34,7 @@ from werkzeug.utils import secure_filename
 
 import constants
 import forms
+import yaml
 from client_models import *
 from crypto import decrypt, decrypt_file, encrypt, encrypt_file
 from helper_functions import (
@@ -53,6 +54,8 @@ from server_models import (
     ServerUser,
     server_db,
 )
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -131,8 +134,40 @@ schedule = BackgroundScheduler(
     daemon=True,
 )
 schedule.start()
+drive_backup_ID = ""
+if os.path.exists(os.path.join(dirname, "client_secrets.json")):
+    gauth = GoogleAuth()
+
+    drive = GoogleDrive(gauth)
+
+    file_list = drive.ListFile(
+        {"q": "'root' in parents and trashed=false"}
+    ).GetList()
+    folder_names = []
+    for file in file_list:
+        print("Title: %s, ID: %s" % (file["title"], file["id"]))
+        folder_names.append(file["title"])
+
+    # if backup folder not created
+    if "backup" not in folder_names:
+        folder = drive.CreateFile(
+            {
+                "title": "backup",
+                "mimeType": "application/vnd.google-apps.folder",
+            }
+        )
+        folder.Upload()
+    file_list = drive.ListFile(
+        {"q": "'root' in parents and trashed=false"}
+    ).GetList()
+    # set drive id for backup
+    for file in file_list:
+        print("Title: %s, ID: %s" % (file["title"], file["id"]))
+        if file["title"] == "backup":
+            drive_backup_ID = file["id"]
 
 
+# backup function to run at interval
 def schedule_backup(filename):
     with app.app_context():
         # get the config of the file
@@ -145,11 +180,66 @@ def schedule_backup(filename):
         # if the file does not have a backup folder
         if not os.path.exists(backup_folder):
             os.mkdir(backup_folder)
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+        ).GetList()  # to list the files in the folder id
+        folder_names = []
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            folder_names.append(file["title"])
+        # if backup folder not created
+        if filename not in folder_names:
+            folder = drive.CreateFile(
+                {
+                    "title": filename,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [
+                        {"kind": "drive#fileLink", "id": drive_backup_ID}
+                    ],
+                }
+            )
+            folder.Upload()
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+        ).GetList()
+        # set drive id for backup
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            if file["title"] == filename:
+                filename_ID = file["id"]
 
+        timestamp = secure_filename(
+            backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
+        )
         timestamp_folder = os.path.join(
             backup_folder,
-            secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+            timestamp,
         )
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % filename_ID}
+        ).GetList()  # to list the files in the folder id
+        folder_names = []
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            folder_names.append(file["title"])
+        # if backup folder not created
+        if timestamp not in folder_names:
+            folder = drive.CreateFile(
+                {
+                    "title": timestamp,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [{"kind": "drive#fileLink", "id": filename_ID}],
+                }
+            )
+            folder.Upload()
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % filename_ID}
+        ).GetList()
+        # set drive id for backup
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            if file["title"] == timestamp:
+                timestamp_ID = file["id"]
 
         # if no timestamp folder
         if not os.path.exists(timestamp_folder):
@@ -167,8 +257,18 @@ def schedule_backup(filename):
         os.remove(file_backup_path)
         # set new path name for encrypted file
         file_backup_path = os.path.join(
-            backup_folder, os.path.basename(file_settings["path"]) + ".enc"
+            timestamp_folder, os.path.basename(file_settings["path"]) + ".enc"
         )
+        # upload to drive
+        file_upload = drive.CreateFile(
+            {
+                "title": os.path.basename(file_backup_path),
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_ID}],
+            }
+        )
+        # set content is get file from filepath
+        file_upload.SetContentFile(file_backup_path)
+        file_upload.Upload()  # Upload the file.
 
         file_hash = hashlib.md5(
             open(file_settings["path"], "rb").read()
@@ -188,6 +288,7 @@ def schedule_backup(filename):
         server_db.session.commit()
 
 
+# check if the scheduler is empty
 if len(schedule.get_jobs()) == 0:
     backup_config = get_config_value("backup")
     for filename in backup_config.keys():
@@ -546,15 +647,70 @@ def backup_add():
         # else make a folder for it
         if not os.path.exists(filename_folder):
             os.mkdir(filename_folder)
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+        ).GetList()  # to list the files in the folder id
+        folder_names = []
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            folder_names.append(file["title"])
+        # if backup folder not created
+        if filename not in folder_names:
+            folder = drive.CreateFile(
+                {
+                    "title": filename,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [
+                        {"kind": "drive#fileLink", "id": drive_backup_ID}
+                    ],
+                }
+            )
+            folder.Upload()
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+        ).GetList()
+        # set drive id for backup
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            if file["title"] == filename:
+                filename_ID = file["id"]
 
+        timestamp = secure_filename(
+            backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
+        )
         # backup folder is timestamp of backup
         backup_folder = os.path.join(
             filename_folder,
-            secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+            timestamp,
         )
         # check if there is a timestamp for the backup
         if not os.path.exists(backup_folder):
             os.mkdir(backup_folder)
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % filename_ID}
+        ).GetList()  # to list the files in the folder id
+        folder_names = []
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            folder_names.append(file["title"])
+        # if backup folder not created
+        if timestamp not in folder_names:
+            folder = drive.CreateFile(
+                {
+                    "title": timestamp,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [{"kind": "drive#fileLink", "id": filename_ID}],
+                }
+            )
+            folder.Upload()
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % filename_ID}
+        ).GetList()
+        # set drive id for backup
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            if file["title"] == timestamp:
+                timestamp_ID = file["id"]
 
         file_backup_path = os.path.join(
             backup_folder, os.path.basename(location)
@@ -578,6 +734,16 @@ def backup_add():
         file_backup_path = os.path.join(
             backup_folder, os.path.basename(location) + ".enc"
         )
+        # upload to drive
+        file_upload = drive.CreateFile(
+            {
+                "title": os.path.basename(file_backup_path),
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_ID}],
+            }
+        )
+        # set content is get file from filepath
+        file_upload.SetContentFile(file_backup_path)
+        file_upload.Upload()  # Upload the file.
 
         file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
 
@@ -685,13 +851,70 @@ def backup_update(file):
             filename = os.path.join(backup_path, file)
             if not os.path.exists(filename):
                 os.mkdir(filename)
+            file_list = drive.ListFile(
+                {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+            ).GetList()  # to list the files in the folder id
+            folder_names = []
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
+                folder_names.append(files["title"])
+            # if backup folder not created
+            if file not in folder_names:
+                folder = drive.CreateFile(
+                    {
+                        "title": file,
+                        "mimeType": "application/vnd.google-apps.folder",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": drive_backup_ID}
+                        ],
+                    }
+                )
+                folder.Upload()
+            file_list = drive.ListFile(
+                {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+            ).GetList()
+            # set drive id for backup
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
+                if files["title"] == file:
+                    filename_ID = files["id"]
 
+            timestamp = secure_filename(
+                backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
+            )
             backup_folder = os.path.join(
                 filename,
-                secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+                timestamp,
             )
             if not os.path.exists(backup_folder):
                 os.mkdir(backup_folder)
+            file_list = drive.ListFile(
+                {"q": "'%s' in parents and trashed=false" % filename_ID}
+            ).GetList()  # to list the files in the folder id
+            folder_names = []
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
+                folder_names.append(files["title"])
+            # if backup folder not created
+            if timestamp not in folder_names:
+                folder = drive.CreateFile(
+                    {
+                        "title": timestamp,
+                        "mimeType": "application/vnd.google-apps.folder",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": filename_ID}
+                        ],
+                    }
+                )
+                folder.Upload()
+            file_list = drive.ListFile(
+                {"q": "'%s' in parents and trashed=false" % filename_ID}
+            ).GetList()
+            # set drive id for backup
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
+                if files["title"] == timestamp:
+                    timestamp_ID = files["id"]
 
             file_backup_path = os.path.join(
                 backup_folder, os.path.basename(file_settings["path"])
@@ -707,6 +930,16 @@ def backup_update(file):
             file_backup_path = os.path.join(
                 backup_folder, os.path.basename(file_settings["path"]) + ".enc"
             )
+            # upload to drive
+            file_upload = drive.CreateFile(
+                {
+                    "title": os.path.basename(file_backup_path),
+                    "parents": [{"kind": "drive#fileLink", "id": timestamp_ID}],
+                }
+            )
+            # set content is get file from filepath
+            file_upload.SetContentFile(file_backup_path)
+            file_upload.Upload()  # Upload the file.
 
             file_hash = hashlib.md5(
                 open(file_settings["path"], "rb").read()
@@ -762,14 +995,70 @@ def backup_update(file):
 
             if not os.path.exists(filename):
                 os.mkdir(filename)
+            file_list = drive.ListFile(
+                {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+            ).GetList()  # to list the files in the folder id
+            folder_names = []
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
+                folder_names.append(files["title"])
+            # if backup folder not created
+            if file not in folder_names:
+                folder = drive.CreateFile(
+                    {
+                        "title": file,
+                        "mimeType": "application/vnd.google-apps.folder",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": drive_backup_ID}
+                        ],
+                    }
+                )
+                folder.Upload()
+            file_list = drive.ListFile(
+                {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+            ).GetList()
+            # set drive id for backup
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
+                if files["title"] == file:
+                    filename_ID = files["id"]
 
+            timestamp = secure_filename(
+                backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
+            )
             backup_folder = os.path.join(
                 filename,
-                secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+                timestamp,
             )
-
             if not os.path.exists(backup_folder):
                 os.mkdir(backup_folder)
+            file_list = drive.ListFile(
+                {"q": "'%s' in parents and trashed=false" % filename_ID}
+            ).GetList()  # to list the files in the folder id
+            folder_names = []
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
+                folder_names.append(files["title"])
+            # if backup folder not created
+            if timestamp not in folder_names:
+                folder = drive.CreateFile(
+                    {
+                        "title": timestamp,
+                        "mimeType": "application/vnd.google-apps.folder",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": filename_ID}
+                        ],
+                    }
+                )
+                folder.Upload()
+            file_list = drive.ListFile(
+                {"q": "'%s' in parents and trashed=false" % filename_ID}
+            ).GetList()
+            # set drive id for backup
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
+                if files["title"] == timestamp:
+                    timestamp_ID = files["id"]
 
             file_backup_path = os.path.join(
                 backup_folder, os.path.basename(file_settings["path"])
@@ -785,6 +1074,16 @@ def backup_update(file):
             file_backup_path = os.path.join(
                 backup_folder, os.path.basename(file_settings["path"]) + ".enc"
             )
+            # upload to drive
+            file_upload = drive.CreateFile(
+                {
+                    "title": os.path.basename(file_backup_path),
+                    "parents": [{"kind": "drive#fileLink", "id": timestamp_ID}],
+                }
+            )
+            # set content is get file from filepath
+            file_upload.SetContentFile(file_backup_path)
+            file_upload.Upload()  # Upload the file.
 
             file_hash = hashlib.md5(
                 open(file_settings["path"], "rb").read()
@@ -1685,6 +1984,69 @@ def onboarding_api_config():
     return render_template("onboarding-api-config.html")
 
 
+@app.route("/onboarding/drive-upload-config", methods=["GET", "POST"])
+@required_permissions("manage_users")
+def onboarding_drive_upload_config():
+    form = forms.OnboardingDriveUpload(request.form)
+    if request.method == "POST" and form.validate():
+        json_file = request.files.get("json-file")
+
+        if json_file is not None and json_file.filename.endswith(".json"):
+            json_file.save(secure_filename("client_secrets.json"))
+
+        setting = {
+            "client_config_backend": "file",
+            "client_config": {
+                "client_id": form.client_id.data,
+                "client_secret": form.client_secret.data,
+            },
+            "save_credentials": True,
+            "save_credentials_backend": "file",
+            "save_credentials_file": "credentials.json",
+            "get_refresh_token": True,
+            "oauth_scope": [
+                "https://www.googleapis.com/auth/drive",
+                "https://www.googleapis.com/auth/drive.install",
+            ],
+        }
+        with open("settings.yaml", "w") as file:
+            documents = yaml.dump(setting, file)
+
+        gauth = GoogleAuth()
+
+        drive = GoogleDrive(gauth)
+
+        file_list = drive.ListFile(
+            {"q": "'root' in parents and trashed=false"}
+        ).GetList()
+        folder_names = []
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            folder_names.append(file["title"])
+
+        # if backup folder not created
+        if "backup" not in folder_names:
+            folder = drive.CreateFile(
+                {
+                    "title": "backup",
+                    "mimeType": "application/vnd.google-apps.folder",
+                }
+            )
+            folder.Upload()
+        file_list = drive.ListFile(
+            {"q": "'root' in parents and trashed=false"}
+        ).GetList()
+        # set drive id for backup
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            if file["title"] == "backup":
+                drive_backup_ID = file["id"]
+
+        return redirect(url_for("onboarding_backup_config"))
+
+    return render_template("onboarding-drive-upload-config.html", form=form)
+
+
 @app.route("/onboarding/backup-config", methods=["GET", "POST"])
 @required_permissions("manage_users")
 def onboarding_backup_config():
@@ -1710,15 +2072,71 @@ def onboarding_backup_config():
         # else make a folder for it
         if not os.path.exists(filename_folder):
             os.mkdir(filename_folder)
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+        ).GetList()  # to list the files in the folder id
+        folder_names = []
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            folder_names.append(file["title"])
+        # if backup folder not created
+        if filename not in folder_names:
+            folder = drive.CreateFile(
+                {
+                    "title": filename,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [
+                        {"kind": "drive#fileLink", "id": drive_backup_ID}
+                    ],
+                }
+            )
+            folder.Upload()
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % drive_backup_ID}
+        ).GetList()
+        # set drive id for backup
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            if file["title"] == filename:
+                filename_ID = file["id"]
 
+        timestamp = secure_filename(
+            backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
+        )
         # backup folder is timestamp of backup
         backup_folder = os.path.join(
             filename_folder,
-            secure_filename(backup_datetime.strftime("%d-%m-%Y %H:%M:%S")),
+            timestamp,
         )
+
         # check if there is a timestamp for the backup
         if not os.path.exists(backup_folder):
             os.mkdir(backup_folder)
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % filename_ID}
+        ).GetList()  # to list the files in the folder id
+        folder_names = []
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            folder_names.append(file["title"])
+        # if backup folder not created
+        if timestamp not in folder_names:
+            folder = drive.CreateFile(
+                {
+                    "title": timestamp,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [{"kind": "drive#fileLink", "id": filename_ID}],
+                }
+            )
+            folder.Upload()
+        file_list = drive.ListFile(
+            {"q": "'%s' in parents and trashed=false" % filename_ID}
+        ).GetList()
+        # set drive id for backup
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
+            if file["title"] == timestamp:
+                timestamp_ID = file["id"]
 
         file_backup_path = os.path.join(
             backup_folder, os.path.basename(location)
@@ -1735,6 +2153,16 @@ def onboarding_backup_config():
         file_backup_path = os.path.join(
             backup_folder, os.path.basename(location) + ".enc"
         )
+        # upload to drive
+        file_upload = drive.CreateFile(
+            {
+                "title": os.path.basename(file_backup_path),
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_ID}],
+            }
+        )
+        # set content is get file from filepath
+        file_upload.SetContentFile(file_backup_path)
+        file_upload.Upload()  # Upload the file.
 
         file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
 

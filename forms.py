@@ -13,6 +13,11 @@ from wtforms import (
 from wtforms.validators import InputRequired, Length, Optional
 
 
+class OnboardingDriveUpload(FlaskForm):
+    client_id = PasswordField("Client ID", [InputRequired()])
+    client_secret = PasswordField("Client secret", [InputRequired()])
+
+
 class OnboardingBackupForm(FlaskForm):
     source = StringField(
         "Database Source",
