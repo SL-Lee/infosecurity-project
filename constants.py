@@ -9,4 +9,5 @@ VALID_SERVER_PERMISSION_NAMES = [
     "manage_api_keys",
     "manage_users",
     "view_api_documentation",
+    "manage_encryption_key",
 ]

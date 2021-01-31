@@ -1,4 +1,5 @@
 import datetime
+import getpass
 import hashlib
 import json
 import os
@@ -35,7 +36,8 @@ from werkzeug.utils import secure_filename
 import constants
 import forms
 from client_models import *
-from crypto import KEY, decrypt, decrypt_file, encrypt, encrypt_file
+from crypto import decrypt, decrypt_file, encrypt, encrypt_file
+from errors import InvalidEncryptionKeyError
 from helper_functions import (
     get_config_value,
     is_safe_url,
@@ -118,6 +120,29 @@ with app.app_context():
 
     server_db.session.commit()
 
+encryption_config = get_config_value("encryption-config")
+
+if encryption_config is not None:
+    kek_passphrase = getpass.getpass("Encryption passphrase: ")
+    kek = hashlib.scrypt(
+        kek_passphrase.encode("UTF-8"),
+        salt=bytes.fromhex(encryption_config["kek-salt"]),
+        n=16384,
+        r=8,
+        p=1,
+        dklen=32,
+    )
+
+    if hashlib.sha3_512(kek).hexdigest() == encryption_config["kek-hash"]:
+        ENCRYPTION_KEY = decrypt(
+            bytes.fromhex(encryption_config["encrypted-dek"]),
+            kek,
+        )
+    else:
+        raise InvalidEncryptionKeyError
+else:
+    ENCRYPTION_KEY = None
+
 dirname = os.path.dirname(__file__)
 
 # only if backup folder does not exist,
@@ -161,7 +186,7 @@ def schedule_backup(filename):
 
         shutil.copy2(file_settings["path"], file_backup_path)
         # encrypt the backed up file
-        encrypt_file(file_backup_path, KEY)
+        encrypt_file(file_backup_path, ENCRYPTION_KEY)
         # after encrypting the copied file,
         # remove the copied file
         os.remove(file_backup_path)
@@ -570,7 +595,7 @@ def backup_add():
         # copy from original location to timestamp
         shutil.copy2(location, file_backup_path)
         # encrypt the backed up file
-        encrypt_file(file_backup_path, KEY)
+        encrypt_file(file_backup_path, ENCRYPTION_KEY)
         # after encrypting the copied file,
         # remove the copied file
         os.remove(file_backup_path)
@@ -699,7 +724,7 @@ def backup_update(file):
 
             shutil.copy2(file_settings["path"], file_backup_path)
             # encrypt the backed up file
-            encrypt_file(file_backup_path, KEY)
+            encrypt_file(file_backup_path, ENCRYPTION_KEY)
             # after encrypting the copied file,
             # remove the copied file
             os.remove(file_backup_path)
@@ -777,7 +802,7 @@ def backup_update(file):
 
             shutil.copy2(file_settings["path"], file_backup_path)
             # encrypt the backed up file
-            encrypt_file(file_backup_path, KEY)
+            encrypt_file(file_backup_path, ENCRYPTION_KEY)
             # after encrypting the copied file,
             # remove the copied file
             os.remove(file_backup_path)
@@ -871,7 +896,7 @@ def backup_restore(file, timestamp):
     )
 
     # decrypt the encrypted file
-    decrypt_file(encrypted, KEY)
+    decrypt_file(encrypted, ENCRYPTION_KEY)
 
     # path to decrypted file
     decrypted = os.path.join(
@@ -1044,6 +1069,138 @@ def delete_sensitive_fields(field):
     server_db.session.commit()
 
     return redirect(url_for("get_sensitive_fields"))
+
+
+# Encryption key management
+@app.route("/encryption/key-management")
+@required_permissions("manage_encryption_key")
+def encryption_key_management():
+    encryption_key_timestamp = get_config_value("encryption-config").get(
+        "timestamp", None
+    )
+    return render_template(
+        "encryption-key-management.html",
+        encryption_key_timestamp=encryption_key_timestamp,
+    )
+
+
+@app.route("/encryption/key-management/generate", methods=["POST"])
+def encryption_key_management_generate():
+    # if get_config_value("encryption-config") is not None:
+    #     return redirect(url_for("encryption_key_management"))
+
+    encryption_passphrase = request.form.get("encryption-passphrase")
+
+    if encryption_passphrase is None:
+        flash(
+            "An error occurred while generating the encryption key. Please "
+            "try again.",
+            "danger",
+        )
+        return redirect(url_for("encryption_key_management_generate"))
+
+    encryption_config = {}
+
+    dek = os.urandom(32)
+
+    kek_salt = os.urandom(32)
+    kek = hashlib.scrypt(
+        encryption_passphrase.encode("UTF-8"),
+        salt=kek_salt,
+        n=16384,
+        r=8,
+        p=1,
+        dklen=32,
+    )
+
+    encryption_config["timestamp"] = datetime.datetime.now().strftime(
+        "%Y-%m-%dT%H:%M:%S+08:00"
+    )
+    encryption_config["kek-salt"] = kek_salt.hex()
+    encryption_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
+    encryption_config["encrypted-dek"] = encrypt(dek, kek).hex()
+
+    set_config_value("encryption-config", encryption_config)
+    return redirect(url_for("encryption_key_management"))
+
+
+@app.route("/encryption/key-management/reset-passphrase", methods=["POST"])
+def encryption_reset_passphrase():
+    encryption_config = get_config_value("encryption-config")
+
+    if encryption_config is None:
+        return redirect(url_for("onboarding_encryption_config"))
+
+    old_encryption_passphrase = request.form.get("old-encryption-passphrase")
+    new_encryption_passphrase = request.form.get("new-encryption-passphrase")
+    confirm_new_encryption_passphrase = request.form.get(
+        "confirm-new-encryption-passphrase"
+    )
+
+    # Return an error if any of the required fields are somehow empty
+    if any(
+        field is None
+        for field in [
+            old_encryption_passphrase,
+            new_encryption_passphrase,
+            confirm_new_encryption_passphrase,
+        ]
+    ):
+        flash(
+            "There was an error while resetting the encryption passphase. "
+            "Please try again.",
+            "danger",
+        )
+        return redirect(url_for("encryption_key_management"))
+
+    old_kek = hashlib.scrypt(
+        old_encryption_passphrase.encode("UTF-8"),
+        salt=bytes.fromhex(encryption_config["kek-salt"]),
+        n=16384,
+        r=8,
+        p=1,
+        dklen=32,
+    )
+
+    # Return an error if the old kek is wrong
+    if hashlib.sha3_512(old_kek).hexdigest() != encryption_config["kek-hash"]:
+        flash(
+            "There was an error while resetting the encryption passphase. "
+            "Please try again.",
+            "danger",
+        )
+        return redirect(url_for("encryption_key_management"))
+
+    # Return an error if new encryption passphrases do not match
+    if new_encryption_passphrase != confirm_new_encryption_passphrase:
+        flash(
+            "New encryption passphrases do not match. Please try again.",
+            "danger",
+        )
+        return redirect(url_for("encryption_key_management"))
+
+    new_kek_salt = os.urandom(32)
+    new_kek = hashlib.scrypt(
+        new_encryption_passphrase.encode("UTF-8"),
+        salt=new_kek_salt,
+        n=16384,
+        r=8,
+        p=1,
+        dklen=32,
+    )
+
+    dek = decrypt(bytes.fromhex(encryption_config["encrypted-dek"]), old_kek)
+
+    encryption_config["timestamp"] = datetime.datetime.now().strftime(
+        "%Y-%m-%dT%H:%M:%S+08:00"
+    )
+    encryption_config["kek-salt"] = new_kek_salt.hex()
+    encryption_config["kek-hash"] = hashlib.sha3_512(new_kek).hexdigest()
+    encryption_config["encrypted-dek"] = encrypt(dek, new_kek).hex()
+
+    set_config_value("encryption-config", encryption_config)
+    flash("Encryption passphrase resetted successfully.", "success")
+    return redirect(url_for("encryption_key_management"))
 
 
 # Upload API
@@ -1477,6 +1634,47 @@ def onboarding_database_config():
     return render_template("onboarding-database-config.html")
 
 
+@app.route("/onboarding/encryption-config", methods=["GET", "POST"])
+# @required_permissions("manage_users")
+def onboarding_encryption_config():
+    if request.method == "POST":
+        encryption_passphrase = request.form.get("encryption-passphrase")
+
+        if encryption_passphrase is None:
+            flash(
+                "An error occurred while generating the encryption key. Please "
+                "try again.",
+                "danger",
+            )
+            return redirect(url_for("onboarding_encryption_config"))
+
+        encryption_config = {}
+
+        dek = os.urandom(32)
+
+        kek_salt = os.urandom(32)
+        kek = hashlib.scrypt(
+            encryption_passphrase.encode("UTF-8"),
+            salt=kek_salt,
+            n=16384,
+            r=8,
+            p=1,
+            dklen=32,
+        )
+
+        encryption_config["timestamp"] = datetime.datetime.now().strftime(
+            "%Y-%m-%dT%H:%M:%S+08:00"
+        )
+        encryption_config["kek-salt"] = kek_salt.hex()
+        encryption_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
+        encryption_config["encrypted-dek"] = encrypt(dek, kek).hex()
+
+        set_config_value("encryption-config", encryption_config)
+        return redirect(url_for("onboarding_api_config"))
+
+    return render_template("onboarding-encryption-config.html")
+
+
 @app.route("/onboarding/api-config")
 @required_permissions("manage_users")
 def onboarding_api_config():
@@ -1525,7 +1723,7 @@ def onboarding_backup_config():
         # copy from original location to timestamp
         shutil.copy2(location, file_backup_path)
         # encrypt the backed up file
-        encrypt_file(file_backup_path, KEY)
+        encrypt_file(file_backup_path, ENCRYPTION_KEY)
         # after encrypting the copied file,
         # remove the copied file
         os.remove(file_backup_path)
@@ -1810,7 +2008,8 @@ class Database(Resource):
                         created_object,
                         encrypted_field_name,
                         encrypt(
-                            getattr(created_object, encrypted_field_name), KEY
+                            getattr(created_object, encrypted_field_name),
+                            ENCRYPTION_KEY,
                         ),
                     )
 
@@ -1823,7 +2022,8 @@ class Database(Resource):
                         created_object,
                         encrypted_field_name,
                         decrypt(
-                            getattr(created_object, encrypted_field_name), KEY
+                            getattr(created_object, encrypted_field_name),
+                            ENCRYPTION_KEY,
                         ),
                     )
 
@@ -1963,7 +2163,10 @@ class Database(Resource):
                         setattr(
                             obj,
                             encrypted_field_name,
-                            decrypt(getattr(obj, encrypted_field_name), KEY),
+                            decrypt(
+                                getattr(obj, encrypted_field_name),
+                                ENCRYPTION_KEY,
+                            ),
                         )
 
             query_results = schema.dump(query_results)
@@ -2146,7 +2349,7 @@ class Database(Resource):
                 for field_name in args["values"]:
                     if field_name in encrypted_fields[args["model"]]:
                         args["values"][field_name] = encrypt(
-                            args["values"][field_name], KEY
+                            args["values"][field_name], ENCRYPTION_KEY
                         )
 
             client_db.session.query(eval(args["model"])).filter(

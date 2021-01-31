@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Encryption Key Management{% endblock %}
+{% block content %}
+<h1>Encryption Key Management</h1>
+<div class="border rounded p-4 text-center">
+  <h3>Encryption Key</h3>
+  {% if encryption_key_timestamp is none %}
+  <button type="button" class="mt-3 btn btn-primary" data-toggle="modal"
+    data-target="#generate-encryption-passphrase-prompt">Generate Encryption
+    Passphrase</button>
+  {% else %}
+  <p class="m-0 text-muted">Generated on {{ encryption_key_timestamp }}</p>
+  <button type="button" class="mt-3 btn btn-primary" data-toggle="modal"
+    data-target="#reset-encryption-passphrase-prompt">Reset Encryption
+    Passphrase</button>
+  {% endif %}
+</div>
+
+<!-- Prompt for generating an encryption passphrase -->
+<div class="modal fade" id="generate-encryption-passphrase-prompt"
+  tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Generate Encryption Passphrase</h5>
+        <button type="button" class="close"
+          data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="generate-encryption-passphrase-form" method="POST"
+          action="/encryption/key-management/generate">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <div class="form-group">
+            <label for="encryption-passphrase-input">Encryption
+              Passphrase</label>
+            <input type="password" class="form-control"
+              id="encryption-passphrase-input" name="encryption-passphrase"
+              required="" placeholder="Encryption Passphrase" />
+          </div>
+          <div class="form-group">
+            <label for="confirm-encryption-passphrase-input">Confirm Encryption
+              Passphrase</label>
+            <input type="password" class="form-control"
+              id="confirm-encryption-passphrase-input"
+              name="confirm-encryption-passphrase" required=""
+              placeholder="Confirm Encryption Passphrase" />
+          </div>
+          <input type="submit" style="display: none;" />
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+          data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary"
+          onclick="document.getElementById('generate-encryption-passphrase-form').requestSubmit();">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Prompt for resetting the encryption passphrase -->
+<div class="modal fade" id="reset-encryption-passphrase-prompt" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Reset Encryption Passphrase</h5>
+        <button type="button" class="close"
+          data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="reset-encryption-passphrase-form" method="POST"
+          action="/encryption/key-management/reset-passphrase">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <div class="form-group">
+            <label for="old-encryption-passphrase-input">Old Encryption
+              Passphrase</label>
+            <input type="password" class="form-control"
+              id="old-encryption-passphrase-input"
+              name="old-encryption-passphrase" required=""
+              placeholder="Old Encryption Passphrase" />
+          </div>
+          <div class="form-group">
+            <label for="new-encryption-passphrase-input">New Encryption
+              Passphrase</label>
+            <input type="password" class="form-control"
+              id="new-encryption-passphrase-input"
+              name="new-encryption-passphrase" required=""
+              placeholder="New Encryption Passphrase" />
+          </div>
+          <div class="form-group">
+            <label for="confirm-new-encryption-passphrase-input">Confirm New
+              Encryption Passphrase</label>
+            <input type="password" class="form-control"
+              id="confirm-new-encryption-passphrase-input"
+              name="confirm-new-encryption-passphrase" required=""
+              placeholder="Confirm New Encryption Passphrase" />
+          </div>
+          <input type="submit" style="display: none;" />
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+          data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary"
+          onclick="document.getElementById('reset-encryption-passphrase-form').requestSubmit();">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
