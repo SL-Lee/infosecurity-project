@@ -60,7 +60,8 @@
               Rules</a>
             {% endif %}
             {% if "view_logged_requests" in current_user_permissions %}
-            <a class="dropdown-item" href="/requests/None/<date>/<query>">Requests</a>
+            <a class="dropdown-item"
+              href="/requests/None/<date>/<query>">Requests</a>
             {% endif %}
             {% if "manage_ip_whitelist" in current_user_permissions %}
             <a class="dropdown-item" href="/whitelist">Whitelist</a>
@@ -76,13 +77,22 @@
           <a class="nav-link" href="/backup">Backup</a>
         </li>
         {% endif %}
-        {% if "manage_encrypted_files" in current_user_permissions %}
+        {% if current_user_permissions | contains_any("manage_encryption_key",
+        "manage_encrypted_files", "manage_encrypted_fields") %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" role="button"
             data-toggle="dropdown">Encrypt</a>
           <div class="dropdown-menu">
+            {% if "manage_encryption_key" in current_user_permissions %}
+            <a class="dropdown-item"
+              href="/encryption/key-management">Encryption Key Management</a>
+            {% endif %}
+            {% if "manage_encrypted_files" in current_user_permissions %}
             <a class="dropdown-item" href="/upload-file">File Upload</a>
+            {% endif %}
+            {% if "manage_encrypted_fields" in current_user_permissions %}
             <a class="dropdown-item" href="/upload-field">Field Upload</a>
+            {% endif %}
           </div>
         </li>
         {% endif %}

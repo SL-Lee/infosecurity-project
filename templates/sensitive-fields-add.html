@@ -1,33 +1,32 @@
 {% extends "base.html" %}
 {% block title %}Add Sensitive Fields{% endblock %}
 {% from "includes/_form_helper.html" import render_field %}
-
 {% block content %}
 <div class="container-fluid content">
-    <div class="row justify-content-center">
-        <div class="col-sm-12">
-            <h4 class="text-center">Sensitive Fields</h4>
-        </div>
+  <div class="row justify-content-center">
+    <div class="col-sm-12">
+      <h4 class="text-center">Sensitive Fields</h4>
     </div>
-    <div class="row justify-content-center">
-        <div class="col-sm-8">
-            <form class="form" method="POST">
-                {{ form.csrf_token }}
-                <div class="form-group">
-                    {{ render_field(form.sensitive_field, class="form-control") }}
-                </div>
-                <div class="form-group">
-                    {{ render_field(form.action, class="form-control") }}
-                </div>
-                <div class="form-group">
-                    {{ render_field(form.alert_level, class="form-control") }}
-                </div>
-                <div class="form-group">
-                    {{ render_field(form.occurrence_threshold, class="form-control") }}
-                </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </form>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col-sm-8">
+      <form class="form" method="POST">
+        {{ form.csrf_token }}
+        <div class="form-group">
+          {{ render_field(form.sensitive_field, class="form-control") }}
         </div>
+        <div class="form-group">
+          {{ render_field(form.action, class="form-control") }}
+        </div>
+        <div class="form-group">
+          {{ render_field(form.alert_level, class="form-control") }}
+        </div>
+        <div class="form-group">
+          {{ render_field(form.occurrence_threshold, class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
     </div>
+  </div>
 </div>
 {% endblock %}

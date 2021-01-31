@@ -35,7 +35,7 @@ from werkzeug.utils import secure_filename
 import constants
 import forms
 from client_models import *
-from crypto import KEY, decrypt, decrypt_file, encrypt, encrypt_file
+from crypto import decrypt, decrypt_file, encrypt, encrypt_file
 from helper_functions import (
     get_config_value,
     is_safe_url,
@@ -161,7 +161,7 @@ def schedule_backup(filename):
 
         shutil.copy2(file_settings["path"], file_backup_path)
         # encrypt the backed up file
-        encrypt_file(file_backup_path, KEY)
+        encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
         # after encrypting the copied file,
         # remove the copied file
         os.remove(file_backup_path)
@@ -571,7 +571,7 @@ def backup_add():
         # copy from original location to timestamp
         shutil.copy2(location, file_backup_path)
         # encrypt the backed up file
-        encrypt_file(file_backup_path, KEY)
+        encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
         # after encrypting the copied file,
         # remove the copied file
         os.remove(file_backup_path)
@@ -700,7 +700,7 @@ def backup_update(file):
 
             shutil.copy2(file_settings["path"], file_backup_path)
             # encrypt the backed up file
-            encrypt_file(file_backup_path, KEY)
+            encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
             # after encrypting the copied file,
             # remove the copied file
             os.remove(file_backup_path)
@@ -778,7 +778,7 @@ def backup_update(file):
 
             shutil.copy2(file_settings["path"], file_backup_path)
             # encrypt the backed up file
-            encrypt_file(file_backup_path, KEY)
+            encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
             # after encrypting the copied file,
             # remove the copied file
             os.remove(file_backup_path)
@@ -872,7 +872,7 @@ def backup_restore(file, timestamp):
     )
 
     # decrypt the encrypted file
-    decrypt_file(encrypted, KEY)
+    decrypt_file(encrypted, constants.ENCRYPTION_KEY)
 
     # path to decrypted file
     decrypted = os.path.join(
@@ -1069,12 +1069,143 @@ def delete_sensitive_fields(field):
     return redirect(url_for("get_sensitive_fields"))
 
 
+# Encryption key management
+@app.route("/encryption/key-management")
+@required_permissions("manage_encryption_key")
+def encryption_key_management():
+    encryption_key_timestamp = get_config_value("encryption-config").get(
+        "timestamp", None
+    )
+    return render_template(
+        "encryption-key-management.html",
+        encryption_key_timestamp=encryption_key_timestamp,
+    )
+
+
+@app.route("/encryption/key-management/generate", methods=["POST"])
+def encryption_key_management_generate():
+    # if get_config_value("encryption-config") is not None:
+    #     return redirect(url_for("encryption_key_management"))
+
+    encryption_passphrase = request.form.get("encryption-passphrase")
+
+    if encryption_passphrase is None:
+        flash(
+            "An error occurred while generating the encryption key. Please "
+            "try again.",
+            "danger",
+        )
+        return redirect(url_for("encryption_key_management_generate"))
+
+    encryption_config = {}
+
+    dek = os.urandom(32)
+
+    kek_salt = os.urandom(32)
+    kek = hashlib.scrypt(
+        encryption_passphrase.encode("UTF-8"),
+        salt=kek_salt,
+        n=16384,
+        r=8,
+        p=1,
+        dklen=32,
+    )
+
+    encryption_config["timestamp"] = datetime.datetime.now().strftime(
+        "%Y-%m-%dT%H:%M:%S+08:00"
+    )
+    encryption_config["kek-salt"] = kek_salt.hex()
+    encryption_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
+    encryption_config["encrypted-dek"] = encrypt(dek, kek).hex()
+
+    set_config_value("encryption-config", encryption_config)
+    return redirect(url_for("encryption_key_management"))
+
+
+@app.route("/encryption/key-management/reset-passphrase", methods=["POST"])
+def encryption_reset_passphrase():
+    encryption_config = get_config_value("encryption-config")
+
+    if encryption_config is None:
+        return redirect(url_for("onboarding_encryption_config"))
+
+    old_encryption_passphrase = request.form.get("old-encryption-passphrase")
+    new_encryption_passphrase = request.form.get("new-encryption-passphrase")
+    confirm_new_encryption_passphrase = request.form.get(
+        "confirm-new-encryption-passphrase"
+    )
+
+    # Return an error if any of the required fields are somehow empty
+    if any(
+        field is None
+        for field in [
+            old_encryption_passphrase,
+            new_encryption_passphrase,
+            confirm_new_encryption_passphrase,
+        ]
+    ):
+        flash(
+            "There was an error while resetting the encryption passphase. "
+            "Please try again.",
+            "danger",
+        )
+        return redirect(url_for("encryption_key_management"))
+
+    old_kek = hashlib.scrypt(
+        old_encryption_passphrase.encode("UTF-8"),
+        salt=bytes.fromhex(encryption_config["kek-salt"]),
+        n=16384,
+        r=8,
+        p=1,
+        dklen=32,
+    )
+
+    # Return an error if the old kek is wrong
+    if hashlib.sha3_512(old_kek).hexdigest() != encryption_config["kek-hash"]:
+        flash(
+            "There was an error while resetting the encryption passphase. "
+            "Please try again.",
+            "danger",
+        )
+        return redirect(url_for("encryption_key_management"))
+
+    # Return an error if new encryption passphrases do not match
+    if new_encryption_passphrase != confirm_new_encryption_passphrase:
+        flash(
+            "New encryption passphrases do not match. Please try again.",
+            "danger",
+        )
+        return redirect(url_for("encryption_key_management"))
+
+    new_kek_salt = os.urandom(32)
+    new_kek = hashlib.scrypt(
+        new_encryption_passphrase.encode("UTF-8"),
+        salt=new_kek_salt,
+        n=16384,
+        r=8,
+        p=1,
+        dklen=32,
+    )
+
+    dek = decrypt(bytes.fromhex(encryption_config["encrypted-dek"]), old_kek)
+
+    encryption_config["timestamp"] = datetime.datetime.now().strftime(
+        "%Y-%m-%dT%H:%M:%S+08:00"
+    )
+    encryption_config["kek-salt"] = new_kek_salt.hex()
+    encryption_config["kek-hash"] = hashlib.sha3_512(new_kek).hexdigest()
+    encryption_config["encrypted-dek"] = encrypt(dek, new_kek).hex()
+
+    set_config_value("encryption-config", encryption_config)
+    flash("Encryption passphrase resetted successfully.", "success")
+    return redirect(url_for("encryption_key_management"))
+
+
 # Upload API
 @app.route("/upload-file", methods=["GET", "POST"])
 @required_permissions("manage_encrypted_files")
 def upload_file():
     if request.method == "POST":
-        encrypt_key = get_config_value("encrypt-key")
         # check if the post request has the file part
         if "file" not in request.files:
             print("no file")
@@ -1093,22 +1224,24 @@ def upload_file():
         file.save(os.path.join("uploads/", filename))
 
         if "encrypt" in request.form:
-            encrypt_file(os.path.join("uploads/", filename), encrypt_key)
+            encrypt_file(
+                os.path.join("uploads/", filename), constants.ENCRYPTION_KEY
+            )
             print("saved file successfully")
             # delete uploaded file
             os.remove(os.path.join("uploads/", filename))
-            print(get_config_value("encrypt-key"))
             # send file name as parameter to download
             return redirect("/download-file/" + filename + ".enc")
 
         if "decrypt" in request.form:
-            decrypt_file(os.path.join("uploads/", filename), encrypt_key)
+            decrypt_file(
+                os.path.join("uploads/", filename), constants.ENCRYPTION_KEY
+            )
             print("saved file2 successfully")
             os.remove(os.path.join("uploads/", filename))
-            print(get_config_value("encrypt-key"))
             # send file name as parameter to download
             return redirect("/download-file2/" + filename[:-4] + ".dec")
-    set_config_value("encrypt-key", b"encrypted__files")
+
     return render_template("upload-file.html")
 
 
@@ -1190,7 +1323,6 @@ def upload_field():
     form.order.choices = [None, OrderProduct.quantity]
 
     if request.method == "POST":
-        encrypt_key = get_config_value("encrypt-key")
         encrypted_fields = get_config_value(
             "encrypted-fields",
             {
@@ -1207,15 +1339,19 @@ def upload_field():
         # User class
         for user in User.query.all():
             if form.user.data == "User.username":
-                user.username = encrypt(str(user.username), encrypt_key)
+                user.username = encrypt(
+                    str(user.username), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "username" not in encrypted_fields["User"]:
                     encrypted_fields["User"].append("username")
-                print(get_config_value("encrypt-key"))
+
                 # print(encrypted_fields)
             elif form.user.data == "User.email":
-                user.email = encrypt(str(user.email), encrypt_key)
+                user.email = encrypt(
+                    str(user.email), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "email" not in encrypted_fields["User"]:
@@ -1223,7 +1359,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.user.data == "User.password":
-                user.password = encrypt(str(user.password), encrypt_key)
+                user.password = encrypt(
+                    str(user.password), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "password" not in encrypted_fields["User"]:
@@ -1236,7 +1374,9 @@ def upload_field():
         # Role class
         for role in Role.query.all():
             if form.role.data == "Role.name":
-                role.name = encrypt(str(role.name), encrypt_key)
+                role.name = encrypt(
+                    str(role.name), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "name" not in encrypted_fields["Role"]:
@@ -1244,7 +1384,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.role.data == "Role.description":
-                role.description = encrypt(str(role.description), encrypt_key)
+                role.description = encrypt(
+                    str(role.description), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "description" not in encrypted_fields["Role"]:
@@ -1258,8 +1400,8 @@ def upload_field():
         for credit_card in CreditCard.query.all():
             if form.credit_card.data == "CreditCard.card_number":
                 credit_card.card_number = encrypt(
-                    str(credit_card.card_number), encrypt_key
-                )
+                    str(credit_card.card_number), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "card_number" not in encrypted_fields["CreditCard"]:
@@ -1267,7 +1409,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.credit_card.data == "CreditCard.iv":
-                credit_card.iv = encrypt(str(credit_card.iv), encrypt_key)
+                credit_card.iv = encrypt(
+                    str(credit_card.iv), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "iv" not in encrypted_fields["CreditCard"]:
@@ -1280,7 +1424,9 @@ def upload_field():
         # Address Class
         for address in Address.query.all():
             if form.address.data == "Address.address":
-                address.address = encrypt(str(address.address), encrypt_key)
+                address.address = encrypt(
+                    str(address.address), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "address" not in encrypted_fields["Address"]:
@@ -1288,7 +1434,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.address.data == "Address.zip_code":
-                address.zip_code = encrypt(str(address.zip_code), encrypt_key)
+                address.zip_code = encrypt(
+                    str(address.zip_code), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "zip_code" not in encrypted_fields["Address"]:
@@ -1296,7 +1444,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.address.data == "Address.city":
-                address.city = encrypt(str(address.city), encrypt_key)
+                address.city = encrypt(
+                    str(address.city), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "city" not in encrypted_fields["Address"]:
@@ -1304,7 +1454,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.address.data == "Address.state":
-                address.state = encrypt(str(address.state), encrypt_key)
+                address.state = encrypt(
+                    str(address.state), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "state" not in encrypted_fields["Address"]:
@@ -1318,8 +1470,8 @@ def upload_field():
         for product in Product.query.all():
             if form.product.data == "Product.product_name":
                 product.product_name = encrypt(
-                    str(product.product_name), encrypt_key
-                )
+                    str(product.product_name), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "product_name" not in encrypted_fields["Product"]:
@@ -1328,8 +1480,8 @@ def upload_field():
                 # print(encrypted_fields)
             elif form.product.data == "Product.description":
                 product.description = encrypt(
-                    str(product.description), encrypt_key
-                )
+                    str(product.description), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "description" not in encrypted_fields["Product"]:
@@ -1337,7 +1489,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.product.data == "Product.image":
-                product.image = encrypt(str(product.image), encrypt_key)
+                product.image = encrypt(
+                    str(product.image), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "image" not in encrypted_fields["Product"]:
@@ -1345,7 +1499,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.product.data == "Product.quantity":
-                product.quantity = encrypt(str(product.quantity), encrypt_key)
+                product.quantity = encrypt(
+                    str(product.quantity), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "quantity" not in encrypted_fields["Product"]:
@@ -1358,7 +1514,9 @@ def upload_field():
         # Review Class
         for review in Review.query.all():
             if form.review.data == "Review.rating":
-                review.rating = encrypt(str(review.rating), encrypt_key)
+                review.rating = encrypt(
+                    str(review.rating), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "rating" not in encrypted_fields["Review"]:
@@ -1366,7 +1524,9 @@ def upload_field():
 
                 # print(encrypted_fields)
             elif form.review.data == "Review.contents":
-                review.contents = encrypt(str(review.contents), encrypt_key)
+                review.contents = encrypt(
+                    str(review.contents), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "contents" not in encrypted_fields["Review"]:
@@ -1379,7 +1539,9 @@ def upload_field():
         # Order Product Class
         for order in OrderProduct.query.all():
             if form.order.data == "OrderProduct.quantity":
-                order.quantity = encrypt(str(order.quantity), encrypt_key)
+                order.quantity = encrypt(
+                    str(order.quantity), constants.ENCRYPTION_KEY
+                ).hex()
                 client_db.session.commit()
 
                 if "quantity" not in encrypted_fields["OrderProduct"]:
@@ -1390,7 +1552,6 @@ def upload_field():
                 print("not found")
 
         set_config_value("encrypted-fields", encrypted_fields)
-        set_config_value("encrypt-key", b"encrypted_fields")
         return redirect(url_for("index"))
 
     return render_template("upload-field.html", form=form)
@@ -1500,6 +1661,47 @@ def onboarding_database_config():
     return render_template("onboarding-database-config.html")
 
 
+@app.route("/onboarding/encryption-config", methods=["GET", "POST"])
+# @required_permissions("manage_users")
+def onboarding_encryption_config():
+    if request.method == "POST":
+        encryption_passphrase = request.form.get("encryption-passphrase")
+
+        if encryption_passphrase is None:
+            flash(
+                "An error occurred while generating the encryption key. Please "
+                "try again.",
+                "danger",
+            )
+            return redirect(url_for("onboarding_encryption_config"))
+
+        encryption_config = {}
+
+        dek = os.urandom(32)
+
+        kek_salt = os.urandom(32)
+        kek = hashlib.scrypt(
+            encryption_passphrase.encode("UTF-8"),
+            salt=kek_salt,
+            n=16384,
+            r=8,
+            p=1,
+            dklen=32,
+        )
+
+        encryption_config["timestamp"] = datetime.datetime.now().strftime(
+            "%Y-%m-%dT%H:%M:%S+08:00"
+        )
+        encryption_config["kek-salt"] = kek_salt.hex()
+        encryption_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
+        encryption_config["encrypted-dek"] = encrypt(dek, kek).hex()
+
+        set_config_value("encryption-config", encryption_config)
+        return redirect(url_for("onboarding_api_config"))
+
+    return render_template("onboarding-encryption-config.html")
+
+
 @app.route("/onboarding/api-config")
 @required_permissions("manage_users")
 def onboarding_api_config():
@@ -1548,7 +1750,7 @@ def onboarding_backup_config():
         # copy from original location to timestamp
         shutil.copy2(location, file_backup_path)
         # encrypt the backed up file
-        encrypt_file(file_backup_path, KEY)
+        encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
         # after encrypting the copied file,
         # remove the copied file
         os.remove(file_backup_path)
@@ -1787,9 +1989,10 @@ class Database(Resource):
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def post(self):
+        args = self.post_parser.parse_args()
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
-        args = self.post_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
@@ -1832,8 +2035,9 @@ class Database(Resource):
                         created_object,
                         encrypted_field_name,
                         encrypt(
-                            getattr(created_object, encrypted_field_name), KEY
-                        ),
+                            getattr(created_object, encrypted_field_name),
+                            constants.ENCRYPTION_KEY,
+                        ).hex(),
                     )
 
             client_db.session.add(created_object)
@@ -1845,7 +2049,8 @@ class Database(Resource):
                         created_object,
                         encrypted_field_name,
                         decrypt(
-                            getattr(created_object, encrypted_field_name), KEY
+                            getattr(created_object, encrypted_field_name),
+                            constants.ENCRYPTION_KEY,
                         ),
                     )
 
@@ -1936,9 +2141,10 @@ class Database(Resource):
     @api.response(401, "Authentication failed")
     @api.response(403, "Forbidden")
     def get(self):
+        args = self.get_parser.parse_args()
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
-        args = self.get_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
@@ -1984,7 +2190,12 @@ class Database(Resource):
                         setattr(
                             obj,
                             encrypted_field_name,
-                            decrypt(getattr(obj, encrypted_field_name), KEY),
+                            decrypt(
+                                bytes.fromhex(
+                                    getattr(obj, encrypted_field_name)
+                                ),
+                                constants.ENCRYPTION_KEY,
+                            ),
                         )
 
             query_results = schema.dump(query_results)
@@ -2006,6 +2217,7 @@ class Database(Resource):
                     # request and log it as a high alert
                     if len(pattern_occurrence_count) > i.occurrence_threshold:
                         print("exceed")
+
                         if i.action == "deny_and_alert":
                             status, status_msg, status_code = (
                                 "ERROR",
@@ -2027,29 +2239,30 @@ class Database(Resource):
                                 "status": status,
                                 "status_msg": status_msg,
                             }, status_code
-                        else:
-                            status, status_msg, status_code = (
-                                "OK",
-                                "Sensitive Field Triggered - " + i.contents,
-                                200,
-                            )
-                            logged_request, logged_alert = log_request(
-                                alert_level=i.alert_level,
-                                status=status,
-                                status_msg=status_msg,
-                                request_params=(
-                                    f"Model: {args['model']}, Filter: "
-                                    f"{args['filter']}"
-                                ),
-                                response=str(query_results),
-                                ip_address=args["ip"],
-                            )
-                            # need a diff return statement as this is alert only, so request should still be allowed
-                            return {
-                                "status": status,
-                                "status_msg": status_msg,
-                                "query_results": query_results,
-                            }, status_code
+
+                        status, status_msg, status_code = (
+                            "OK",
+                            "Sensitive Field Triggered - " + i.contents,
+                            200,
+                        )
+                        logged_request, logged_alert = log_request(
+                            alert_level=i.alert_level,
+                            status=status,
+                            status_msg=status_msg,
+                            request_params=(
+                                f"Model: {args['model']}, Filter: "
+                                f"{args['filter']}"
+                            ),
+                            response=str(query_results),
+                            ip_address=args["ip"],
+                        )
+                        # need a diff return statement as this is alert only,
+                        # so request should still be allowed
+                        return {
+                            "status": status,
+                            "status_msg": status_msg,
+                            "query_results": query_results,
+                        }, status_code
 
             status, status_msg, status_code = "OK", "OK", 200
             logged_request, logged_alert = log_request(
@@ -2117,9 +2330,10 @@ class Database(Resource):
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def patch(self):
+        args = self.patch_parser.parse_args()
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
-        args = self.patch_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
@@ -2167,8 +2381,8 @@ class Database(Resource):
                 for field_name in args["values"]:
                     if field_name in encrypted_fields[args["model"]]:
                         args["values"][field_name] = encrypt(
-                            args["values"][field_name], KEY
-                        )
+                            args["values"][field_name], constants.ENCRYPTION_KEY
+                        ).hex()
 
             client_db.session.query(eval(args["model"])).filter(
                 eval(args["filter"])
@@ -2233,9 +2447,10 @@ class Database(Resource):
     @api.response(400, "Invalid Request")
     @api.response(401, "Authentication failed")
     def delete(self):
+        args = self.delete_parser.parse_args()
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
-        args = self.delete_parser.parse_args()
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
