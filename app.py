@@ -68,6 +68,7 @@ app.config.update(dict(
     MAIL_USERNAME = 'asecuredb@gmail.com',
     MAIL_PASSWORD = 'securedb123',
 ))
+mail = Mail(app)
 app.register_blueprint(blueprint)
 csrf.exempt(blueprint)
 
@@ -708,15 +709,18 @@ def alertview():
     print(rs)
     return render_template("alert-view.html", files=rs)
 
-@app.route("/alert/email")
-def alertemail():
-   msg = Message('SecureDB Report on Suspicious Requests', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'])
-   msg.body = "This is a report on High Alert Level Requests we have received. Please look through and respond accordingly. Thank you for using SecureDB."
-   return "Sent"
+# def alertemail():
+#    msg = Message('SecureDB Report on Suspicious Requests', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'])
+#    msg.body = "This is a report on High Alert Level Requests we have received. Please look through and respond accordingly. Thank you for using SecureDB."
+#    return "Sent"
 
-def sendalertemail(alertemail):
-
-
+@app.route("/alert/email/<id>")
+def sendalertemail(id):
+    rs = Alert.query.filter_by(request_id=id).all()
+    print("Sent",rs[0].__dict__)
+    msg = Message('SecureDB Report on Suspicious Requests.', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'], html="<h1><b>Request ID : {}\nAlert Level : {}\nDatetime : {}\nRequest Parameters : {}\nStatus : {}\nMessage : {}\nResponse : {}</h1></b>".format(rs[0].request_id,rs[0].alert_level,rs[0].request.datetime,rs[0].request.request_params,rs[0].request.status,rs[0].request.status_msg,rs[0].request.response))
+    mail.send(msg)
+    return redirect(url_for("sendalertemail"))
 
 # Onboarding routes
 @app.route("/onboarding")

@@ -7,6 +7,7 @@
   <div class="row justify-content-center">
     <div class="col-sm-12">
       <h4 class="text-center">Alert Details</h4>
+      <p class="text-center">High Level Alerts Detected. Please deal with accordingly.</p>
     </div>
   </div>
   <div class="row justify-content-center">
@@ -34,7 +35,7 @@
         <td>{{ row.request.response }}</td>
           <tr>
             <td><button class="btn btn-success"
-                onclick="location.href='/alert/email">Email</button>
+                onclick="location.href='/alert/email/{{request_id}}">Email</button>
             </td>
           </tr>
           {% endfor %}
