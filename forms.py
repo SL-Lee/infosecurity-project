@@ -119,6 +119,20 @@ class RequestFilter(FlaskForm):
     )
 
 
+class RequestBehaviourForm(FlaskForm):
+    url = StringField(
+        "URL", [InputRequired(), Length(min=1, max=100)]
+    )
+    Count = IntegerField(
+        "URL Accessed Count", [InputRequired()]
+    )
+    alert_level = SelectField(
+        "Alert Level",
+        [InputRequired()],
+        choices=[("High", "High"), ("Medium", "Medium"), ("Low", "Low")],
+    )
+
+
 class SensitiveFieldForm(FlaskForm):
     sensitive_field = StringField(
         "Sensitive Field", [InputRequired(), Length(min=1, max=100)]

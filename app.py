@@ -240,6 +240,7 @@ if len(schedule.get_jobs()) == 0:
             )
 
 
+
 @app.template_filter()
 def contains_any(items, *required_items):
     return any(item in required_items for item in items)
@@ -983,6 +984,28 @@ def get_requests(query, alert_level, date):
         "requests.html", alerts=alert_list, filter=alert_level, form=form
     )
 
+# Request Behaviour
+@app.route("/requests/behaviour", methods=["GET"])
+def request_behaviour():
+    try:
+        url_dict = get_config_value("url_dict")
+    except:
+        url_dict = {}
+        set_config_value("url_dict", url_dict)
+    return render_template(
+        "sensitive-fields.html", sensitive_fields=sensitive_fields
+    )
+
+@app.route("/requests/behaviour/add", methods=["GET"])
+def request_behaviour_add():
+    try:
+        url_dict = get_config_value("url_dict")
+    except:
+        url_dict = {}
+        set_config_value("url_dict", url_dict)
+    return render_template(
+        "sensitive-fields.html", sensitive_fields=sensitive_fields
+    )
 
 # Configure Sensitive Fields
 @app.route("/sensitive-fields", methods=["GET"])
@@ -1968,6 +1991,9 @@ class Database(Resource):
 
             sensitive_fields = Rule.query.all()
             whitelist = get_config_value("whitelist")
+
+
+            # If IP address not in whitelist, go through sensitive field validation
             if args.get("ip") not in whitelist:
                 for i in sensitive_fields:
                     pattern = f"'{i.contents}',"
