@@ -987,25 +987,46 @@ def get_requests(query, alert_level, date):
 # Request Behaviour
 @app.route("/requests/behaviour", methods=["GET"])
 def request_behaviour():
-    try:
-        url_dict = get_config_value("url_dict")
-    except:
-        url_dict = {}
+    url_dict = get_config_value("url_dict")
+    if url_dict is None:
+        url_dict = dict()
         set_config_value("url_dict", url_dict)
+    print(url_dict)
     return render_template(
-        "sensitive-fields.html", sensitive_fields=sensitive_fields
+        "request-behaviour.html", urls=url_dict
     )
 
-@app.route("/requests/behaviour/add", methods=["GET"])
+@app.route("/requests/behaviour/add", methods=["GET", "POST"])
 def request_behaviour_add():
-    try:
+    form = forms.RequestBehaviourForm(request.form)
+
+    if request.method == "POST" and form.validate():
         url_dict = get_config_value("url_dict")
-    except:
-        url_dict = {}
+        if url_dict is None:
+            url_dict = dict()
+        print(url_dict)
+        print("Before")
+        url_dict[form.url.data] = (form.count.data, form.alert_level.data)
+        print(url_dict)
         set_config_value("url_dict", url_dict)
+
+        return redirect(url_for("request_behaviour"))
+
+
     return render_template(
-        "sensitive-fields.html", sensitive_fields=sensitive_fields
+        "request-behaviour-add.html", form=form
     )
+
+
+@app.route("/requests/behaviour/delete/<url>", methods=["GET", "POST"])
+@required_permissions("manage_sensitive_fields")
+def delete_request_behaviour(url):
+    url_dict = get_config_value("url_dict")
+    url_dict.pop(url)
+    set_config_value("url_dict", url_dict)
+
+    return redirect(url_for("request_behaviour"))
+
 
 # Configure Sensitive Fields
 @app.route("/sensitive-fields", methods=["GET"])
@@ -1990,7 +2011,7 @@ class Database(Resource):
     @api.response(401, "Authentication failed")
     def post(self):
         args = self.post_parser.parse_args()
-
+        print(args["ip"])
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
         try:
@@ -2203,7 +2224,7 @@ class Database(Resource):
             sensitive_fields = Rule.query.all()
             whitelist = get_config_value("whitelist")
 
-
+            print(args["url"])
             # If IP address not in whitelist, go through sensitive field validation
             if args.get("ip") not in whitelist:
                 for i in sensitive_fields:

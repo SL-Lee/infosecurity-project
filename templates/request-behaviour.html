@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Request Behaviour{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
+{% block content %}
+<div class="container-fluid content">
+  <div class="justify-content-center">
+    <h4 class="text-center">Request Behaviour</h4>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col-sm-8">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">URL</th>
+            <th scope="col">Alert Level</th>
+            <th scope="col">URL Accessed Count in a min</th>
+            <th scope="col">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in urls %}
+          <tr>
+            <td>{{ i }}</td>
+            <td>{{ urls[i][1] }}</td>
+            <td>{{ urls[i][0] }}</td>
+            <td>
+              <button class="btn btn-danger"
+                onclick="location.href='/requests/behaviour/delete/{{ i }}'">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-primary btn-lg btn-block"
+        onclick="location.href='/requests/behaviour/add'">Add URL</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

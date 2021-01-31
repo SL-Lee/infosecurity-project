@@ -123,8 +123,8 @@ class RequestBehaviourForm(FlaskForm):
     url = StringField(
         "URL", [InputRequired(), Length(min=1, max=100)]
     )
-    Count = IntegerField(
-        "URL Accessed Count", [InputRequired()]
+    count = IntegerField(
+        "URL Accessed Count in a min", [InputRequired()]
     )
     alert_level = SelectField(
         "Alert Level",
