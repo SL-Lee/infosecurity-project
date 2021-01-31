@@ -10,7 +10,7 @@ from flask_login import current_user
 
 import constants
 from errors import InvalidAPIKeyError
-from server_models import Alert, Request
+from server_models import Alert, Request, server_db
 
 
 def get_config_value(key, default_value=None):
@@ -85,6 +85,45 @@ def request_filter(alerts, date, query):
             else:
                 alert_list.append(i)
     return alert_list
+
+
+def req_behaviour(url, ip):
+    url_dict = get_config_value("url_dict")
+    url_dict_count = get_config_value("url_dict_count")
+    if url_dict_count is None:
+        url_dict_count = dict()
+    print(url_dict_count)
+    ip_access_url_count = dict()
+    # Go through url dict to find any url matching inside the dictionary
+    for i in url_dict:
+        url_found = re.findall(i, url)
+        if len(url_found) >= 1:
+            # If url first accessed
+            if url not in url_dict_count:
+                ip_access_url_count[ip] = 1
+                url_dict_count[url] = ip_access_url_count
+            else:
+                # If a new ip access the url
+                if ip not in url_dict_count[url]:
+                    # Retrieve existing ip address : count
+                    ip_access_url_count = url_dict_count[url]
+                    ip_access_url_count[ip] = 1
+                    url_dict_count[url] = ip_access_url_count
+                # Existing ip access the url
+                else:
+                    url_dict_count[url][ip] += 1
+            # When ip address count reaches stated url count, trigger alert
+            if url_dict_count[url][ip] >= url_dict[i][0]:
+                logged_request, logged_alert = log_request(alert_level=url_dict[i][1], status="", status_msg="Request Behaviour conditions met", request_params="", response="URL Path - {}, has been accessed {} time(s) from ip address {}".format(url, url_dict_count[url][ip], ip),  ip_address=ip,)
+                server_db.session.add(logged_request)
+                server_db.session.add(logged_alert)
+                server_db.session.commit()
+    set_config_value("url_dict_count", url_dict_count)
+
+
+def restart_req():
+    url_dict_count = dict()
+    set_config_value("url_dict_count", url_dict_count)
 
 
 def required_permissions(*required_permission_names):

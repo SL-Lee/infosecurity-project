@@ -55,6 +55,9 @@
             "view_logged_requests", "manage_ip_whitelist", "manage_alerts") %}
             <div class="dropdown-divider"></div>
             {% endif %}
+            {% if "manage_request_behaviour" in current_user_permissions %}
+            <a class="dropdown-item" href="/requests/behaviour">Requests Behaviour</a>
+            {% endif %}
             {% if "manage_sensitive_fields" in current_user_permissions %}
             <a class="dropdown-item" href="/sensitive-fields">Sensitive Field
               Rules</a>

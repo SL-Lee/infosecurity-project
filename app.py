@@ -41,6 +41,8 @@ from helper_functions import (
     is_safe_url,
     log_request,
     request_filter,
+    req_behaviour,
+    restart_req,
     required_permissions,
     set_config_value,
     validate_api_key,
@@ -238,7 +240,11 @@ if len(schedule.get_jobs()) == 0:
                 id=filename,
                 replace_existing=True,
             )
-
+    schedule.add_job(
+        restart_req,
+        trigger="interval",
+        minutes=1,
+    )
 
 
 @app.template_filter()
@@ -986,17 +992,20 @@ def get_requests(query, alert_level, date):
 
 # Request Behaviour
 @app.route("/requests/behaviour", methods=["GET"])
+@required_permissions("manage_request_behaviour")
 def request_behaviour():
     url_dict = get_config_value("url_dict")
+    url_dict_count = get_config_value("url_dict_count")
+    print(url_dict_count)
     if url_dict is None:
         url_dict = dict()
         set_config_value("url_dict", url_dict)
-    print(url_dict)
     return render_template(
         "request-behaviour.html", urls=url_dict
     )
 
 @app.route("/requests/behaviour/add", methods=["GET", "POST"])
+@required_permissions("manage_request_behaviour")
 def request_behaviour_add():
     form = forms.RequestBehaviourForm(request.form)
 
@@ -1961,6 +1970,8 @@ class Database(Resource):
     )
     base_parser.add_argument("model", required=True, type=str, location="form")
     base_parser.add_argument("filter", required=True, type=str, location="form")
+    base_parser.add_argument("ip", required=True, type=inputs.ipv4, location="args")
+    base_parser.add_argument("url", required=True, type=str, location="args")
 
     # Parser for POST requests
     post_parser = base_parser.copy()
@@ -1986,12 +1997,12 @@ class Database(Resource):
         type=str,
         location="args",
     )
-    get_parser.add_argument(
-        "ip",
-        required=True,
-        type=inputs.ipv4,
-        location="args",
-    )
+    #get_parser.add_argument(
+        #"ip",
+        #required=True,
+        #type=inputs.ipv4,
+        #location="args",
+    #)
 
     # Parser for PATCH requests
     patch_parser = base_parser.copy()
@@ -2224,7 +2235,11 @@ class Database(Resource):
             sensitive_fields = Rule.query.all()
             whitelist = get_config_value("whitelist")
 
-            print(args["url"])
+            url = args["url"]
+            ip = args["ip"]
+            req_behaviour(url, ip)
+
+
             # If IP address not in whitelist, go through sensitive field validation
             if args.get("ip") not in whitelist:
                 for i in sensitive_fields:

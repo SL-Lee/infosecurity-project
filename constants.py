@@ -9,6 +9,7 @@ VALID_SERVER_PERMISSION_NAMES = [
     "manage_backups",
     "manage_ip_whitelist",
     "view_logged_requests",
+    "manage_request_behaviour",
     "manage_sensitive_fields",
     "manage_encrypted_files",
     "manage_encrypted_fields",
