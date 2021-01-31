@@ -211,8 +211,8 @@ def schedule_backup(filename):
         file_list = drive.ListFile(
             {"q": "'%s' in parents and trashed=false" % drive_backup_id}
         ).GetList()
-        # set drive id for backup
 
+        # set drive id for backup
         if file_list:
             for file in file_list:
                 print("Title: %s, ID: %s" % (file["title"], file["id"]))
