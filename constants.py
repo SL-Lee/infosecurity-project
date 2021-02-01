@@ -26,9 +26,10 @@ if _encryption_config is not None:
     kek = hashlib.scrypt(
         kek_passphrase.encode("UTF-8"),
         salt=bytes.fromhex(_encryption_config["kek-salt"]),
-        n=16384,
+        n=32768,
         r=8,
         p=1,
+        maxmem=33816576,
         dklen=32,
     )
 

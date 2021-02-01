@@ -408,9 +408,10 @@ def index():
             hashlib.scrypt(
                 password=login_form.password.data.encode("UTF-8"),
                 salt=server_user.password_salt,
-                n=16384,
+                n=32768,
                 r=8,
                 p=1,
+                maxmem=33816576,
             )
             == server_user.password_hash
         ):
@@ -458,9 +459,10 @@ def user_management_create():
         new_server_user_password_hash = hashlib.scrypt(
             password=create_user_form.password.data.encode("UTF-8"),
             salt=new_server_user_password_salt,
-            n=16384,
+            n=32768,
             r=8,
             p=1,
+            maxmem=33816576,
         )
         new_server_user = ServerUser(
             username=create_user_form.username.data,
@@ -519,9 +521,10 @@ def user_management_edit(server_user_id):
         password_hash = hashlib.scrypt(
             password=edit_user_form.password.data.encode("UTF-8"),
             salt=password_salt,
-            n=16384,
+            n=32768,
             r=8,
             p=1,
+            maxmem=33816576,
         )
         server_user.password_salt = password_salt
         server_user.password_hash = password_hash
@@ -1430,9 +1433,13 @@ def delete_sensitive_fields(field):
 @app.route("/encryption/key-management")
 @required_permissions("manage_encryption_key")
 def encryption_key_management():
-    encryption_key_timestamp = get_config_value("encryption-config").get(
-        "timestamp", None
-    )
+    try:
+        encryption_key_timestamp = get_config_value("encryption-config").get(
+            "timestamp", None
+        )
+    except:
+        encryption_key_timestamp = None
+
     return render_template(
         "encryption-key-management.html",
         encryption_key_timestamp=encryption_key_timestamp,
@@ -1462,9 +1469,10 @@ def encryption_key_management_generate():
     kek = hashlib.scrypt(
         encryption_passphrase.encode("UTF-8"),
         salt=kek_salt,
-        n=16384,
+        n=32768,
         r=8,
         p=1,
+        maxmem=33816576,
         dklen=32,
     )
 
@@ -1511,9 +1519,10 @@ def encryption_reset_passphrase():
     old_kek = hashlib.scrypt(
         old_encryption_passphrase.encode("UTF-8"),
         salt=bytes.fromhex(encryption_config["kek-salt"]),
-        n=16384,
+        n=32768,
         r=8,
         p=1,
+        maxmem=33816576,
         dklen=32,
     )
 
@@ -1538,9 +1547,10 @@ def encryption_reset_passphrase():
     new_kek = hashlib.scrypt(
         new_encryption_passphrase.encode("UTF-8"),
         salt=new_kek_salt,
-        n=16384,
+        n=32768,
         r=8,
         p=1,
+        maxmem=33816576,
         dklen=32,
     )
 
@@ -1960,9 +1970,10 @@ def onboarding_admin_user_creation():
         new_admin_user_password_hash = hashlib.scrypt(
             password=create_admin_user_form.password.data.encode("UTF-8"),
             salt=new_admin_user_password_salt,
-            n=16384,
+            n=32768,
             r=8,
             p=1,
+            maxmem=33816576,
         )
         new_admin_user = ServerUser(
             username=create_admin_user_form.username.data,
@@ -2040,9 +2051,10 @@ def onboarding_encryption_config():
         kek = hashlib.scrypt(
             encryption_passphrase.encode("UTF-8"),
             salt=kek_salt,
-            n=16384,
+            n=32768,
             r=8,
             p=1,
+            maxmem=33816576,
             dklen=32,
         )
 
