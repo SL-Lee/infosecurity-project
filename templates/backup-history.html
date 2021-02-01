@@ -1,12 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Backup{% endblock %}
 {% from "includes/_form_helper.html" import render_field %}
-
 {% block content %}
 <div class="container-fluid content">
   <div class="row justify-content-center">
     <div class="col-sm-12">
-      <h4 class="text-center">Backup History</h4>
+      <h4 class="text-center">Backup History for {{ file }}</h4>
     </div>
   </div>
   <div class="row justify-content-center">
@@ -22,18 +21,54 @@
         </thead>
         <tbody>
           {% for i in timestamp %}
-          <tr>
-            <th scope="row">{{ loop.index }}</th>
-            <td>{{ i }}</td>
-            <td>
-              <button class="btn btn-warning"
-                onclick="restore('{{ file }}', '{{ i }}')">Restore
-              </button>
-            </td>
-          </tr>
+            {% if loop.index <= 10 %}
+              <tr id="{{ loop.index }}">
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ i }}</td>
+                <td>
+                  <button class="btn btn-warning"
+                    onclick="restore('{{ file }}', '{{ i }}')">Restore
+                  </button>
+                </td>
+              </tr>
+            {% else %}
+              <tr style="display:none" id="{{ loop.index }}">
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ i }}</td>
+                <td>
+                  <button class="btn btn-warning"
+                    onclick="restore('{{ file }}', '{{ i }}')">Restore
+                  </button>
+                </td>
+              </tr>
+            {% endif %}
           {% endfor %}
         </tbody>
       </table>
+      <nav aria-label="pagination">
+        <ul class="pagination justify-content-center">
+          <li class="page-item disabled" id="previous">
+            <a class="page-link" href="#" tabindex="-1" onclick="previousPage()">Previous</a>
+          </li>
+
+          {% set pages = (((timestamp | length)/10) | round(method='ceil') | int) %}
+          {% for i in range(pages) %}
+            <li class="page-item">
+              <a class="page-link" href="#" onclick="goToPage({{ i+1 }})">{{ i+1 }}</a>
+            </li>
+          {% endfor %}
+
+          {% if (pages) == 1 %}
+            <li class="page-item disabled" id="next">
+              <a class="page-link" href="#" onclick="nextPage()" tabindex="-1">Next</a>
+            </li>
+          {% else %}
+            <li class="page-item" id="next">
+              <a class="page-link" href="#" onclick="nextPage()">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
       {% else %}
       <h6 class="text-center text-muted">There are no backups of the file
         selected</h6>
@@ -45,7 +80,142 @@
 <script>
   function restore(file, time) {
     if (confirm("Are you sure you want to restore file back to time?")) {
-      location.href="/backup/"+(file)+"/"+(time)+"/restore";
+      location.href = "/backup/" + (file) + "/" + (time) + "/restore";
+    }
+  }
+
+  var current = 0;
+  var first = 0;
+  var last = 10;
+  function nextPage() {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
+      }
+    }
+
+    current += 1;
+    first += 10;
+    last += 10;
+
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
+      }
+    }
+
+    if (current + 1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    } else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current + 1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    } else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
+    }
+  }
+
+  function previousPage() {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
+      }
+    }
+
+    current -= 1;
+    first -= 10;
+    last -= 10;
+
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
+      }
+    }
+
+    if (current + 1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    } else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current + 1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    } else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
+    }
+  }
+
+  function goToPage(page) {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
+      }
+    }
+
+    current = page - 1;
+    first = page * 10 - 10;
+    last = page * 10;
+
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
+      }
+    }
+
+    if (current + 1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    } else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current + 1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    } else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
     }
   }
 </script>

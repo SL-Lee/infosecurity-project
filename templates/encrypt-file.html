@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Upload New File{% endblock %}
+{% block title %}Encrypt New File{% endblock %}
 {% block content %}
 <div class="d-flex" style="height: 80vh;">
   <div class="ml-auto mr-auto align-self-center">
-    <h1 class="text-center" style="font-size: 50px;">Upload File</h1>
-    <p class="lead text-center">Choose file to upload:</p>
+    <h1 class="text-center" style="font-size: 50px;">Encrypt File</h1>
+    <p class="lead text-center">Choose file to encrypt:</p>
     <form action="" method="POST" enctype="multipart/form-data"
       class="text-center">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -18,7 +18,7 @@
 </div>
 <script>
   function confirmUpload() {
-    var message = confirm("Are you sure you want to upload this file?")
+    var message = confirm("Are you sure you want to encrypt this file?")
       ? "You pressed OK!"
       : "You pressed cancel!";
     document.querySelector("form").onclick = function () {
@@ -26,7 +26,7 @@
     };
   }
   function confirmUpload2() {
-    var message = confirm("Are you sure you want to upload this file?")
+    var message = confirm("Are you sure you want to decrypt this file?")
       ? "You pressed OK!"
       : "You pressed cancel!";
     document.querySelector("form").onclick = function () {

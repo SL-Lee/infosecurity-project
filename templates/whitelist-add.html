@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Whitelist address{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
+{% block content %}
+<div class="container-fluid content">
+  <div class="justify-content-center">
+    <div class="col-sm-12">
+      <h4 class="text-center">Whitelist address</h4>
+    </div>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col-sm-8">
+      <form class="form" method="POST">
+        {{ form.csrf_token }}
+        <div class="form-group">
+          {{ render_field(form.ip_address, class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
