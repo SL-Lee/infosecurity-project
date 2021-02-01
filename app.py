@@ -20,7 +20,7 @@ from flask import (
     render_template,
     request,
     send_file,
-    url_for, flash,
+    url_for,
 )
 from flask_login import (
     LoginManager,
@@ -29,12 +29,12 @@ from flask_login import (
     login_user,
     logout_user,
 )
+from flask_mail import Mail, Message
 from flask_restx import Api, Resource, apidoc, inputs, reqparse
 from flask_wtf.csrf import CSRFProtect
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 from werkzeug.utils import secure_filename
-from flask_mail import Mail, Message
 
 import constants
 import forms
@@ -66,6 +66,18 @@ app.config["SQLALCHEMY_BINDS"] = {
     "server": "sqlite:///server_db.sqlite3",
 }
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config.update(
+    dict(
+        DEBUG=True,
+        MAIL_SERVER="smtp.gmail.com",
+        MAIL_PORT=587,
+        MAIL_USE_TLS=True,
+        MAIL_USE_SSL=False,
+        MAIL_DEFAULT_SENDER="asecuredb@gmail.com",
+        MAIL_USERNAME="asecuredb@gmail.com",
+        MAIL_PASSWORD="securedb123",
+    )
+)
 
 csrf = CSRFProtect(app)
 
@@ -86,16 +98,7 @@ api = Api(
     security="api-key",
     doc="/doc/",
 )
-app.config.update(dict(
-    DEBUG = True,
-    MAIL_SERVER = 'smtp.gmail.com',
-    MAIL_PORT = 587,
-    MAIL_USE_TLS = True,
-    MAIL_USE_SSL = False,
-    MAIL_DEFAULT_SENDER = 'asecuredb@gmail.com',
-    MAIL_USERNAME = 'asecuredb@gmail.com',
-    MAIL_PASSWORD = 'securedb123',
-))
+
 mail = Mail(app)
 app.register_blueprint(blueprint)
 csrf.exempt(blueprint)
@@ -1937,27 +1940,53 @@ def upload_field():
 
 
 # Alert Function
-@app.route("/alert/view", methods=['GET'])
+@app.route("/alert/view", methods=["GET"])
 def alertview():
     rs = Alert.query.filter_by(alert_level="high").all()
     print(rs)
     return render_template("alert-view.html", files=rs)
 
-# def alertemail():
-#    msg = Message('SecureDB Report on Suspicious Requests', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'])
-#    msg.body = "This is a report on High Alert Level Requests we have received. Please look through and respond accordingly. Thank you for using SecureDB."
-#    return "Sent"
 
-@app.route("/alert/email/<id>", methods=['GET','POST'])
+# def alertemail():
+#     msg = Message(
+#         "SecureDB Report on Suspicious Requests",
+#         sender="asecured@gmail.com",
+#         recipients=["aecommerce7@gmail.com"],
+#     )
+#     msg.body = (
+#         "This is a report on High Alert Level Requests we have received. "
+#         "Please look through and respond accordingly. Thank you for using "
+#         "SecureDB."
+#     )
+#     return "Sent"
+
+
+@app.route("/alert/email/<id>", methods=["GET", "POST"])
 def sendalertemail(id):
-    print('sent')
+    print("sent")
     rs = Alert.query.filter_by(request_id=id).all()
-    print("Sent",rs[0].__dict__)
-    msg = Message('SecureDB Report on Suspicious Requests.', sender='asecured@gmail.com', recipients=['aecommerce7@gmail.com'],
-             html="<h1><b>Request ID : {}\nAlert Level : {}\nDatetime : {}\nRequest Parameters : {}\nStatus : {}\nMessage : {}\nResponse : {}</h1></b>"
-            .format(rs[0].request_id,rs[0].alert_level,rs[0].request.datetime,rs[0].request.request_params,rs[0].request.status,rs[0].request.status_msg,rs[0].request.response))
+    print("Sent", rs[0].__dict__)
+    msg = Message(
+        "SecureDB Report on Suspicious Requests.",
+        sender="asecured@gmail.com",
+        recipients=["aecommerce7@gmail.com"],
+        html=(
+            "<h1><b>Request ID : {}\nAlert Level : {}\nDatetime : {}\nRequest "
+            "Parameters : {}\nStatus : {}\nMessage : {}\nResponse : {}</h1></"
+            "b>".format(
+                rs[0].request_id,
+                rs[0].alert_level,
+                rs[0].request.datetime,
+                rs[0].request.request_params,
+                rs[0].request.status,
+                rs[0].request.status_msg,
+                rs[0].request.response,
+            )
+        ),
+    )
     mail.send(msg)
     return redirect(url_for("alertview"))
+
 
 # Onboarding routes
 @app.route("/onboarding")
@@ -2455,10 +2484,6 @@ def api_documentation():
 
 
 # API routes
-def log_request(param, status, status_msg):
-    pass
-
-
 @api.route("/database")
 class Database(Resource):
     base_parser = reqparse.RequestParser(bundle_errors=True)
