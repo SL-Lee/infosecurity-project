@@ -215,16 +215,13 @@ def schedule_backup(filename):
         ).GetList()
 
         # set drive id for backup
-        if file_list:
-            for file in file_list:
-                print("Title: %s, ID: %s" % (file["title"], file["id"]))
+        filename_id = None
 
-                if file["title"] == filename:
-                    filename_id = file["id"]
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
 
-            filename_id = None
-        else:
-            filename_id = None
+            if file["title"] == filename:
+                filename_id = file["id"]
 
         timestamp = secure_filename(
             backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
@@ -258,16 +255,13 @@ def schedule_backup(filename):
         ).GetList()
 
         # set drive id for backup
-        if file_list:
-            for file in file_list:
-                print("Title: %s, ID: %s" % (file["title"], file["id"]))
+        timestamp_id = None
 
-                if file["title"] == timestamp:
-                    timestamp_id = file["id"]
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
 
-            timestamp_id = None
-        else:
-            timestamp_id = None
+            if file["title"] == timestamp:
+                timestamp_id = file["id"]
 
         # if no timestamp folder
         if not os.path.exists(timestamp_folder):
@@ -711,16 +705,13 @@ def backup_add():
         ).GetList()
 
         # set drive id for backup
-        if file_list:
-            for file in file_list:
-                print("Title: %s, ID: %s" % (file["title"], file["id"]))
+        filename_id = None
 
-                if file["title"] == filename:
-                    filename_id = file["id"]
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
 
-            filename_id = None
-        else:
-            filename_id = None
+            if file["title"] == filename:
+                filename_id = file["id"]
 
         timestamp = secure_filename(
             backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
@@ -760,16 +751,13 @@ def backup_add():
         ).GetList()
 
         # set drive id for backup
-        if file_list:
-            for file in file_list:
-                print("Title: %s, ID: %s" % (file["title"], file["id"]))
+        timestamp_id = None
 
-                if file["title"] == timestamp:
-                    timestamp_id = file["id"]
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
 
-            timestamp_id = None
-        else:
-            timestamp_id = None
+            if file["title"] == timestamp:
+                timestamp_id = file["id"]
 
         file_backup_path = os.path.join(
             backup_folder, os.path.basename(location)
@@ -941,16 +929,13 @@ def backup_update(file):
             ).GetList()
 
             # set drive id for backup
-            if file_list:
-                for files in file_list:
-                    print("Title: %s, ID: %s" % (files["title"], files["id"]))
+            filename_id = None
 
-                    if files["title"] == file:
-                        filename_id = files["id"]
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
 
-                filename_id = None
-            else:
-                filename_id = None
+                if files["title"] == file:
+                    filename_id = files["id"]
 
             timestamp = secure_filename(
                 backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
@@ -990,16 +975,13 @@ def backup_update(file):
             ).GetList()
 
             # set drive id for backup
-            if file_list:
-                for files in file_list:
-                    print("Title: %s, ID: %s" % (files["title"], files["id"]))
+            timestamp_id = None
 
-                    if files["title"] == timestamp:
-                        timestamp_id = files["id"]
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
 
-                timestamp_id = None
-            else:
-                timestamp_id = None
+                if files["title"] == timestamp:
+                    timestamp_id = files["id"]
 
             file_backup_path = os.path.join(
                 backup_folder, os.path.basename(file_settings["path"])
@@ -1107,16 +1089,13 @@ def backup_update(file):
             ).GetList()
 
             # set drive id for backup
-            if file_list:
-                for files in file_list:
-                    print("Title: %s, ID: %s" % (files["title"], files["id"]))
+            filename_id = None
 
-                    if files["title"] == file:
-                        filename_id = files["id"]
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
 
-                filename_id = None
-            else:
-                filename_id = None
+                if files["title"] == file:
+                    filename_id = files["id"]
 
             timestamp = secure_filename(
                 backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
@@ -1156,16 +1135,13 @@ def backup_update(file):
             ).GetList()
 
             # set drive id for backup
-            if file_list:
-                for files in file_list:
-                    print("Title: %s, ID: %s" % (files["title"], files["id"]))
+            timestamp_id = None
 
-                    if files["title"] == timestamp:
-                        timestamp_id = files["id"]
+            for files in file_list:
+                print("Title: %s, ID: %s" % (files["title"], files["id"]))
 
-                timestamp_id = None
-            else:
-                timestamp_id = None
+                if files["title"] == timestamp:
+                    timestamp_id = files["id"]
 
             file_backup_path = os.path.join(
                 backup_folder, os.path.basename(file_settings["path"])
@@ -2265,16 +2241,13 @@ def onboarding_backup_config():
         ).GetList()
 
         # set drive id for backup
-        if file_list:
-            for file in file_list:
-                print("Title: %s, ID: %s" % (file["title"], file["id"]))
+        filename_id = None
 
-                if file["title"] == filename:
-                    filename_id = file["id"]
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
 
-            filename_id = None
-        else:
-            filename_id = None
+            if file["title"] == filename:
+                filename_id = file["id"]
 
         timestamp = secure_filename(
             backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
@@ -2314,16 +2287,13 @@ def onboarding_backup_config():
         ).GetList()
 
         # set drive id for backup
-        if file_list:
-            for file in file_list:
-                print("Title: %s, ID: %s" % (file["title"], file["id"]))
+        timestamp_id = None
 
-                if file["title"] == timestamp:
-                    timestamp_id = file["id"]
+        for file in file_list:
+            print("Title: %s, ID: %s" % (file["title"], file["id"]))
 
-            timestamp_id = None
-        else:
-            timestamp_id = None
+            if file["title"] == timestamp:
+                timestamp_id = file["id"]
 
         file_backup_path = os.path.join(
             backup_folder, os.path.basename(location)
