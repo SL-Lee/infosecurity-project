@@ -89,6 +89,9 @@ def request_filter(alerts, date, query):
 
 def req_behaviour(url, ip):
     url_dict = get_config_value("url_dict")
+    if url_dict is None:
+        url_dict = dict()
+        set_config_value("url_dict", url_dict)
     url_dict_count = get_config_value("url_dict_count")
     if url_dict_count is None:
         url_dict_count = dict()
