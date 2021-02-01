@@ -92,12 +92,11 @@ def req_behaviour(url, ip):
     url_dict_count = get_config_value("url_dict_count")
     if url_dict_count is None:
         url_dict_count = dict()
-    print(url_dict_count)
     ip_access_url_count = dict()
     # Go through url dict to find any url matching inside the dictionary
     for i in url_dict:
         url_found = re.findall(i, url)
-        if len(url_found) >= 1:
+        if i == url:
             # If url first accessed
             if url not in url_dict_count:
                 ip_access_url_count[ip] = 1
@@ -119,7 +118,7 @@ def req_behaviour(url, ip):
                 server_db.session.add(logged_alert)
                 server_db.session.commit()
     set_config_value("url_dict_count", url_dict_count)
-
+    print(url_dict_count)
 
 def restart_req():
     url_dict_count = dict()
