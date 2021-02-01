@@ -1942,9 +1942,9 @@ def upload_field():
 # Alert Function
 @app.route("/alert/view", methods=["GET"])
 def alertview():
-    rs = Alert.query.filter_by(alert_level="high").all()
-    print(rs)
-    return render_template("alert-view.html", files=rs)
+    alerts = Alert.query.filter_by(alert_level="high").all()
+    print(alerts)
+    return render_template("alert-view.html", alerts=alerts)
 
 
 # def alertemail():
@@ -1961,11 +1961,11 @@ def alertview():
 #     return "Sent"
 
 
-@app.route("/alert/email/<id>", methods=["GET", "POST"])
-def sendalertemail(id):
+@app.route("/alert/email/<request_id>", methods=["GET", "POST"])
+def sendalertemail(request_id):
     print("sent")
-    rs = Alert.query.filter_by(request_id=id).all()
-    print("Sent", rs[0].__dict__)
+    alerts = Alert.query.filter_by(request_id=request_id).all()
+    print("Sent", alerts[0].__dict__)
     msg = Message(
         "SecureDB Report on Suspicious Requests.",
         sender="asecured@gmail.com",
@@ -1974,13 +1974,13 @@ def sendalertemail(id):
             "<h1><b>Request ID : {}\nAlert Level : {}\nDatetime : {}\nRequest "
             "Parameters : {}\nStatus : {}\nMessage : {}\nResponse : {}</h1></"
             "b>".format(
-                rs[0].request_id,
-                rs[0].alert_level,
-                rs[0].request.datetime,
-                rs[0].request.request_params,
-                rs[0].request.status,
-                rs[0].request.status_msg,
-                rs[0].request.response,
+                alerts[0].request_id,
+                alerts[0].alert_level,
+                alerts[0].request.datetime,
+                alerts[0].request.request_params,
+                alerts[0].request.status,
+                alerts[0].request.status_msg,
+                alerts[0].request.response,
             )
         ),
     )
