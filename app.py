@@ -1559,7 +1559,7 @@ def encryption_reset_passphrase():
 
 
 # Upload API
-@app.route("/upload-file", methods=["GET", "POST"])
+@app.route("/encrypt-file", methods=["GET", "POST"])
 @required_permissions("manage_encrypted_files")
 def upload_file():
     if request.method == "POST":
@@ -1599,7 +1599,7 @@ def upload_file():
             # send file name as parameter to download
             return redirect("/download-file2/" + filename[:-4] + ".dec")
 
-    return render_template("upload-file.html")
+    return render_template("encrypt-file.html")
 
 
 # Download API
@@ -1643,7 +1643,7 @@ def return_files_tut2(filename):
 
 
 # Individual data fields encryption
-@app.route("/upload-field", methods=["GET", "POST"])
+@app.route("/encrypt-field", methods=["GET", "POST"])
 @required_permissions("manage_encrypted_fields")
 def upload_field():
     # pylint: disable=pointless-string-statement
@@ -1911,7 +1911,7 @@ def upload_field():
         set_config_value("encrypted-fields", encrypted_fields)
         return redirect(url_for("index"))
 
-    return render_template("upload-field.html", form=form)
+    return render_template("encrypt-field.html", form=form)
 
 
 # Alert Function
