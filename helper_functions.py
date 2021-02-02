@@ -15,6 +15,7 @@ import constants
 from crypto_functions import encrypt_file
 from errors import InvalidAPIKeyError
 from server_models import Alert, BackupLog, Request, server_db
+from flask_mail import Mail, Message
 
 
 def get_config_value(key, default_value=None):
@@ -314,3 +315,33 @@ def schedule_backup(filename):
         )
         server_db.session.add(backup_log)
         server_db.session.commit()
+
+def alertemail(mail, request_id):
+    alerts = Alert.query.filter_by(request_id=request_id).all()
+    print("Sent", alerts[0].__dict__)
+    msg = Message(
+        "SecureDB Report on Suspicious Requests.",
+        sender="asecured@gmail.com",
+        recipients=["aecommerce7@gmail.com"],
+        html=(
+            "<h2><b>Request ID :</h2> {}"
+            "\n<h2>Alert Level :</h2> {}"
+            "\n<h2>Datetime of Detection :</h2> {}"
+            "\n<h2>IP Address :</h2> {}"
+            "\n<h2>Request Parameters :</h2> {}"
+            "\n<h2>Status :</h2> {}"
+            "\n<h2>Message :</h2> {}"
+            "\n<h2>Response :</h2> {}</"
+            "b>".format(
+                alerts[0].request_id,
+                alerts[0].alert_level,
+                str(alerts[0].request.datetime)[:19],
+                alerts[0].request.ip_address,
+                alerts[0].request.request_params,
+                alerts[0].request.status,
+                alerts[0].request.status_msg,
+                alerts[0].request.response,
+            )
+        ),
+    )
+    mail.send(msg)
