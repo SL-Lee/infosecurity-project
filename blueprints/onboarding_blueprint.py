@@ -191,7 +191,6 @@ def onboarding_drive_upload_config():
         folder_names = []
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
             folder_names.append(file["title"])
 
         # if backup folder not created
@@ -210,8 +209,6 @@ def onboarding_drive_upload_config():
 
         # set drive id for backup
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
-
             if file["title"] == "backup":
                 _drive_backup_id = file["id"]
 
@@ -259,7 +256,6 @@ def onboarding_backup_config():
         folder_names = []
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
             folder_names.append(file["title"])
 
         # if backup folder not created
@@ -289,8 +285,6 @@ def onboarding_backup_config():
         filename_id = None
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
-
             if file["title"] == filename:
                 filename_id = file["id"]
 
@@ -313,7 +307,6 @@ def onboarding_backup_config():
         folder_names = []
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
             folder_names.append(file["title"])
 
         # if backup folder not created
@@ -335,8 +328,6 @@ def onboarding_backup_config():
         timestamp_id = None
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
-
             if file["title"] == timestamp:
                 timestamp_id = file["id"]
 
