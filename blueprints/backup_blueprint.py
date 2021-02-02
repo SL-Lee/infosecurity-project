@@ -8,10 +8,11 @@ from werkzeug.utils import secure_filename
 
 import constants
 import forms
-from crypto import decrypt_file, encrypt_file
+from crypto_functions import decrypt_file, encrypt_file
 from helper_functions import (
     get_config_value,
     required_permissions,
+    schedule_backup,
     set_config_value,
 )
 from server_models import BackupLog, server_db
@@ -80,7 +81,6 @@ def backup_add():
         folder_names = []
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
             folder_names.append(file["title"])
 
         # if backup folder not created
@@ -110,8 +110,6 @@ def backup_add():
         filename_id = None
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
-
             if file["title"] == filename:
                 filename_id = file["id"]
 
@@ -134,7 +132,6 @@ def backup_add():
         folder_names = []
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
             folder_names.append(file["title"])
 
         # if backup folder not created
@@ -156,8 +153,6 @@ def backup_add():
         timestamp_id = None
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
-
             if file["title"] == timestamp:
                 timestamp_id = file["id"]
 
@@ -218,7 +213,7 @@ def backup_add():
 
         if form.interval_type.data == "min":
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 minutes=form.interval.data,
@@ -227,7 +222,7 @@ def backup_add():
             )
         elif form.interval_type.data == "hr":
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 hours=form.interval.data,
@@ -236,7 +231,7 @@ def backup_add():
             )
         elif form.interval_type.data == "d":
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 days=form.interval.data,
@@ -245,7 +240,7 @@ def backup_add():
             )
         elif form.interval_type.data == "wk":
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 weeks=form.interval.data,
@@ -255,7 +250,7 @@ def backup_add():
         elif form.interval_type.data == "mth":
             months = 31 * form.interval.data
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 days=months,
@@ -274,8 +269,14 @@ def backup_add():
 @required_permissions("manage_backups")
 def backup_history(file):
     path = os.path.join(constants.BACKUP_PATH, file)
-    timestamp = os.listdir(path)
-    timestamp.reverse()
+    # get all entries in the directory
+    entries = []
+    for file_name in os.listdir(path):
+        entries.append(os.path.join(path, file_name))
+    entries.sort(key=os.path.getctime, reverse=True)
+    timestamp = []
+    for i in entries:
+        timestamp.append(os.path.basename(i))
     print(timestamp)
 
     return render_template(
@@ -313,7 +314,6 @@ def backup_update(file):
             folder_names = []
 
             for files in file_list:
-                print("Title: %s, ID: %s" % (files["title"], files["id"]))
                 folder_names.append(files["title"])
 
             # if backup folder not created
@@ -343,8 +343,6 @@ def backup_update(file):
             filename_id = None
 
             for files in file_list:
-                print("Title: %s, ID: %s" % (files["title"], files["id"]))
-
                 if files["title"] == file:
                     filename_id = files["id"]
 
@@ -365,7 +363,6 @@ def backup_update(file):
             folder_names = []
 
             for files in file_list:
-                print("Title: %s, ID: %s" % (files["title"], files["id"]))
                 folder_names.append(files["title"])
 
             # if backup folder not created
@@ -389,8 +386,6 @@ def backup_update(file):
             timestamp_id = None
 
             for files in file_list:
-                print("Title: %s, ID: %s" % (files["title"], files["id"]))
-
                 if files["title"] == timestamp:
                     timestamp_id = files["id"]
 
@@ -440,32 +435,38 @@ def backup_update(file):
 
             # if field different from settings and the file is valid and not
             # empty
-            if (
-                form.source.data != file_settings["path"]
-                and os.path.isfile(form.source.data)
-                and form.source.data != ""
-            ):
-                file_settings["path"] = form.source.data
+            if form.source.data is not None:
+                if (
+                    form.source.data != file_settings["path"]
+                    and os.path.isfile(form.source.data)
+                    and form.source.data != ""
+                ):
+                    file_settings["path"] = form.source.data
 
             # if field different from settings and not empty
-            if (
-                form.interval_type.data != file_settings["interval_type"]
-                and form.interval_type.data != ""
-            ):
-                file_settings["interval_type"] = form.interval_type.data
+            if form.interval_type.data is not None:
+                if (
+                    form.interval_type.data != file_settings["interval_type"]
+                    and form.interval_type.data != ""
+                ):
+                    file_settings["interval_type"] = form.interval_type.data
 
             # if field different from settings and not empty
-            if (
-                form.interval.data != file_settings["interval"]
-                and form.interval.data != ""
-            ):
-                file_settings["interval"] = form.interval.data
+            if form.interval.data is not None:
+                if (
+                    form.interval.data != file_settings["interval"]
+                    and form.interval.data != ""
+                ):
+                    file_settings["interval"] = form.interval.data
 
             # update settings for file
             backup_config[file] = file_settings
             # cannot put file settings directly, else it would override the
             # whole backup settings
             set_config_value("backup", backup_config)
+            backup_config = get_config_value("backup")
+            print("backup files:", backup_config)
+            file_settings = backup_config[file]
 
             # create folders to be used for saving
             backup_datetime = datetime.datetime.now()
@@ -483,7 +484,6 @@ def backup_update(file):
             folder_names = []
 
             for files in file_list:
-                print("Title: %s, ID: %s" % (files["title"], files["id"]))
                 folder_names.append(files["title"])
 
             # if backup folder not created
@@ -513,8 +513,6 @@ def backup_update(file):
             filename_id = None
 
             for files in file_list:
-                print("Title: %s, ID: %s" % (files["title"], files["id"]))
-
                 if files["title"] == file:
                     filename_id = files["id"]
 
@@ -535,7 +533,6 @@ def backup_update(file):
             folder_names = []
 
             for files in file_list:
-                print("Title: %s, ID: %s" % (files["title"], files["id"]))
                 folder_names.append(files["title"])
 
             # if backup folder not created
@@ -559,8 +556,6 @@ def backup_update(file):
             timestamp_id = None
 
             for files in file_list:
-                print("Title: %s, ID: %s" % (files["title"], files["id"]))
-
                 if files["title"] == timestamp:
                     timestamp_id = files["id"]
 
@@ -621,28 +616,28 @@ def backup_update(file):
                 constants.SCHEDULER.reschedule_job(
                     file,
                     trigger="interval",
-                    minutes=form.interval.data,
+                    minutes=file_settings["interval"],
                 )
             elif form.interval_type.data == "hr":
                 constants.SCHEDULER.reschedule_job(
                     file,
                     trigger="interval",
-                    hours=form.interval.data,
+                    hours=file_settings["interval"],
                 )
             elif form.interval_type.data == "d":
                 constants.SCHEDULER.reschedule_job(
                     file,
                     trigger="interval",
-                    days=form.interval.data,
+                    days=file_settings["interval"],
                 )
             elif form.interval_type.data == "wk":
                 constants.SCHEDULER.reschedule_job(
                     file,
                     trigger="interval",
-                    weeks=form.interval.data,
+                    weeks=file_settings["interval"],
                 )
             elif form.interval_type.data == "mth":
-                months = 31 * form.interval.data
+                months = 31 * file_settings["interval"]
                 constants.SCHEDULER.reschedule_job(
                     file,
                     trigger="interval",
