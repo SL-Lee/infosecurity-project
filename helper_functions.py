@@ -160,7 +160,6 @@ def schedule_backup(filename):
         folder_names = []
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
             folder_names.append(file["title"])
 
         # if backup folder not created
@@ -184,8 +183,6 @@ def schedule_backup(filename):
         filename_id = None
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
-
             if file["title"] == filename:
                 filename_id = file["id"]
 
@@ -202,7 +199,6 @@ def schedule_backup(filename):
         folder_names = []
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
             folder_names.append(file["title"])
 
         # if backup folder not created
@@ -224,8 +220,6 @@ def schedule_backup(filename):
         timestamp_id = None
 
         for file in file_list:
-            print("Title: %s, ID: %s" % (file["title"], file["id"]))
-
             if file["title"] == timestamp:
                 timestamp_id = file["id"]
 
