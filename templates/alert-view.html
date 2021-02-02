@@ -24,17 +24,18 @@
           </tr>
         </thead>
         <tbody>
-          {% for row in files %}
-          <td>{{ row.request.id }}</td>
-          <td>{{ row.alert_level }}</td>
-          <td>{{ row.request.datetime }}</td>
-          <td>{{ row.request.request_params }}</td>
-          <td>{{ row.request.status }}</td>
-          <td>{{ row.request.status_msg }}</td>
-          <td>{{ row.request.response }}</td>
+          {% for alert in alerts %}
+          <td>{{ alert.request.id }}</td>
+          <td>{{ alert.alert_level }}</td>
+          <td>{{ alert.request.datetime }}</td>
+          <td>{{ alert.request.ip_address }}</td>
+          <td>{{ alert.request.request_params }}</td>
+          <td>{{ alert.request.status }}</td>
+          <td>{{ alert.request.status_msg }}</td>
+          <td>{{ alert.request.response }}</td>
           <tr>
             <td>
-              <button class="btn btn-success" onclick="location.href='/alert/email/{{ row.request.id }}'">Email</button>
+              <button class="btn btn-success" onclick="location.href='/alert/email/{{ alert.request.id }}'">Email</button>
             </td>
           </tr>
           {% endfor %}
