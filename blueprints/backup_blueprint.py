@@ -270,7 +270,7 @@ def backup_add():
 def backup_history(file):
     path = os.path.join(constants.BACKUP_PATH, file)
     # get all entries in the directory
-    entries =[]
+    entries = []
     for file_name in os.listdir(path):
         entries.append(os.path.join(path, file_name))
     entries.sort(key=os.path.getctime, reverse=True)

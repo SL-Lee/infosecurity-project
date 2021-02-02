@@ -98,6 +98,7 @@ if os.path.exists(os.path.join(_dirname, "client_secrets.json")):
 
 # check if the scheduler is empty
 from app import app
+
 with app.app_context():
     server_users = ServerUser.query.all()
     if len(SCHEDULER.get_jobs()) == 0 and len(server_users) != 0:
