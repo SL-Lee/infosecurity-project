@@ -122,6 +122,7 @@ class RequestFilter(FlaskForm):
     date = DateField(
         "Date", format="%Y-%m-%d", validators=(validators.Optional(),)
     )
+    sort = SelectField("Sort By", choices=[("Latest", "Latest"), ("Oldest", "Oldest")])
 
 
 class RequestBehaviourForm(FlaskForm):

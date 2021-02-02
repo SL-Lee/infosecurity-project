@@ -1335,9 +1335,9 @@ def delete_whitelist(field):
 
 
 # Requests
-@app.route("/requests/<alert_level>/<date>/<query>", methods=["GET", "POST"])
+@app.route("/requests/<alert_level>/<date>/<query>/<sort>", methods=["GET", "POST"])
 @required_permissions("view_logged_requests")
-def get_requests(query, alert_level, date):
+def get_requests(query, alert_level, date, sort):
     form = forms.RequestFilter(request.form)
 
     if request.method == "POST" and form.validate():
@@ -1345,8 +1345,8 @@ def get_requests(query, alert_level, date):
             form.query.data = "<query>"
 
         return redirect(
-            "/requests/{}/{}/{}".format(
-                form.alert_level.data, form.date.data, form.query.data
+            "/requests/{}/{}/{}/{}".format(
+                form.alert_level.data, form.date.data, form.query.data, form.sort.data
             )
         )
 
@@ -1356,8 +1356,7 @@ def get_requests(query, alert_level, date):
     else:
         alerts = Alert.query.filter_by(alert_level=alert_level).all()
 
-    alert_list = request_filter(alerts, date, query)
-
+    alert_list = request_filter(alerts, date, query, sort)
     form.alert_level.data = alert_level
 
     # if query is empty, display in form empty string
@@ -1380,8 +1379,19 @@ def request_behaviour():
     if url_dict is None:
         url_dict = dict()
         set_config_value("url_dict", url_dict)
+
+    url_converted_dict = dict()
+
+    for i in url_dict:
+        x = i.replace("/", "|")
+        print("Test")
+        print(x)
+        url_converted_dict[i] = x
+
+    print(url_converted_dict)
+
     return render_template(
-        "request-behaviour.html", urls=url_dict
+        "request-behaviour.html", urls=url_dict, url_converted_dict=url_converted_dict
     )
 
 @app.route("/requests/behaviour/add", methods=["GET", "POST"])
@@ -1410,6 +1420,8 @@ def request_behaviour_add():
 @app.route("/requests/behaviour/delete/<url>", methods=["GET", "POST"])
 @required_permissions("manage_sensitive_fields")
 def delete_request_behaviour(url):
+    url = url.replace("|", "/")
+    print(url)
     url_dict = get_config_value("url_dict")
     url_dict.pop(url)
     set_config_value("url_dict", url_dict)
@@ -2503,8 +2515,7 @@ class Database(Resource):
     )
     base_parser.add_argument("model", required=True, type=str, location="form")
     base_parser.add_argument("filter", required=True, type=str, location="form")
-    base_parser.add_argument("ip", required=True, type=inputs.ipv4, location="args")
-    base_parser.add_argument("url", required=True, type=str, location="args")
+
 
     # Parser for POST requests
     post_parser = base_parser.copy()
@@ -2515,6 +2526,9 @@ class Database(Resource):
         type=json.loads,
         location="form",
     )
+    post_parser.add_argument("ip", required=True, type=inputs.ipv4, location="form")
+    post_parser.add_argument("url", required=True, type=str, location="form")
+
 
     # Parser for GET requests
     get_parser = base_parser.copy()
@@ -2530,12 +2544,13 @@ class Database(Resource):
         type=str,
         location="args",
     )
-    #get_parser.add_argument(
-        #"ip",
-        #required=True,
-        #type=inputs.ipv4,
-        #location="args",
-    #)
+    get_parser.add_argument(
+        "ip",
+        required=True,
+        type=inputs.ipv4,
+        location="args",
+    )
+    get_parser.add_argument("url", required=True, type=str, location="args")
 
     # Parser for PATCH requests
     patch_parser = base_parser.copy()
@@ -2545,6 +2560,9 @@ class Database(Resource):
         type=json.loads,
         location="form",
     )
+    patch_parser.add_argument("ip", required=True, type=inputs.ipv4, location="form")
+    patch_parser.add_argument("url", required=True, type=str, location="form")
+
 
     # Parser for DELETE requests
     delete_parser = base_parser.copy()

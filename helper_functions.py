@@ -60,7 +60,7 @@ def log_request(
     return logged_request, logged_alert
 
 
-def request_filter(alerts, date, query):
+def request_filter(alerts, date, query, sort):
     alert_list = list()
     for i in alerts:
         if (
@@ -84,6 +84,10 @@ def request_filter(alerts, date, query):
                     alert_list.append(i)
             else:
                 alert_list.append(i)
+
+    if sort == "Latest" or sort == "<sort>":
+        alert_list.reverse()
+
     return alert_list
 
 

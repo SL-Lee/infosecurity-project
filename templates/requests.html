@@ -47,9 +47,14 @@
           {{ render_field(form.date, class="form-control", placeholder="YYYY-MM-DD") }}
         </div>
       </div>
-      <div class="row">
-        <span class="col-sm-10"></span>
-        <button type="submit" class="btn btn-primary col-sm-2">Submit</button>
+      <div class="row align-items-center">
+        <div class="form-group col-sm-6">
+          {{ render_field(form.sort, class="form-control") }}
+        </div>
+        <div class="col-sm-6 ">
+          <button type="submit" class="btn btn-primary text-center" style="width: 100%;">Submit</button>
+        </div>
+
       </div>
 
     </form>
@@ -83,29 +88,78 @@
         </thead>
         <tbody>
           {% for row in alerts %}
+          {% if loop.index <= 10 %}
           {% if row.alert_level == "High" %}
-          <tr class="table-danger">
-            {% elif row.alert_level == "Medium" %}
-          <tr class="table-warning">
-            {% else %}
-          <tr class="table-success">
+            <tr class="table-danger" id="{{ loop.index }}">
+          {% elif row.alert_level == "Medium" %}
+            <tr class="table-warning" id="{{ loop.index }}">
+          {% else %}
+            <tr class="table-success" id="{{ loop.index }}">
+          {% endif %}
+              <td>{{ row.request.id }}</td>
+              <td>{{ row.alert_level }}</td>
+              <td>{{ row.request.datetime }}</td>
+              <td>{{ row.request.ip_address }}</td>
+              <td>{{ row.request.request_params }}</td>
+              <td>{{ row.request.status }}</td>
+              <td>{{ row.request.status_msg }}</td>
+              <td>
+                <textarea
+                  class="request-response border-0 bg-transparent form-control"
+                  disabled="disabled">{{ row.request.response }}</textarea>
+              </td>
+            </tr>
+          {% else %}
+          {% if row.alert_level == "High" %}
+            <tr class="table-danger" id="{{ loop.index }}">
+          {% elif row.alert_level == "Medium" %}
+            <tr class="table-warning" id="{{ loop.index }}">
+          {% else %}
+            <tr class="table-success" id="{{ loop.index }}">
+          {% endif %}
+              <td>{{ row.request.id }}</td>
+              <td>{{ row.alert_level }}</td>
+              <td>{{ row.request.datetime }}</td>
+              <td>{{ row.request.ip_address }}</td>
+              <td>{{ row.request.request_params }}</td>
+              <td>{{ row.request.status }}</td>
+              <td>{{ row.request.status_msg }}</td>
+              <td>
+                <textarea
+                  class="request-response border-0 bg-transparent form-control"
+                  disabled="disabled">{{ row.request.response }}</textarea>
+              </td>
+            </tr>
             {% endif %}
-            <td>{{ row.request.id }}</td>
-            <td>{{ row.alert_level }}</td>
-            <td>{{ row.request.datetime }}</td>
-            <td>{{ row.request.ip_address }}</td>
-            <td>{{ row.request.request_params }}</td>
-            <td>{{ row.request.status }}</td>
-            <td>{{ row.request.status_msg }}</td>
-            <td>
-              <textarea
-                class="request-response border-0 bg-transparent form-control"
-                disabled="disabled">{{ row.request.response }}</textarea>
-            </td>
-          </tr>
           {% endfor %}
         </tbody>
       </table>
+
+      <nav aria-label="pagination">
+        <ul class="pagination justify-content-center">
+          <li class="page-item disabled" id="previous">
+            <a class="page-link" href="#" tabindex="-1" onclick="previousPage()">Previous</a>
+          </li>
+
+          {% set pages = (((alerts | length)/10) | round(method='ceil') | int) %}
+          {% for i in range(pages) %}
+            <li class="page-item">
+              <a class="page-link" href="#" onclick="goToPage({{ i+1 }})">{{ i+1 }}</a>
+            </li>
+          {% endfor %}
+
+          {% if (pages) == 1 %}
+            <li class="page-item disabled" id="next">
+              <a class="page-link" href="#" onclick="nextPage()" tabindex="-1">Next</a>
+            </li>
+          {% else %}
+            <li class="page-item" id="next">
+              <a class="page-link" href="#" onclick="nextPage()">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+
     </div>
   </div>
 </div>
@@ -125,5 +179,141 @@
       }
     });
 }
+
+  var current = 0;
+  var first = 0;
+  var last = 10;
+  function nextPage() {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
+      }
+    }
+
+    current += 1;
+    first += 10;
+    last += 10;
+
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
+      }
+    }
+
+    if (current + 1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    } else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current + 1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    } else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
+    }
+  }
+
+  function previousPage() {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
+      }
+    }
+
+    current -= 1;
+    first -= 10;
+    last -= 10;
+
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
+      }
+    }
+
+    if (current + 1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    } else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current + 1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    } else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
+    }
+  }
+
+  function goToPage(page) {
+    // numbers are following index
+    var i, tbody, tr;
+    tbody = document.getElementsByTagName("tbody")[0];
+    tr = tbody.getElementsByTagName("tr");
+
+    // set all to hidden first
+    for (i = 0; i < {{ pages }} * 10; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "none";
+      }
+    }
+
+    current = page - 1;
+    first = page * 10 - 10;
+    last = page * 10;
+
+    for (i = first; i < last; i++) {
+      if (tr[i]) {
+        tr[i].style.display = "";
+      }
+    }
+
+    if (current + 1 == 1) {
+      var previous = document.getElementById("previous");
+      previous.classList.add("disabled");
+      previous.firstChild.tabIndex = "-1";
+    } else {
+      var previous = document.getElementById("previous");
+      previous.classList.remove("disabled");
+      previous.firstChild.tabIndex = "";
+    }
+
+    if (current + 1 < {{ pages }}) {
+      var next = document.getElementById("next");
+      next.classList.remove("disabled");
+      next.firstChild.tabIndex = "";
+    } else {
+      var next = document.getElementById("next");
+      next.classList.add("disabled");
+      next.firstChild.tabIndex = "-1";
+    }
+  }
+
 </script>
 {% endblock %}

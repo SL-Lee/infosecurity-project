@@ -64,7 +64,7 @@
             {% endif %}
             {% if "view_logged_requests" in current_user_permissions %}
             <a class="dropdown-item"
-              href="/requests/None/<date>/<query>">Requests</a>
+              href="/requests/None/<date>/<query>/<sort>">Requests</a>
             {% endif %}
             {% if "manage_ip_whitelist" in current_user_permissions %}
             <a class="dropdown-item" href="/whitelist">Whitelist</a>
