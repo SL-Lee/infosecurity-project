@@ -12,6 +12,7 @@ from crypto import decrypt_file, encrypt_file
 from helper_functions import (
     get_config_value,
     required_permissions,
+    schedule_backup,
     set_config_value,
 )
 from server_models import BackupLog, server_db
@@ -218,7 +219,7 @@ def backup_add():
 
         if form.interval_type.data == "min":
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 minutes=form.interval.data,
@@ -227,7 +228,7 @@ def backup_add():
             )
         elif form.interval_type.data == "hr":
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 hours=form.interval.data,
@@ -236,7 +237,7 @@ def backup_add():
             )
         elif form.interval_type.data == "d":
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 days=form.interval.data,
@@ -245,7 +246,7 @@ def backup_add():
             )
         elif form.interval_type.data == "wk":
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 weeks=form.interval.data,
@@ -255,7 +256,7 @@ def backup_add():
         elif form.interval_type.data == "mth":
             months = 31 * form.interval.data
             constants.SCHEDULER.add_job(
-                constants.schedule_backup,
+                schedule_backup,
                 args=[filename],
                 trigger="interval",
                 days=months,
