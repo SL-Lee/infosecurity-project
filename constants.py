@@ -9,7 +9,7 @@ from pydrive.drive import GoogleDrive
 
 from crypto_functions import decrypt
 from errors import InvalidEncryptionKeyError
-from helper_functions import get_config_value, schedule_backup, set_config_value
+from helper_functions import get_config_value, schedule_backup, set_config_value, restart_req
 from server_models import ServerUser
 
 VALID_SERVER_PERMISSION_NAMES = [
@@ -172,3 +172,9 @@ with app.app_context():
                     id=filename,
                     replace_existing=True,
                 )
+        SCHEDULER.add_job(
+                restart_req,
+                trigger="interval",
+                minutes=1,
+                id="restart_requests",
+            )

@@ -6,6 +6,45 @@ endif %}{% endblock %}
 <h1 class="display-3 text-center">SecureDB</h1>
 {% if current_user.is_authenticated %}
 <p class="lead text-center">Welcome to SecureDB.</p>
+
+<div class="ct-chart ct-perfect-fourth">
+
+</div>
+
+
+
+<script>
+
+  var getData = $.get("/data");
+
+  getData.done(function(results) {
+    var data = {
+      // A labels array that can contain any sort of values
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      // Our series array that contains series objects or in this case series data arrays
+      series: [
+        results.results
+      ]
+    };
+
+    // As options we currently only set a static size of 300x200 px. We can also omit this and use aspect ratio containers
+    // as you saw in the previous example
+    var options = {
+      width: 600,
+      height: 200
+    };
+
+    // Create a new line chart object where as first parameter we pass in a selector
+    // that is resolving to our chart container element. The Second parameter
+    // is the actual data object. As a third parameter we pass in our custom options.
+    var myChart = new Chartist.Bar('.ct-chart', data, options);
+
+  });
+
+
+</script>
+
+
 {% else %}
 <p class="lead text-center">Login to SecureDB to continue.</p>
 <hr />
@@ -24,5 +63,9 @@ endif %}{% endblock %}
     </form>
   </div>
 </div>
+
+
+
+
 {% endif %}
 {% endblock%}

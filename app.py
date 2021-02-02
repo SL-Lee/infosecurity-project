@@ -176,8 +176,8 @@ def index():
 
 @app.route("/data")
 def data():
-    number_list = (1,2,3,4,5)
-    return jsonify({"Results": number_list})
+    number_list = (10, 20, 30, 50, 5)
+    return jsonify({"results": number_list})
 
 
 @app.route("/logout", methods=["POST"])

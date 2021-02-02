@@ -325,6 +325,7 @@ class Database(Resource):
 
             # If IP address not in whitelist, go through sensitive field validation
             if args.get("ip") not in whitelist:
+                print("NOT IN WHITELIST")
                 for i in sensitive_fields:
                     pattern = f"'{i.contents}',"
                     pattern_occurrence_count = re.findall(
