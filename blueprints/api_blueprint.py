@@ -59,6 +59,8 @@ class Database(Resource):
         type=json.loads,
         location="form",
     )
+    post_parser.add_argument("ip", required=True, type=inputs.ipv4, location="form")
+    post_parser.add_argument("url", required=True, type=str, location="form")
 
     # Parser for GET requests
     get_parser = base_parser.copy()
@@ -80,6 +82,7 @@ class Database(Resource):
         type=inputs.ipv4,
         location="args",
     )
+    get_parser.add_argument("url", required=True, type=str, location="args")
 
     # Parser for PATCH requests
     patch_parser = base_parser.copy()
@@ -89,6 +92,8 @@ class Database(Resource):
         type=json.loads,
         location="form",
     )
+    patch_parser.add_argument("ip", required=True, type=inputs.ipv4, location="form")
+    patch_parser.add_argument("url", required=True, type=str, location="form")
 
     # Parser for DELETE requests
     delete_parser = base_parser.copy()
