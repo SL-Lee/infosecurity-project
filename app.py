@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, redirect, render_template, request, url_for, jsonify
 from flask_login import (
     LoginManager,
     current_user,
@@ -173,6 +173,11 @@ def index():
     return render_template(
         "index.html", form=login_form, next=request.args.get("next")
     )
+
+@app.route("/data")
+def data():
+    number_list = (1,2,3,4,5)
+    return jsonify({"Results": number_list})
 
 
 @app.route("/logout", methods=["POST"])

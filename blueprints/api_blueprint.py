@@ -15,6 +15,7 @@ from helper_functions import (
     log_request,
     required_permissions,
     validate_api_key,
+    req_behaviour
 )
 from server_models import Rule, server_db
 
@@ -104,7 +105,9 @@ class Database(Resource):
     @api.response(401, "Authentication failed")
     def post(self):
         args = self.post_parser.parse_args()
-
+        url = args["url"]
+        ip = args["ip"]
+        req_behaviour(url, ip)
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
         try:
@@ -256,6 +259,9 @@ class Database(Resource):
     @api.response(403, "Forbidden")
     def get(self):
         args = self.get_parser.parse_args()
+        url = args["url"]
+        ip = args["ip"]
+        req_behaviour(url, ip)
 
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
@@ -316,6 +322,8 @@ class Database(Resource):
 
             sensitive_fields = Rule.query.all()
             whitelist = get_config_value("whitelist")
+
+            # If IP address not in whitelist, go through sensitive field validation
             if args.get("ip") not in whitelist:
                 for i in sensitive_fields:
                     pattern = f"'{i.contents}',"
@@ -442,6 +450,9 @@ class Database(Resource):
     @api.response(401, "Authentication failed")
     def patch(self):
         args = self.patch_parser.parse_args()
+        url = args["url"]
+        ip = args["ip"]
+        req_behaviour(url, ip)
 
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.

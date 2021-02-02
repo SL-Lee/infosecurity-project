@@ -58,11 +58,7 @@ def request_behaviour():
 
     for i in url_dict:
         x = i.replace("/", "|")
-        print("Test")
-        print(x)
         url_converted_dict[i] = x
-
-    print(url_converted_dict)
 
     return render_template(
         "request-behaviour.html", urls=url_dict, url_converted_dict=url_converted_dict
@@ -78,13 +74,10 @@ def request_behaviour_add():
         url_dict = get_config_value("url_dict")
         if url_dict is None:
             url_dict = dict()
-        print(url_dict)
-        print("Before")
         url_dict[form.url.data] = (form.count.data, form.alert_level.data)
-        print(url_dict)
         set_config_value("url_dict", url_dict)
 
-        return redirect(url_for("request_behaviour"))
+        return redirect(url_for(".request_behaviour"))
 
     return render_template(
         "request-behaviour-add.html", form=form
@@ -95,9 +88,8 @@ def request_behaviour_add():
 @required_permissions("manage_sensitive_fields")
 def delete_request_behaviour(url):
     url = url.replace("|", "/")
-    print(url)
     url_dict = get_config_value("url_dict")
     url_dict.pop(url)
     set_config_value("url_dict", url_dict)
 
-    return redirect(url_for("request_behaviour"))
+    return redirect(url_for(".request_behaviour"))
