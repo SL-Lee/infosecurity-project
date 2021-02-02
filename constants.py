@@ -7,7 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
-from crypto import decrypt
+from crypto_functions import decrypt
 from errors import InvalidEncryptionKeyError
 from helper_functions import get_config_value, schedule_backup
 

@@ -12,7 +12,7 @@ from flask_login import current_user
 from werkzeug.utils import secure_filename
 
 import constants
-from crypto import encrypt_file
+from crypto_functions import encrypt_file
 from errors import InvalidAPIKeyError
 from server_models import Alert, BackupLog, Request, server_db
 

@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 
 import constants
 import forms
-from crypto import encrypt, encrypt_file
+from crypto_functions import encrypt, encrypt_file
 from helper_functions import (
     required_permissions,
     schedule_backup,

@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 import constants
 import forms
-from crypto import decrypt_file, encrypt_file
+from crypto_functions import decrypt_file, encrypt_file
 from helper_functions import (
     get_config_value,
     required_permissions,

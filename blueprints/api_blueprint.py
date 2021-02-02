@@ -9,7 +9,7 @@ from flask_restx import Api, Resource, apidoc, inputs, reqparse
 
 import constants
 from client_models import *
-from crypto import decrypt, encrypt
+from crypto_functions import decrypt, encrypt
 from helper_functions import (
     get_config_value,
     log_request,

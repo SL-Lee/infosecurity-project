@@ -4,7 +4,7 @@ import os
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
-from crypto import decrypt, encrypt
+from crypto_functions import decrypt, encrypt
 from helper_functions import (
     get_config_value,
     required_permissions,
