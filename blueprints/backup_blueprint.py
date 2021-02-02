@@ -34,7 +34,7 @@ def backup_set_default():
     path = ".\\client_db.sqlite3"
     keyname = os.path.basename(path)
     interval = 1
-    interval_type = "min"
+    interval_type = "wk"
     client_db_config = {
         keyname: {
             "path": path,

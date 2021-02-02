@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 
 from crypto import decrypt, encrypt_file
 from errors import InvalidEncryptionKeyError
-from helper_functions import get_config_value
+from helper_functions import get_config_value, restart_req
 from server_models import BackupLog, server_db
 
 VALID_SERVER_PERMISSION_NAMES = [
