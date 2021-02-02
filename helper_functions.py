@@ -127,6 +127,7 @@ def req_behaviour(url, ip):
     set_config_value("url_dict_count", url_dict_count)
     print(url_dict_count)
 
+
 def restart_req():
     url_dict_count = dict()
     set_config_value("url_dict_count", url_dict_count)

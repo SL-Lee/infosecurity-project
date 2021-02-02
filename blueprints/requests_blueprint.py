@@ -1,17 +1,17 @@
-from flask import Blueprint, redirect, render_template, request
+from flask import Blueprint, redirect, render_template, request, url_for
 
 import forms
-from helper_functions import request_filter, required_permissions
+from helper_functions import request_filter, required_permissions, get_config_value, set_config_value
 from server_models import Alert
 
 requests_blueprint = Blueprint("requests", __name__)
 
 
 @requests_blueprint.route(
-    "/requests/<alert_level>/<date>/<query>", methods=["GET", "POST"]
+    "/requests/<alert_level>/<date>/<query>/<sort>", methods=["GET", "POST"]
 )
 @required_permissions("view_logged_requests")
-def get_requests(query, alert_level, date):
+def get_requests(query, alert_level, date, sort):
     form = forms.RequestFilter(request.form)
 
     if request.method == "POST" and form.validate():
@@ -19,8 +19,8 @@ def get_requests(query, alert_level, date):
             form.query.data = "<query>"
 
         return redirect(
-            "/requests/{}/{}/{}".format(
-                form.alert_level.data, form.date.data, form.query.data
+            "/requests/{}/{}/{}/{}".format(
+                form.alert_level.data, form.date.data, form.query.data, form.sort.data
             )
         )
 
@@ -30,8 +30,7 @@ def get_requests(query, alert_level, date):
     else:
         alerts = Alert.query.filter_by(alert_level=alert_level).all()
 
-    alert_list = request_filter(alerts, date, query)
-
+    alert_list = request_filter(alerts, date, query, sort)
     form.alert_level.data = alert_level
 
     # if query is empty, display in form empty string
@@ -43,3 +42,62 @@ def get_requests(query, alert_level, date):
     return render_template(
         "requests.html", alerts=alert_list, filter=alert_level, form=form
     )
+
+
+@requests_blueprint.route("/requests/behaviour", methods=["GET"])
+@required_permissions("manage_request_behaviour")
+def request_behaviour():
+    url_dict = get_config_value("url_dict")
+    url_dict_count = get_config_value("url_dict_count")
+    print(url_dict_count)
+    if url_dict is None:
+        url_dict = dict()
+        set_config_value("url_dict", url_dict)
+
+    url_converted_dict = dict()
+
+    for i in url_dict:
+        x = i.replace("/", "|")
+        print("Test")
+        print(x)
+        url_converted_dict[i] = x
+
+    print(url_converted_dict)
+
+    return render_template(
+        "request-behaviour.html", urls=url_dict, url_converted_dict=url_converted_dict
+    )
+
+
+@requests_blueprint.route("/requests/behaviour/add", methods=["GET", "POST"])
+@required_permissions("manage_request_behaviour")
+def request_behaviour_add():
+    form = forms.RequestBehaviourForm(request.form)
+
+    if request.method == "POST" and form.validate():
+        url_dict = get_config_value("url_dict")
+        if url_dict is None:
+            url_dict = dict()
+        print(url_dict)
+        print("Before")
+        url_dict[form.url.data] = (form.count.data, form.alert_level.data)
+        print(url_dict)
+        set_config_value("url_dict", url_dict)
+
+        return redirect(url_for("request_behaviour"))
+
+    return render_template(
+        "request-behaviour-add.html", form=form
+    )
+
+
+@requests_blueprint.route("/requests/behaviour/delete/<url>", methods=["GET", "POST"])
+@required_permissions("manage_sensitive_fields")
+def delete_request_behaviour(url):
+    url = url.replace("|", "/")
+    print(url)
+    url_dict = get_config_value("url_dict")
+    url_dict.pop(url)
+    set_config_value("url_dict", url_dict)
+
+    return redirect(url_for("request_behaviour"))
