@@ -70,7 +70,7 @@
             <a class="dropdown-item" href="/whitelist">Whitelist</a>
             {% endif %}
             {% if "manage_alerts" in current_user_permissions %}
-            <a class="dropdown-item" href="/alert">API Alerts</a>
+            <a class="dropdown-item" href="/alert/view">API Alerts</a>
             {% endif %}
           </div>
         </li>
@@ -91,10 +91,10 @@
               href="/encryption/key-management">Encryption Key Management</a>
             {% endif %}
             {% if "manage_encrypted_files" in current_user_permissions %}
-            <a class="dropdown-item" href="/upload-file">Encrypt File</a>
+            <a class="dropdown-item" href="/encrypt-file">Encrypt File</a>
             {% endif %}
             {% if "manage_encrypted_fields" in current_user_permissions %}
-            <a class="dropdown-item" href="/upload-field">Encrypt Field</a>
+            <a class="dropdown-item" href="/encrypt-field">Encrypt Field</a>
             {% endif %}
           </div>
         </li>

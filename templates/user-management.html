@@ -31,7 +31,7 @@
       <td>
         <div class="btn-group">
           <a class="btn btn-warning" role="button"
-            href="{{ url_for('user_management_edit', server_user_id=server_user.id) }}">Edit</a>
+            href="{{ url_for('user_management.user_management_edit', server_user_id=server_user.id) }}">Edit</a>
           <button type="button" class="btn btn-danger" data-toggle="modal"
             data-target="#delete-user-alert"
             data-server-user-id="{{ server_user.id }}">Delete</a>

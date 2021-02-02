@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Alert Details{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
+<div class="container-fluid content">
+  <div class="row justify-content-center">
+    <div class="col-sm-12">
+      <p>Report on High Level Alerts that have been detected.</p>
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Request ID</th>
+            <th scope="col">Alert Level</th>
+            <th scope="col">Datetime</th>
+            <th scope="col">Request Parameters</th>
+            <th scope="col">Status</th>
+            <th scope="col">Message</th>
+            <th scope="col">Response</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in files %}
+          <td>{{ row.request.id }}</td>
+          <td>{{ row.alert_level }}</td>
+          <td>{{ row.request.datetime }}</td>
+          <td>{{ row.request.request_params }}</td>
+          <td>{{ row.request.status }}</td>
+          <td>{{ row.request.status_msg }}</td>
+          <td>{{ row.request.response }}</td>
+          {% endfor %}
+        </tbody>
+    </div>
+  </div>
+</div>
+{% endblock %}
