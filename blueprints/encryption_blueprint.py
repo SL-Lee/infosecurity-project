@@ -116,34 +116,8 @@ def upload_field():
     # pylint: disable=unused-variable
 
     form = forms.ChoiceForm()
-    form.user.choices = [
-        None,
-        User.username,
-        User.email,
-        User.password,
-    ]
-    form.role.choices = [None, Role.name, Role.description]
-    form.credit_card.choices = [
-        None,
-        CreditCard.card_number,
-        CreditCard.iv,
-    ]
-    form.address.choices = [
-        None,
-        Address.address,
-        Address.zip_code,
-        Address.city,
-        Address.state,
-    ]
-    form.product.choices = [
-        None,
-        Product.product_name,
-        Product.description,
-        Product.image,
-        Product.quantity,
-    ]
-    form.review.choices = [None, Review.rating, Review.contents]
-    form.order.choices = [None, OrderProduct.quantity]
+    model = form.model.data
+    field = form.field.data
 
     if request.method == "POST":
         encrypted_fields = get_config_value(
@@ -159,9 +133,9 @@ def upload_field():
             },
         )
 
-        # User class
+        # User Class
         for user in User.query.all():
-            if form.user.data == "User.username":
+            if model == "User" and field == "username":
                 user.username = encrypt(
                     str(user.username), constants.ENCRYPTION_KEY
                 ).hex()
@@ -171,7 +145,7 @@ def upload_field():
                     encrypted_fields["User"].append("username")
 
                 # print(encrypted_fields)
-            elif form.user.data == "User.email":
+            elif model == "User" and field == "email":
                 user.email = encrypt(
                     str(user.email), constants.ENCRYPTION_KEY
                 ).hex()
@@ -181,7 +155,7 @@ def upload_field():
                     encrypted_fields["User"].append("email")
 
                 # print(encrypted_fields)
-            elif form.user.data == "User.password":
+            elif model == "User" and field == "password":
                 user.password = encrypt(
                     str(user.password), constants.ENCRYPTION_KEY
                 ).hex()
@@ -194,9 +168,9 @@ def upload_field():
             else:
                 print("not found")
 
-        # Role class
+        # Role Class
         for role in Role.query.all():
-            if form.role.data == "Role.name":
+            if model == "Role" and field == "name":
                 role.name = encrypt(
                     str(role.name), constants.ENCRYPTION_KEY
                 ).hex()
@@ -206,7 +180,7 @@ def upload_field():
                     encrypted_fields["Role"].append("name")
 
                 # print(encrypted_fields)
-            elif form.role.data == "Role.description":
+            elif model == "Role" and field == "description":
                 role.description = encrypt(
                     str(role.description), constants.ENCRYPTION_KEY
                 ).hex()
@@ -216,12 +190,10 @@ def upload_field():
                     encrypted_fields["Role"].append("description")
 
                 # print(encrypted_fields)
-            else:
-                print("not found")
 
         # Credit Card Class
         for credit_card in CreditCard.query.all():
-            if form.credit_card.data == "CreditCard.card_number":
+            if model == "Credit Card" and field == "card number":
                 credit_card.card_number = encrypt(
                     str(credit_card.card_number), constants.ENCRYPTION_KEY
                 ).hex()
@@ -231,7 +203,7 @@ def upload_field():
                     encrypted_fields["CreditCard"].append("card_number")
 
                 # print(encrypted_fields)
-            elif form.credit_card.data == "CreditCard.iv":
+            elif model == "Credit Card" and field == "iv":
                 credit_card.iv = encrypt(
                     str(credit_card.iv), constants.ENCRYPTION_KEY
                 ).hex()
@@ -246,7 +218,7 @@ def upload_field():
 
         # Address Class
         for address in Address.query.all():
-            if form.address.data == "Address.address":
+            if model == "Address" and field == "address":
                 address.address = encrypt(
                     str(address.address), constants.ENCRYPTION_KEY
                 ).hex()
@@ -256,7 +228,7 @@ def upload_field():
                     encrypted_fields["Address"].append("address")
 
                 # print(encrypted_fields)
-            elif form.address.data == "Address.zip_code":
+            elif model == "Address" and field == "zip code":
                 address.zip_code = encrypt(
                     str(address.zip_code), constants.ENCRYPTION_KEY
                 ).hex()
@@ -266,7 +238,7 @@ def upload_field():
                     encrypted_fields["Address"].append("zip_code")
 
                 # print(encrypted_fields)
-            elif form.address.data == "Address.city":
+            elif model == "Address" and field == "city":
                 address.city = encrypt(
                     str(address.city), constants.ENCRYPTION_KEY
                 ).hex()
@@ -276,7 +248,7 @@ def upload_field():
                     encrypted_fields["Address"].append("city")
 
                 # print(encrypted_fields)
-            elif form.address.data == "Address.state":
+            elif model == "Address" and field == "state":
                 address.state = encrypt(
                     str(address.state), constants.ENCRYPTION_KEY
                 ).hex()
@@ -291,7 +263,7 @@ def upload_field():
 
         # Product Class
         for product in Product.query.all():
-            if form.product.data == "Product.product_name":
+            if model == "Product" and field == "product name":
                 product.product_name = encrypt(
                     str(product.product_name), constants.ENCRYPTION_KEY
                 ).hex()
@@ -301,7 +273,7 @@ def upload_field():
                     encrypted_fields["Product"].append("product_name")
 
                 # print(encrypted_fields)
-            elif form.product.data == "Product.description":
+            elif model == "Product" and field == "description":
                 product.description = encrypt(
                     str(product.description), constants.ENCRYPTION_KEY
                 ).hex()
@@ -311,7 +283,7 @@ def upload_field():
                     encrypted_fields["Product"].append("description")
 
                 # print(encrypted_fields)
-            elif form.product.data == "Product.image":
+            elif model == "Product" and field == "image":
                 product.image = encrypt(
                     str(product.image), constants.ENCRYPTION_KEY
                 ).hex()
@@ -321,7 +293,7 @@ def upload_field():
                     encrypted_fields["Product"].append("image")
 
                 # print(encrypted_fields)
-            elif form.product.data == "Product.quantity":
+            elif model == "Product" and field == "quantity":
                 product.quantity = encrypt(
                     str(product.quantity), constants.ENCRYPTION_KEY
                 ).hex()
@@ -336,7 +308,7 @@ def upload_field():
 
         # Review Class
         for review in Review.query.all():
-            if form.review.data == "Review.rating":
+            if model == "Review" and field == "rating":
                 review.rating = encrypt(
                     str(review.rating), constants.ENCRYPTION_KEY
                 ).hex()
@@ -346,7 +318,7 @@ def upload_field():
                     encrypted_fields["Review"].append("rating")
 
                 # print(encrypted_fields)
-            elif form.review.data == "Review.contents":
+            elif model == "Review" and field == "contents":
                 review.contents = encrypt(
                     str(review.contents), constants.ENCRYPTION_KEY
                 ).hex()
@@ -359,9 +331,9 @@ def upload_field():
             else:
                 print("not found")
 
-        # Order Product Class
+        # Order Class
         for order in OrderProduct.query.all():
-            if form.order.data == "OrderProduct.quantity":
+            if model == "Order Product" and field == "quantity":
                 order.quantity = encrypt(
                     str(order.quantity), constants.ENCRYPTION_KEY
                 ).hex()
