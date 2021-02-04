@@ -5,7 +5,15 @@ import os
 import shutil
 
 import yaml
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from flask_login import login_user
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -241,6 +249,14 @@ def onboarding_drive_upload_config():
         return redirect(url_for(".onboarding_backup_config"))
 
     return render_template("onboarding-drive-upload-config.html", form=form)
+
+
+@onboarding_blueprint.route(
+    "/onboarding/drive-upload-pdf", methods=["GET", "POST"]
+)
+@required_permissions("manage_users")
+def onboarding_drive_upload():
+    return send_from_directory("static/docs", "drive-how-to.pdf")
 
 
 @onboarding_blueprint.route(
