@@ -15,6 +15,7 @@ document
       .then(
         json => {
           $(".modal").modal("hide");
+          $("#generated-api-key-name").text(json["new-api-key-name"]);
           $("#new-api-key").text(json["new-api-key"]);
           $("#api-key-generation-success-modal").modal();
           $("#open-api-key-generation-prompt-btn").attr("disabled", "");
