@@ -1,7 +1,12 @@
 from flask import Blueprint, redirect, render_template, request, url_for
 
 import forms
-from helper_functions import request_filter, required_permissions, get_config_value, set_config_value
+from helper_functions import (
+    request_filter,
+    required_permissions,
+    get_config_value,
+    set_config_value,
+)
 from server_models import Alert
 
 requests_blueprint = Blueprint("requests", __name__)
@@ -20,7 +25,10 @@ def get_requests(query, alert_level, date, sort):
 
         return redirect(
             "/requests/{}/{}/{}/{}".format(
-                form.alert_level.data, form.date.data, form.query.data, form.sort.data
+                form.alert_level.data,
+                form.date.data,
+                form.query.data,
+                form.sort.data,
             )
         )
 
@@ -61,7 +69,9 @@ def request_behaviour():
         url_converted_dict[i] = x
 
     return render_template(
-        "request-behaviour.html", urls=url_dict, url_converted_dict=url_converted_dict
+        "request-behaviour.html",
+        urls=url_dict,
+        url_converted_dict=url_converted_dict,
     )
 
 
@@ -79,12 +89,12 @@ def request_behaviour_add():
 
         return redirect(url_for(".request_behaviour"))
 
-    return render_template(
-        "request-behaviour-add.html", form=form
-    )
+    return render_template("request-behaviour-add.html", form=form)
 
 
-@requests_blueprint.route("/requests/behaviour/delete/<url>", methods=["GET", "POST"])
+@requests_blueprint.route(
+    "/requests/behaviour/delete/<url>", methods=["GET", "POST"]
+)
 @required_permissions("manage_sensitive_fields")
 def delete_request_behaviour(url):
     url = url.replace("|", "/")

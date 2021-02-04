@@ -29,7 +29,13 @@ from blueprints import (
 )
 from client_models import client_db
 from helper_functions import is_safe_url
-from server_models import ServerPermission, ServerUser, server_db, Alert, Request
+from server_models import (
+    ServerPermission,
+    ServerUser,
+    server_db,
+    Alert,
+    Request,
+)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -176,10 +182,14 @@ def index():
 
     today = datetime.datetime.now()
     today = datetime.datetime(today.year, today.month, today.day)
-    last_time = datetime.datetime(today.year, today.month, today.day, 23, 59, 59, 999999)
+    last_time = datetime.datetime(
+        today.year, today.month, today.day, 23, 59, 59, 999999
+    )
     print(last_time)
     # Get requests based on time
-    requests = Request.query.filter(Request.datetime.between(today, last_time)).all()
+    requests = Request.query.filter(
+        Request.datetime.between(today, last_time)
+    ).all()
     print(requests)
     alerts = list()
     for client_request in requests:
@@ -195,7 +205,10 @@ def index():
             alert_list[2] += 1
 
     return render_template(
-        "index.html", form=login_form, next=request.args.get("next"), alert_list=alert_list
+        "index.html",
+        form=login_form,
+        next=request.args.get("next"),
+        alert_list=alert_list,
     )
 
 

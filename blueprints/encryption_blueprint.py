@@ -173,7 +173,8 @@ def upload_field():
                     credit_card,
                     field,
                     encrypt(
-                        str(getattr(credit_card, field)), constants.ENCRYPTION_KEY
+                        str(getattr(credit_card, field)),
+                        constants.ENCRYPTION_KEY,
                     ).hex(),
                 )
                 client_db.session.commit()
