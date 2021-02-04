@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import (
     DateField,
+    FloatField,
     IntegerField,
     PasswordField,
     RadioField,
@@ -9,7 +10,6 @@ from wtforms import (
     StringField,
     SubmitField,
     validators,
-    FloatField,
 )
 from wtforms.validators import InputRequired, Length, Optional
 

@@ -1,7 +1,7 @@
 from flask import Blueprint, redirect, render_template, url_for
-from flask_mail import Mail, Message
-from helper_functions import alertemail
+from flask_mail import Mail
 
+from helper_functions import alertemail
 from server_models import Alert
 
 alert_blueprint = Blueprint("alert", __name__)
