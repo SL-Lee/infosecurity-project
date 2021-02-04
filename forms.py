@@ -9,6 +9,7 @@ from wtforms import (
     StringField,
     SubmitField,
     validators,
+    FloatField,
 )
 from wtforms.validators import InputRequired, Length, Optional
 
@@ -24,7 +25,7 @@ class OnboardingBackupForm(FlaskForm):
         [Length(max=260), InputRequired()],
         render_kw={"value": ".\\client_db.sqlite3", "readonly": True},
     )
-    interval = IntegerField(
+    interval = FloatField(
         "Interval",
         [InputRequired()],
         render_kw={
@@ -57,7 +58,7 @@ class BackupFirstForm(FlaskForm):
             )
         },
     )
-    interval = IntegerField(
+    interval = FloatField(
         "Interval",
         [InputRequired()],
         render_kw={
@@ -86,7 +87,7 @@ class BackupForm(FlaskForm):
         [Length(max=260), Optional()],
         render_kw={"placeholder": "Leave empty if no changes"},
     )
-    interval = IntegerField(
+    interval = FloatField(
         "Interval",
         [Optional()],
         render_kw={"placeholder": "Leave empty if no changes"},
