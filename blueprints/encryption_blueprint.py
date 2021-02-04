@@ -139,7 +139,7 @@ def upload_field():
                     user,
                     field,
                     encrypt(
-                        getattr(user, field), constants.ENCRYPTION_KEY
+                        str(getattr(user, field)), constants.ENCRYPTION_KEY
                     ).hex(),
                 )
                 client_db.session.commit()
@@ -156,7 +156,7 @@ def upload_field():
                     role,
                     field,
                     encrypt(
-                        getattr(role, field), constants.ENCRYPTION_KEY
+                        str(getattr(role, field)), constants.ENCRYPTION_KEY
                     ).hex(),
                 )
                 client_db.session.commit()
@@ -173,7 +173,7 @@ def upload_field():
                     credit_card,
                     field,
                     encrypt(
-                        getattr(credit_card, field), constants.ENCRYPTION_KEY
+                        str(getattr(credit_card, field)), constants.ENCRYPTION_KEY
                     ).hex(),
                 )
                 client_db.session.commit()
@@ -190,7 +190,7 @@ def upload_field():
                     address,
                     field,
                     encrypt(
-                        getattr(address, field), constants.ENCRYPTION_KEY
+                        str(getattr(address, field)), constants.ENCRYPTION_KEY
                     ).hex(),
                 )
                 client_db.session.commit()
@@ -207,7 +207,7 @@ def upload_field():
                     product,
                     field,
                     encrypt(
-                        getattr(product, field), constants.ENCRYPTION_KEY
+                        str(getattr(product, field)), constants.ENCRYPTION_KEY
                     ).hex(),
                 )
                 client_db.session.commit()
@@ -224,7 +224,7 @@ def upload_field():
                     review,
                     field,
                     encrypt(
-                        getattr(review, field), constants.ENCRYPTION_KEY
+                        str(getattr(review, field)), constants.ENCRYPTION_KEY
                     ).hex(),
                 )
                 client_db.session.commit()
