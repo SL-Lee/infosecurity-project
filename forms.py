@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import (
     DateField,
+    FloatField,
     IntegerField,
     PasswordField,
     RadioField,
@@ -24,7 +25,7 @@ class OnboardingBackupForm(FlaskForm):
         [Length(max=260), InputRequired()],
         render_kw={"value": ".\\client_db.sqlite3", "readonly": True},
     )
-    interval = IntegerField(
+    interval = FloatField(
         "Interval",
         [InputRequired()],
         render_kw={
@@ -57,7 +58,7 @@ class BackupFirstForm(FlaskForm):
             )
         },
     )
-    interval = IntegerField(
+    interval = FloatField(
         "Interval",
         [InputRequired()],
         render_kw={
@@ -86,7 +87,7 @@ class BackupForm(FlaskForm):
         [Length(max=260), Optional()],
         render_kw={"placeholder": "Leave empty if no changes"},
     )
-    interval = IntegerField(
+    interval = FloatField(
         "Interval",
         [Optional()],
         render_kw={"placeholder": "Leave empty if no changes"},
@@ -190,10 +191,5 @@ class CreateAdminUserForm(FlaskForm):
 
 
 class ChoiceForm(FlaskForm):
-    user = SelectField("user", choices=[], default="None")
-    role = SelectField("role", choices=[], default="None")
-    credit_card = SelectField("credit_card", choices=[], default="None")
-    address = SelectField("address", choices=[], default="None")
-    product = SelectField("product", choices=[], default="None")
-    review = SelectField("review", choices=[], default="None")
-    order = SelectField("order", choices=[], default="None")
+    model = StringField("Model", validators=[InputRequired()])
+    field = StringField("Field", validators=[InputRequired()])

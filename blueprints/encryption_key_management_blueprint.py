@@ -36,8 +36,8 @@ def encryption_key_management():
     "/encryption/key-management/generate", methods=["POST"]
 )
 def encryption_key_management_generate():
-    # if get_config_value("encryption-config") is not None:
-    #     return redirect(url_for(".encryption_key_management"))
+    if get_config_value("encryption-config") is not None:
+        return redirect(url_for(".encryption_key_management"))
 
     encryption_passphrase = request.form.get("encryption-passphrase")
 

@@ -1,9 +1,8 @@
 from flask import Blueprint, redirect, render_template, url_for
-from flask_mail import Mail, Message
+from flask_mail import Mail
+
 from helper_functions import alertemail
-
 from server_models import Alert
-
 
 alert_blueprint = Blueprint("alert", __name__)
 mail = Mail()
@@ -28,6 +27,7 @@ def alertview():
 #         "SecureDB."
 #     )
 #     return "Sent"
+
 
 @alert_blueprint.route("/alert/email/<request_id>", methods=["GET", "POST"])
 def sendalertemail(request_id):

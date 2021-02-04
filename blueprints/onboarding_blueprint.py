@@ -1,10 +1,19 @@
+import atexit
 import datetime
 import hashlib
 import os
 import shutil
 
 import yaml
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from flask_login import login_user
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -14,6 +23,7 @@ import constants
 import forms
 from crypto_functions import encrypt, encrypt_file
 from helper_functions import (
+    get_config_value,
     required_permissions,
     schedule_backup,
     set_config_value,
@@ -32,6 +42,12 @@ def onboarding():
     "/onboarding/admin-user-creation", methods=["GET", "POST"]
 )
 def onboarding_admin_user_creation():
+    if any(
+        ServerPermission.query.get("manage_users") in server_user.permissions
+        for server_user in ServerUser.query.all()
+    ):
+        return redirect(url_for(".onboarding_database_config"))
+
     create_admin_user_form = forms.CreateAdminUserForm(request.form)
 
     if request.method == "POST" and create_admin_user_form.validate():
@@ -70,11 +86,19 @@ def onboarding_admin_user_creation():
 )
 @required_permissions("manage_users")
 def onboarding_database_config():
+    if os.path.exists("client_db.sqlite3"):
+        return redirect(url_for(".onboarding_encryption_config"))
+
     if request.method == "POST":
         db_file = request.files.get("db-file")
 
         if db_file is not None and db_file.filename.endswith(".sqlite3"):
-            db_file.save(secure_filename("client_db.sqlite3"))
+            db_file.save(secure_filename("client_db.sqlite3.tmp"))
+            atexit.register(
+                lambda: os.replace(
+                    "client_db.sqlite3.tmp", "client_db.sqlite3"
+                ),
+            )
         else:
             flash(
                 "The database file seems to be of an incorrect format. Please "
@@ -86,7 +110,10 @@ def onboarding_database_config():
         db_models = request.files.get("db-models")
 
         if db_models is not None and db_models.filename.endswith(".py"):
-            db_models.save(secure_filename("client_models.py"))
+            db_models.save(secure_filename("client_models.py.tmp"))
+            atexit.register(
+                lambda: os.replace("client_models.py.tmp", "client_models.py"),
+            )
         else:
             flash(
                 "The database models file seems to be of an incorrect format. "
@@ -95,7 +122,7 @@ def onboarding_database_config():
             )
             return redirect(url_for(".onboarding_database_config"))
 
-        return redirect(url_for(".onboarding_api_config"))
+        return redirect(url_for(".onboarding_encryption_config"))
 
     return render_template("onboarding-database-config.html")
 
@@ -103,8 +130,11 @@ def onboarding_database_config():
 @onboarding_blueprint.route(
     "/onboarding/encryption-config", methods=["GET", "POST"]
 )
-# @required_permissions("manage_users")
+@required_permissions("manage_users")
 def onboarding_encryption_config():
+    if get_config_value("encryption-config") is not None:
+        return redirect(url_for(".onboarding_api_config"))
+
     if request.method == "POST":
         encryption_passphrase = request.form.get("encryption-passphrase")
 
@@ -147,6 +177,9 @@ def onboarding_encryption_config():
 @onboarding_blueprint.route("/onboarding/api-config")
 @required_permissions("manage_users")
 def onboarding_api_config():
+    if get_config_value("api-keys") is not None:
+        return redirect(url_for(".onboarding_drive_upload_config"))
+
     return render_template("onboarding-api-config.html")
 
 
@@ -156,6 +189,7 @@ def onboarding_api_config():
 @required_permissions("manage_users")
 def onboarding_drive_upload_config():
     form = forms.OnboardingDriveUpload(request.form)
+
     if request.method == "POST" and form.validate():
         json_file = request.files.get("json-file")
 
@@ -215,6 +249,14 @@ def onboarding_drive_upload_config():
         return redirect(url_for(".onboarding_backup_config"))
 
     return render_template("onboarding-drive-upload-config.html", form=form)
+
+
+@onboarding_blueprint.route(
+    "/onboarding/drive-upload-pdf", methods=["GET", "POST"]
+)
+@required_permissions("manage_users")
+def onboarding_drive_upload():
+    return send_from_directory("static/docs", "drive-how-to.pdf")
 
 
 @onboarding_blueprint.route(
@@ -427,12 +469,12 @@ def onboarding_backup_config():
             )
 
         constants.SCHEDULER.print_jobs()
-        return redirect(url_for(".onboarding_review_settings"))
+        return redirect(url_for(".onboarding_complete"))
 
     return render_template("onboarding-backup-config.html", form=form)
 
 
-@onboarding_blueprint.route("/onboarding/review-settings")
+@onboarding_blueprint.route("/onboarding/onboarding-complete")
 @required_permissions("manage_users")
-def onboarding_review_settings():
-    return render_template("onboarding-review-settings.html")
+def onboarding_complete():
+    return render_template("onboarding-complete.html")

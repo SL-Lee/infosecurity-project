@@ -27,13 +27,13 @@ VALID_SERVER_PERMISSION_NAMES = [
     "manage_encryption_key",
 ]
 
-_encryption_config = get_config_value("encryption-config")
+_ENCRYPTION_CONFIG = get_config_value("encryption-config")
 
-if _encryption_config is not None:
+if _ENCRYPTION_CONFIG is not None:
     kek_passphrase = getpass.getpass("Encryption passphrase: ")
     kek = hashlib.scrypt(
         kek_passphrase.encode("UTF-8"),
-        salt=bytes.fromhex(_encryption_config["kek-salt"]),
+        salt=bytes.fromhex(_ENCRYPTION_CONFIG["kek-salt"]),
         n=32768,
         r=8,
         p=1,
@@ -41,9 +41,9 @@ if _encryption_config is not None:
         dklen=32,
     )
 
-    if hashlib.sha3_512(kek).hexdigest() == _encryption_config["kek-hash"]:
+    if hashlib.sha3_512(kek).hexdigest() == _ENCRYPTION_CONFIG["kek-hash"]:
         ENCRYPTION_KEY = decrypt(
-            bytes.fromhex(_encryption_config["encrypted-dek"]),
+            bytes.fromhex(_ENCRYPTION_CONFIG["encrypted-dek"]),
             kek,
         )
     else:
@@ -51,119 +51,121 @@ if _encryption_config is not None:
 else:
     ENCRYPTION_KEY = None
 
-_dirname = os.path.dirname(__file__)
+_DIRNAME = os.path.dirname(__file__)
 
 # only if backup folder does not exist, then make a backup folder
-if not os.path.exists(os.path.join(_dirname, "backup")):
-    os.mkdir(os.path.join(_dirname, "backup"))
+if not os.path.exists(os.path.join(_DIRNAME, "backup")):
+    os.mkdir(os.path.join(_DIRNAME, "backup"))
 
-BACKUP_PATH = os.path.join(_dirname, "backup")
+BACKUP_PATH = os.path.join(_DIRNAME, "backup")
 SCHEDULER = BackgroundScheduler(
     jobstores={"default": SQLAlchemyJobStore(url="sqlite:///jobs.sqlite3")},
     daemon=True,
 )
 SCHEDULER.start()
 
-if os.path.exists(os.path.join(_dirname, "client_secrets.json")):
-    gauth = GoogleAuth()
+if os.path.exists(os.path.join(_DIRNAME, "client_secrets.json")):
+    _GAUTH = GoogleAuth()
 
-    DRIVE = GoogleDrive(gauth)
+    DRIVE = GoogleDrive(_GAUTH)
 
-    file_list = DRIVE.ListFile(
+    _file_list = DRIVE.ListFile(
         {"q": "'root' in parents and trashed=false"}
     ).GetList()
-    folder_names = []
+    _FOLDER_NAMES = []
 
-    for file in file_list:
-        folder_names.append(file["title"])
+    for file in _file_list:
+        _FOLDER_NAMES.append(file["title"])
 
     # if backup folder not created
-    if "backup" not in folder_names:
-        folder = DRIVE.CreateFile(
+    if "backup" not in _FOLDER_NAMES:
+        _FOLDER = DRIVE.CreateFile(
             {
                 "title": "backup",
                 "mimeType": "application/vnd.google-apps.folder",
             }
         )
-        folder.Upload()
+        _FOLDER.Upload()
 
-    file_list = DRIVE.ListFile(
+    _file_list = DRIVE.ListFile(
         {"q": "'root' in parents and trashed=false"}
     ).GetList()
 
     # set drive id for backup
-    for file in file_list:
+    for file in _file_list:
         if file["title"] == "backup":
             DRIVE_BACKUP_ID = file["id"]
 
 
 # check if the scheduler is empty
-from app import app
+from app import app  # pylint: disable=wrong-import-position
 
 with app.app_context():
     server_users = ServerUser.query.all()
+
     if len(SCHEDULER.get_jobs()) == 0 and len(server_users) != 0:
-        backup_config = get_config_value("backup")
+        _backup_config = get_config_value("backup")
+
         # if the config is empty
-        if backup_config is None:
-            path = ".\\client_db.sqlite3"
-            keyname = os.path.basename(path)
-            interval = 1
-            interval_type = "wk"
-            client_db_config = {
-                keyname: {
-                    "path": path,
-                    "interval": interval,
-                    "interval_type": interval_type,
+        if _backup_config is None:
+            _PATH = ".\\client_db.sqlite3"
+            _KEYNAME = os.path.basename(_PATH)
+            _INTERVAL = 1
+            _INTERVAL_TYPE = "wk"
+            _CLIENT_DB_CONFIG = {
+                _KEYNAME: {
+                    "path": _PATH,
+                    "interval": _INTERVAL,
+                    "interval_type": _INTERVAL_TYPE,
                 }
             }
-            set_config_value("backup", client_db_config)
-            backup_config = get_config_value("backup")
-            print("backup files:", backup_config)
-            print(backup_config[keyname]["path"])
-            print(os.path.isfile(backup_config[keyname]["path"]))
+            set_config_value("backup", _CLIENT_DB_CONFIG)
+            _backup_config = get_config_value("backup")
+            print("backup files:", _backup_config)
+            print(_backup_config[_KEYNAME]["path"])
+            print(os.path.isfile(_backup_config[_KEYNAME]["path"]))
 
-        for filename in backup_config.keys():
-            file_settings = backup_config[filename]
+        for filename in _backup_config.keys():
+            _FILE_SETTINGS = _backup_config[filename]
 
-            if file_settings["interval_type"] == "min":
+            if _FILE_SETTINGS["interval_type"] == "min":
                 SCHEDULER.add_job(
                     schedule_backup,
                     args=[filename],
                     trigger="interval",
-                    minutes=file_settings["interval"],
+                    minutes=_FILE_SETTINGS["interval"],
                     id=filename,
                     replace_existing=True,
                 )
-            elif file_settings["interval_type"] == "hr":
+            elif _FILE_SETTINGS["interval_type"] == "hr":
                 SCHEDULER.add_job(
                     schedule_backup,
                     args=[filename],
                     trigger="interval",
-                    hours=file_settings["interval"],
+                    hours=_FILE_SETTINGS["interval"],
                     id=filename,
                     replace_existing=True,
                 )
-            elif file_settings["interval_type"] == "d":
+            elif _FILE_SETTINGS["interval_type"] == "d":
                 SCHEDULER.add_job(
                     schedule_backup,
                     args=[filename],
                     trigger="interval",
-                    days=file_settings["interval"],
+                    days=_FILE_SETTINGS["interval"],
                     id=filename,
                     replace_existing=True,
                 )
-            elif file_settings["interval_type"] == "wk":
+            elif _FILE_SETTINGS["interval_type"] == "wk":
                 SCHEDULER.add_job(
                     schedule_backup,
                     args=[filename],
                     trigger="interval",
-                    weeks=file_settings["interval"],
+                    weeks=_FILE_SETTINGS["interval"],
                     id=filename,
                     replace_existing=True,
                 )
-            elif file_settings["interval_type"] == "mth":
-                months = 31 * file_settings["interval"]
+            elif _FILE_SETTINGS["interval_type"] == "mth":
+                months = 31 * _FILE_SETTINGS["interval"]
                 SCHEDULER.add_job(
                     schedule_backup,
                     args=[filename],

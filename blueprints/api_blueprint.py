@@ -241,10 +241,10 @@ class Database(Resource):
                 response=str(args["object"]),
                 ip_address=args["ip"],
             )
-        finally:
-            server_db.session.add(logged_alert)
-            server_db.session.add(logged_request)
-            server_db.session.commit()
+
+        server_db.session.add(logged_alert)
+        server_db.session.add(logged_request)
+        server_db.session.commit()
 
         return {
             "status": status,
@@ -434,10 +434,10 @@ class Database(Resource):
                 response=str(query_results),
                 ip_address=args["ip"],
             )
-        finally:
-            server_db.session.add(logged_request)
-            server_db.session.add(logged_alert)
-            server_db.session.commit()
+
+        server_db.session.add(logged_request)
+        server_db.session.add(logged_alert)
+        server_db.session.commit()
 
         return {
             "status": status,
@@ -563,6 +563,7 @@ class Database(Resource):
         server_db.session.add(logged_alert)
         server_db.session.add(logged_request)
         server_db.session.commit()
+
         return {"status": status, "status_msg": status_msg}, status_code
 
     @api.expect(delete_parser)

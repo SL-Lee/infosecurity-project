@@ -22,22 +22,63 @@
         </thead>
         <tbody>
           {% for i in files %}
-          <tr>
-            <th scope="row">{{ loop.index }}</th>
-            <td>{{ i }}</td>
-            <td><button class="btn btn-success"
-                onclick="location.href='/backup/{{ i }}'">View</button>
-            </td>
-            <td><button class="btn btn-warning"
-                onclick="location.href='/backup/{{ i }}/update'">Update</button>
-            </td>
-          </tr>
+            {% if loop.index <= 10 %}
+              <tr id="{{ loop.index }}">
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ i }}</td>
+                <td><button class="btn btn-success"
+                    onclick="location.href='/backup/{{ i }}'">View</button>
+                </td>
+                <td><button class="btn btn-warning"
+                    onclick="location.href='/backup/{{ i }}/update'">Update</button>
+                </td>
+              </tr>
+            {% else %}
+              <tr id="{{ loop.index }}">
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ i }}</td>
+                <td><button class="btn btn-success"
+                    onclick="location.href='/backup/{{ i }}'">View</button>
+                </td>
+                <td><button class="btn btn-warning"
+                    onclick="location.href='/backup/{{ i }}/update'">Update</button>
+                </td>
+              </tr>
+            {% endif %}
           {% endfor %}
         </tbody>
       </table>
+      <nav aria-label="pagination">
+        <ul class="pagination justify-content-center">
+          <li class="page-item disabled" id="previous">
+            <a class="page-link" href="#" tabindex="-1" onclick="previousPage()">Previous</a>
+          </li>
+
+          {% set pages = (((files | length)/10) | round(method='ceil') | int) %}
+          {% for i in range(pages) %}
+            <li class="page-item">
+              <a class="page-link" href="#" onclick="goToPage({{ i+1 }})">{{ i+1 }}</a>
+            </li>
+          {% endfor %}
+
+          {% if (pages) == 1 %}
+            <li class="page-item disabled" id="next">
+              <a class="page-link" href="#" onclick="nextPage()" tabindex="-1">Next</a>
+            </li>
+          {% else %}
+            <li class="page-item" id="next">
+              <a class="page-link" href="#" onclick="nextPage()">Next</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
       <button type="button" class="btn btn-primary btn-lg btn-block"
         onclick="location.href='/backup/add'">Add File</button>
     </div>
   </div>
 </div>
+<script>
+  let pages = {{ pages }};
+</script>
+<script src="/static/js/backup.js"></script>
 {% endblock %}

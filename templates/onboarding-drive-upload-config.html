@@ -4,13 +4,14 @@
 {% from "includes/_form_helper.html" import render_field %}
 <h4 class="mt-4">Credential Upload</h4>
 <p>Enter the credentials of the account that you want to upload to.</p>
+<p>If you do not know how to get the following credentials, please click <a href="/onboarding/drive-upload-pdf" target="_blank">HERE</a>, and follow the steps as stated in the document.</p>
 <form id="credential-upload-form" method="POST" action="/onboarding/drive-upload-config"
   enctype="multipart/form-data">
   {{ form.csrf_token }}
-  <div class="form-group">
+  <div class="col-12 col-md-6 form-group">
     {{ render_field(form.client_id, class="form-control") }}
   </div>
-  <div class="form-group">
+  <div class="col-12 col-md-6 form-group">
     {{ render_field(form.client_secret, class="form-control") }}
   </div>
   <div class="col-12 col-md-6 form-group">
@@ -21,8 +22,6 @@
 </form>
 <hr class="my-4" />
 <div class="d-flex">
-  <a class="btn btn-primary float-left mr-auto"
-    href="/onboarding/api-config" role="button">← Back</a>
   <a class="btn btn-primary float-right ml-auto"
     onclick="document.getElementById('credential-upload-form').requestSubmit()"
     role="button">Continue →</a>
