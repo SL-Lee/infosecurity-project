@@ -88,7 +88,7 @@
         </thead>
         <tbody>
           {% for row in alerts %}
-            {% if loop.index <= 10 %}
+            {% if loop.index <= 20 %}
               {% if row.alert_level == "High" %}
                 <tr class="table-danger" id="{{ loop.index }}">
               {% elif row.alert_level == "Medium" %}
@@ -128,7 +128,7 @@
             <a class="page-link" href="#" tabindex="-1" onclick="previousPage()">Previous</a>
           </li>
 
-          {% set pages = (((alerts | length)/10) | round(method='ceil') | int) %}
+          {% set pages = (((alerts | length)/20) | round(method='ceil') | int) %}
           {% for i in range(pages) %}
             <li class="page-item">
               <a class="page-link" href="#" onclick="goToPage({{ i+1 }})">{{ i+1 }}</a>
@@ -169,7 +169,7 @@
 
   var current = 0;
   var first = 0;
-  var last = 10;
+  var last = 20;
   function nextPage() {
     // numbers are following index
     var i, tbody, tr;
@@ -177,15 +177,15 @@
     tr = tbody.getElementsByTagName("tr");
 
     // set all to hidden first
-    for (i = 0; i < {{ pages }} * 10; i++) {
+    for (i = 0; i < {{ pages }} * 20; i++) {
       if (tr[i]) {
         tr[i].style.display = "none";
       }
     }
 
     current += 1;
-    first += 10;
-    last += 10;
+    first += 20;
+    last += 20;
 
     for (i = first; i < last; i++) {
       if (tr[i]) {
@@ -221,15 +221,15 @@
     tr = tbody.getElementsByTagName("tr");
 
     // set all to hidden first
-    for (i = 0; i < {{ pages }} * 10; i++) {
+    for (i = 0; i < {{ pages }} * 20; i++) {
       if (tr[i]) {
         tr[i].style.display = "none";
       }
     }
 
     current -= 1;
-    first -= 10;
-    last -= 10;
+    first -= 20;
+    last -= 20;
 
     for (i = first; i < last; i++) {
       if (tr[i]) {
@@ -265,15 +265,15 @@
     tr = tbody.getElementsByTagName("tr");
 
     // set all to hidden first
-    for (i = 0; i < {{ pages }} * 10; i++) {
+    for (i = 0; i < {{ pages }} * 20; i++) {
       if (tr[i]) {
         tr[i].style.display = "none";
       }
     }
 
     current = page - 1;
-    first = page * 10 - 10;
-    last = page * 10;
+    first = page * 20 - 20;
+    last = page * 20;
 
     for (i = first; i < last; i++) {
       if (tr[i]) {

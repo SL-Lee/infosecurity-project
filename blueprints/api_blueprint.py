@@ -15,7 +15,8 @@ from helper_functions import (
     log_request,
     required_permissions,
     validate_api_key,
-    req_behaviour
+    req_behaviour,
+    alertemail,
 )
 from server_models import Rule, server_db
 
@@ -355,6 +356,9 @@ class Database(Resource):
                                 response=str(query_results),
                                 ip_address=args["ip"],
                             )
+                            server_db.session.add(logged_alert)
+                            server_db.session.add(logged_request)
+                            server_db.session.commit()
                             return {
                                 "status": status,
                                 "status_msg": status_msg,
@@ -376,6 +380,9 @@ class Database(Resource):
                             response=str(query_results),
                             ip_address=args["ip"],
                         )
+                        server_db.session.add(logged_alert)
+                        server_db.session.add(logged_request)
+                        server_db.session.commit()
                         # need a diff return statement as this is alert only,
                         # so request should still be allowed
                         return {

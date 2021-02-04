@@ -16,7 +16,7 @@ import constants
 from crypto_functions import encrypt_file
 from errors import InvalidAPIKeyError
 from server_models import Alert, BackupLog, Request, server_db
-
+from flask_mail import Mail
 
 def get_config_value(key, default_value=None):
     config_db = shelve.open("config")
@@ -128,7 +128,9 @@ def request_filter(alerts, date, query, sort):
                 alert_list.append(i)
 
     if sort == "Latest" or sort == "<sort>":
-        alert_list.reverse()
+        alert_list.sort(key=lambda r: r.request.datetime, reverse=True)
+    else:
+        alert_list.sort(key=lambda r: r.request.datetime, reverse=False)
 
     return alert_list
 
@@ -354,7 +356,8 @@ def schedule_backup(filename):
         server_db.session.commit()
 
 
-def alertemail(mail, request_id):
+def alertemail(request_id):
+    mail = Mail()
     alerts = Alert.query.filter_by(request_id=request_id).all()
     print("Sent", alerts[0].__dict__)
     msg = Message(
