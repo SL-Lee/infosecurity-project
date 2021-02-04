@@ -86,9 +86,6 @@ def onboarding_admin_user_creation():
 )
 @required_permissions("manage_users")
 def onboarding_database_config():
-    if os.path.exists("client_db.sqlite3"):
-        return redirect(url_for(".onboarding_encryption_config"))
-
     if request.method == "POST":
         db_file = request.files.get("db-file")
 
