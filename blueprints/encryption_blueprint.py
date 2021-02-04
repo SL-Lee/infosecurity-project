@@ -135,7 +135,13 @@ def upload_field():
         # User Class
         if model == "User":
             for user in User.query.all():
-                setattr(user, field, encrypt(getattr(user, field), constants.ENCRYPTION_KEY).hex())
+                setattr(
+                    user,
+                    field,
+                    encrypt(
+                        getattr(user, field), constants.ENCRYPTION_KEY
+                    ).hex(),
+                )
                 client_db.session.commit()
 
                 if field not in encrypted_fields["User"]:
@@ -146,7 +152,13 @@ def upload_field():
         # Role Class
         elif model == "Role":
             for role in Role.query.all():
-                setattr(role, field, encrypt(getattr(role, field), constants.ENCRYPTION_KEY).hex())
+                setattr(
+                    role,
+                    field,
+                    encrypt(
+                        getattr(role, field), constants.ENCRYPTION_KEY
+                    ).hex(),
+                )
                 client_db.session.commit()
 
                 if field not in encrypted_fields["Role"]:
@@ -157,7 +169,13 @@ def upload_field():
         # Credit Card Class
         elif model == "Credit Card":
             for credit_card in CreditCard.query.all():
-                setattr(credit_card, field, encrypt(getattr(credit_card, field), constants.ENCRYPTION_KEY).hex())
+                setattr(
+                    credit_card,
+                    field,
+                    encrypt(
+                        getattr(credit_card, field), constants.ENCRYPTION_KEY
+                    ).hex(),
+                )
                 client_db.session.commit()
 
                 if field not in encrypted_fields["CreditCard"]:
@@ -168,7 +186,13 @@ def upload_field():
         # Address Class
         elif model == "Address":
             for address in Address.query.all():
-                setattr(address, field, encrypt(getattr(address, field), constants.ENCRYPTION_KEY).hex())
+                setattr(
+                    address,
+                    field,
+                    encrypt(
+                        getattr(address, field), constants.ENCRYPTION_KEY
+                    ).hex(),
+                )
                 client_db.session.commit()
 
                 if field not in encrypted_fields["Address"]:
@@ -179,7 +203,13 @@ def upload_field():
         # Product Class
         elif model == "Product":
             for product in Product.query.all():
-                setattr(product, field, encrypt(getattr(product, field), constants.ENCRYPTION_KEY).hex())
+                setattr(
+                    product,
+                    field,
+                    encrypt(
+                        getattr(product, field), constants.ENCRYPTION_KEY
+                    ).hex(),
+                )
                 client_db.session.commit()
 
                 if field not in encrypted_fields["Product"]:
@@ -190,7 +220,13 @@ def upload_field():
         # Review Class
         elif model == "Review":
             for review in Review.query.all():
-                setattr(review, field, encrypt(getattr(review, field), constants.ENCRYPTION_KEY).hex())
+                setattr(
+                    review,
+                    field,
+                    encrypt(
+                        getattr(review, field), constants.ENCRYPTION_KEY
+                    ).hex(),
+                )
                 client_db.session.commit()
 
                 if field not in encrypted_fields["Review"]:
@@ -201,7 +237,13 @@ def upload_field():
         # Order Class
         elif model == "Order Product":
             for order in OrderProduct.query.all():
-                setattr(order, field, encrypt(str(getattr(order, field)), constants.ENCRYPTION_KEY).hex())
+                setattr(
+                    order,
+                    field,
+                    encrypt(
+                        str(getattr(order, field)), constants.ENCRYPTION_KEY
+                    ).hex(),
+                )
                 client_db.session.commit()
 
                 if field not in encrypted_fields["OrderProduct"]:
