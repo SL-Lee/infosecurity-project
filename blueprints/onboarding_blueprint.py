@@ -15,6 +15,7 @@ import constants
 import forms
 from crypto_functions import encrypt, encrypt_file
 from helper_functions import (
+    get_config_value,
     required_permissions,
     schedule_backup,
     set_config_value,
@@ -33,6 +34,12 @@ def onboarding():
     "/onboarding/admin-user-creation", methods=["GET", "POST"]
 )
 def onboarding_admin_user_creation():
+    if any(
+        ServerPermission.query.get("manage_users") in server_user.permissions
+        for server_user in ServerUser.query.all()
+    ):
+        return redirect(url_for(".onboarding_database_config"))
+
     create_admin_user_form = forms.CreateAdminUserForm(request.form)
 
     if request.method == "POST" and create_admin_user_form.validate():
@@ -71,6 +78,9 @@ def onboarding_admin_user_creation():
 )
 @required_permissions("manage_users")
 def onboarding_database_config():
+    if os.path.exists("client_db.sqlite3"):
+        return redirect(url_for(".onboarding_encryption_config"))
+
     if request.method == "POST":
         db_file = request.files.get("db-file")
 
@@ -114,6 +124,9 @@ def onboarding_database_config():
 )
 @required_permissions("manage_users")
 def onboarding_encryption_config():
+    if get_config_value("encryption-config") is not None:
+        return redirect(url_for(".onboarding_api_config"))
+
     if request.method == "POST":
         encryption_passphrase = request.form.get("encryption-passphrase")
 
@@ -156,6 +169,9 @@ def onboarding_encryption_config():
 @onboarding_blueprint.route("/onboarding/api-config")
 @required_permissions("manage_users")
 def onboarding_api_config():
+    if get_config_value("api-keys") is not None:
+        return redirect(url_for(".onboarding_drive_upload_config"))
+
     return render_template("onboarding-api-config.html")
 
 
@@ -165,6 +181,7 @@ def onboarding_api_config():
 @required_permissions("manage_users")
 def onboarding_drive_upload_config():
     form = forms.OnboardingDriveUpload(request.form)
+
     if request.method == "POST" and form.validate():
         json_file = request.files.get("json-file")
 
