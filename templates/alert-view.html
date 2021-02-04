@@ -12,11 +12,22 @@
   <div class="row justify-content-center">
     <div class="col-sm-10">
       <table class="table table-striped table-hover">
+        <colgroup>
+          <col style="width: 10%;" />
+          <col style="width: 10%;" />
+          <col style="width: 10%;" />
+          <col style="width: 10%;" />
+          <col style="width: 10%;" />
+          <col style="width: 10%;" />
+          <col style="width: 10%;" />
+          <col style="width: 30%;" />
+        </colgroup>
         <thead>
           <tr>
             <th scope="col">Request ID</th>
             <th scope="col">Alert Level</th>
             <th scope="col">Datetime</th>
+            <th scope="col">IP Address</th>
             <th scope="col">Request Parameters</th>
             <th scope="col">Status</th>
             <th scope="col">Message</th>
@@ -32,7 +43,11 @@
           <td>{{ alert.request.request_params }}</td>
           <td>{{ alert.request.status }}</td>
           <td>{{ alert.request.status_msg }}</td>
-          <td>{{ alert.request.response }}</td>
+          <td>
+            <textarea
+              class="request-response border-0 bg-transparent form-control"
+              disabled="disabled">{{ alert.request.response }}</textarea>
+          </td>
           <tr>
             <td>
               <button class="btn btn-success" onclick="location.href='/alert/email/{{ alert.request.id }}'">Email</button>

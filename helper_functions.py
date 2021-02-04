@@ -281,7 +281,7 @@ def alertemail(mail, request_id):
         html=(
             "<h2><b>Request ID :</h2> {}"
             "\n<h2>Alert Level :</h2> {}"
-            "\n<h2>Datetime of Detection :</h2> {}"
+            "\n<h2>Time of Request :</h2> {}"
             "\n<h2>IP Address :</h2> {}"
             "\n<h2>Request Parameters :</h2> {}"
             "\n<h2>Status :</h2> {}"
