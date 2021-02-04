@@ -88,49 +88,36 @@
         </thead>
         <tbody>
           {% for row in alerts %}
-          {% if loop.index <= 10 %}
-          {% if row.alert_level == "High" %}
-            <tr class="table-danger" id="{{ loop.index }}">
-          {% elif row.alert_level == "Medium" %}
-            <tr class="table-warning" id="{{ loop.index }}">
-          {% else %}
-            <tr class="table-success" id="{{ loop.index }}">
-          {% endif %}
-              <td>{{ row.request.id }}</td>
-              <td>{{ row.alert_level }}</td>
-              <td>{{ row.request.datetime }}</td>
-              <td>{{ row.request.ip_address }}</td>
-              <td>{{ row.request.request_params }}</td>
-              <td>{{ row.request.status }}</td>
-              <td>{{ row.request.status_msg }}</td>
-              <td>
-                <textarea
-                  class="request-response border-0 bg-transparent form-control"
-                  disabled="disabled">{{ row.request.response }}</textarea>
-              </td>
-            </tr>
-          {% else %}
-          {% if row.alert_level == "High" %}
-            <tr class="table-danger" id="{{ loop.index }}">
-          {% elif row.alert_level == "Medium" %}
-            <tr class="table-warning" id="{{ loop.index }}">
-          {% else %}
-            <tr class="table-success" id="{{ loop.index }}">
-          {% endif %}
-              <td>{{ row.request.id }}</td>
-              <td>{{ row.alert_level }}</td>
-              <td>{{ row.request.datetime }}</td>
-              <td>{{ row.request.ip_address }}</td>
-              <td>{{ row.request.request_params }}</td>
-              <td>{{ row.request.status }}</td>
-              <td>{{ row.request.status_msg }}</td>
-              <td>
-                <textarea
-                  class="request-response border-0 bg-transparent form-control"
-                  disabled="disabled">{{ row.request.response }}</textarea>
-              </td>
-            </tr>
+            {% if loop.index <= 10 %}
+              {% if row.alert_level == "High" %}
+                <tr class="table-danger" id="{{ loop.index }}">
+              {% elif row.alert_level == "Medium" %}
+                <tr class="table-warning" id="{{ loop.index }}">
+              {% else %}
+                <tr class="table-success" id="{{ loop.index }}">
+              {% endif %}
+            {% else %}
+              {% if row.alert_level == "High" %}
+                <tr class="table-danger" style="display:none" id="{{ loop.index }}">
+              {% elif row.alert_level == "Medium" %}
+                <tr class="table-warning" style="display:none" id="{{ loop.index }}">
+              {% else %}
+                <tr class="table-success" style="display:none" id="{{ loop.index }}">
+              {% endif %}
             {% endif %}
+                  <td>{{ row.request.id }}</td>
+                  <td>{{ row.alert_level }}</td>
+                  <td>{{ row.request.datetime }}</td>
+                  <td>{{ row.request.ip_address }}</td>
+                  <td>{{ row.request.request_params }}</td>
+                  <td>{{ row.request.status }}</td>
+                  <td>{{ row.request.status_msg }}</td>
+                  <td>
+                    <textarea
+                      class="request-response border-0 bg-transparent form-control"
+                      disabled="disabled">{{ row.request.response }}</textarea>
+                  </td>
+                </tr>
           {% endfor %}
         </tbody>
       </table>

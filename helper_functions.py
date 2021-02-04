@@ -65,6 +65,43 @@ def log_request(
     return logged_request, logged_alert
 
 
+def month_calculator(month):
+    month_list = {
+        1: "Jan",
+        2: "Feb",
+        3: "Mar",
+        4: "Apr",
+        5: "May",
+        6: "Jun",
+        7: "Jul",
+        8: "Aug",
+        9: "Sep",
+        10: "Oct",
+        11: "Nov",
+        12: "Dec",
+    }
+    months = list()
+    months_num = list()
+    if month - 4 <= 0:
+        # extra month is the number of months before Jan
+        # start is the month that starts from the months before Jan
+        extra_month = 1 - (month-4)
+        start = 13 - extra_month
+        for i in range(start, 13):
+            months.append(month_list[i])
+            months_num.append(i)
+        for i in range(1, month+1):
+            months.append(month_list[i])
+            months_num.append(i)
+        year = "previous"
+    else:
+        # Append the previous 4 months
+        for i in range(month-4, month+1):
+            months.append(month_list[i])
+            months_num.append(i)
+        year = "current"
+    return months, months_num, year
+
 def request_filter(alerts, date, query, sort):
     alert_list = list()
     for i in alerts:

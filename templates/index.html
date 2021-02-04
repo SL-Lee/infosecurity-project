@@ -3,44 +3,138 @@
 endif %}{% endblock %}
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
+<style>
+.ct-series-a .ct-bar {
+  stroke: #1de016;
+}
+
+.ct-series-b .ct-bar {
+  stroke: #faf32d;
+}
+
+.ct-series-c .ct-bar {
+  stroke: #d60909;
+}
+</style>
 <h1 class="display-3 text-center">SecureDB</h1>
 {% if current_user.is_authenticated %}
 <p class="lead text-center">Welcome to SecureDB.</p>
+<div class="container-fluid content text-center">
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="ct-chart ct-perfect-fourth"></div>
+      <div class="text-center">
+        <button id="day" class="btn btn-primary btn-lg" style="width:32%;">Day</button>
+        <button id="month" class="btn btn-primary btn-lg" style="width:32%;">Month</button>
+        <button id="year" class="btn btn-primary btn-lg" style="width:32%;">Year</button>
+      </div>
 
-<div class="ct-chart ct-perfect-fourth">
+    </div>
+
+  </div>
 
 </div>
 
 
-
 <script>
 
-  var getData = $.get("/data");
+  var myChart;
+
+  var getData = $.get("/day");
 
   getData.done(function(results) {
     var data = {
       // A labels array that can contain any sort of values
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       // Our series array that contains series objects or in this case series data arrays
       series: [
-        results.results
+        results.low, results.medium, results.high
       ]
+
     };
 
     // As options we currently only set a static size of 300x200 px. We can also omit this and use aspect ratio containers
     // as you saw in the previous example
     var options = {
       width: 600,
-      height: 200
+      height: 200,
+
+      stackBars: true,
+
     };
 
     // Create a new line chart object where as first parameter we pass in a selector
     // that is resolving to our chart container element. The Second parameter
     // is the actual data object. As a third parameter we pass in our custom options.
-    var myChart = new Chartist.Bar('.ct-chart', data, options);
+    myChart = new Chartist.Bar('.ct-chart', data, options).on('draw', function(data) {
+      if(data.type === 'bar') {
+        data.element.attr({
+          style: 'stroke-width: 30px'
+        });
+      }
+    });
 
   });
 
+  function updateChartDay() {
+
+    var updatedData = $.get("/day");
+
+    updatedData.done(function(results) {
+
+      var data = {
+        // A labels array that can contain any sort of values
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        // Our series array that contains series objects or in this case series data arrays
+        series: [
+          results.low, results.medium, results.high
+        ]
+      };
+      myChart.update(data);
+
+    });
+  }
+  $("#day").on('click', updateChartDay);
+
+  function updateChartMonth() {
+
+    var updatedData = $.get("/month");
+
+    updatedData.done(function(results) {
+
+      var data = {
+        // A labels array that can contain any sort of values
+        labels: results.month,
+        // Our series array that contains series objects or in this case series data arrays
+        series: [
+          results.low, results.medium, results.high
+        ]
+      };
+      myChart.update(data);
+
+    });
+  }
+  $("#month").on('click', updateChartMonth);
+
+  function updateChartYear() {
+
+    var updatedData = $.get("/year");
+
+    updatedData.done(function(results) {
+
+      var data = {
+        // A labels array that can contain any sort of values
+        labels: results.year,
+        // Our series array that contains series objects or in this case series data arrays
+        series: [
+          results.low, results.medium, results.high
+        ]
+      };
+      myChart.update(data);
+
+    });
+  }
+  $("#year").on('click', updateChartYear);
 
 </script>
 
