@@ -9,13 +9,13 @@ from urllib.parse import urljoin, urlparse
 
 from flask import abort, request
 from flask_login import current_user
+from flask_mail import Message
 from werkzeug.utils import secure_filename
 
 import constants
 from crypto_functions import encrypt_file
 from errors import InvalidAPIKeyError
 from server_models import Alert, BackupLog, Request, server_db
-from flask_mail import Mail, Message
 
 
 def get_config_value(key, default_value=None):
@@ -269,6 +269,7 @@ def schedule_backup(filename):
         )
         server_db.session.add(backup_log)
         server_db.session.commit()
+
 
 def alertemail(mail, request_id):
     alerts = Alert.query.filter_by(request_id=request_id).all()

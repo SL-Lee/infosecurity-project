@@ -20,6 +20,7 @@ from blueprints import (
     backup_blueprint,
     encryption_blueprint,
     encryption_key_management_blueprint,
+    onboarding_blueprint,
     requests_blueprint,
     sensitive_fields_blueprint,
     user_management_blueprint,
@@ -60,6 +61,7 @@ app.register_blueprint(encryption_blueprint.encryption_blueprint)
 app.register_blueprint(
     encryption_key_management_blueprint.encryption_key_management_blueprint
 )
+app.register_blueprint(onboarding_blueprint.onboarding_blueprint)
 app.register_blueprint(requests_blueprint.requests_blueprint)
 app.register_blueprint(sensitive_fields_blueprint.sensitive_fields_blueprint)
 app.register_blueprint(user_management_blueprint.user_management_blueprint)

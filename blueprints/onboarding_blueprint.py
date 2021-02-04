@@ -1,3 +1,4 @@
+import atexit
 import datetime
 import hashlib
 import os
@@ -74,7 +75,12 @@ def onboarding_database_config():
         db_file = request.files.get("db-file")
 
         if db_file is not None and db_file.filename.endswith(".sqlite3"):
-            db_file.save(secure_filename("client_db.sqlite3"))
+            db_file.save(secure_filename("client_db.sqlite3.tmp"))
+            atexit.register(
+                lambda: os.replace(
+                    "client_db.sqlite3.tmp", "client_db.sqlite3"
+                ),
+            )
         else:
             flash(
                 "The database file seems to be of an incorrect format. Please "
@@ -86,7 +92,10 @@ def onboarding_database_config():
         db_models = request.files.get("db-models")
 
         if db_models is not None and db_models.filename.endswith(".py"):
-            db_models.save(secure_filename("client_models.py"))
+            db_models.save(secure_filename("client_models.py.tmp"))
+            atexit.register(
+                lambda: os.replace("client_models.py.tmp", "client_models.py"),
+            )
         else:
             flash(
                 "The database models file seems to be of an incorrect format. "
@@ -95,7 +104,7 @@ def onboarding_database_config():
             )
             return redirect(url_for(".onboarding_database_config"))
 
-        return redirect(url_for(".onboarding_api_config"))
+        return redirect(url_for(".onboarding_encryption_config"))
 
     return render_template("onboarding-database-config.html")
 
@@ -103,7 +112,7 @@ def onboarding_database_config():
 @onboarding_blueprint.route(
     "/onboarding/encryption-config", methods=["GET", "POST"]
 )
-# @required_permissions("manage_users")
+@required_permissions("manage_users")
 def onboarding_encryption_config():
     if request.method == "POST":
         encryption_passphrase = request.form.get("encryption-passphrase")
@@ -427,12 +436,12 @@ def onboarding_backup_config():
             )
 
         constants.SCHEDULER.print_jobs()
-        return redirect(url_for(".onboarding_review_settings"))
+        return redirect(url_for(".onboarding_complete"))
 
     return render_template("onboarding-backup-config.html", form=form)
 
 
-@onboarding_blueprint.route("/onboarding/review-settings")
+@onboarding_blueprint.route("/onboarding/onboarding-complete")
 @required_permissions("manage_users")
-def onboarding_review_settings():
-    return render_template("onboarding-review-settings.html")
+def onboarding_complete():
+    return render_template("onboarding-complete.html")
