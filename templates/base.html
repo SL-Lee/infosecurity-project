@@ -106,16 +106,16 @@
               onclick="this.parentElement.requestSubmit()">Logout</a>
           </form>
         </li>
+        <div class="justify-content-end">
+          {% if "manage_alerts" in current_user_permissions %}
+           <a href="/alert/view"><img src="\static\images\alertnotif.png" height="40" width="40"></a>
+           {% endif %}
+        </div>
       </ul>
     </div>
     {% else %}
     <a class="navbar-brand ml-auto mr-auto" href="/">SecureDB</a>
     {% endif %}
-     <div class="justify-content-end">
-       {% if "manage_alerts" in current_user_permissions %}
-        <a href="/alert/view"><img src="\static\images\alertnotif.png" height="40" width="40"></a>
-        {% endif %}
-     </div>
   </nav>
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
