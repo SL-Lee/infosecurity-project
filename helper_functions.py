@@ -12,7 +12,6 @@ from flask_login import current_user
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 
-import constants
 from crypto_functions import encrypt_file
 from errors import InvalidAPIKeyError
 from server_models import Alert, BackupLog, Request, server_db
@@ -205,6 +204,10 @@ def restart_req():
 
 
 def required_permissions(*required_permission_names):
+    # pylint: disable=import-outside-toplevel
+
+    from constants import VALID_SERVER_PERMISSION_NAMES
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -215,7 +218,7 @@ def required_permissions(*required_permission_names):
             # Abort with a 500 error code if not all required permissions are
             # valid
             if not all(
-                permission in constants.VALID_SERVER_PERMISSION_NAMES
+                permission in VALID_SERVER_PERMISSION_NAMES
                 for permission in required_permission_names
             ):
                 abort(500)
@@ -252,7 +255,13 @@ def schedule_backup(filename):
     # pylint: disable=import-outside-toplevel
 
     from app import app
-    from constants import BACKUP_PATH, DRIVE, DRIVE_BACKUP_ID, SCHEDULER
+    from constants import (
+        BACKUP_PATH,
+        DRIVE,
+        DRIVE_BACKUP_ID,
+        ENCRYPTION_KEY,
+        SCHEDULER,
+    )
 
     with app.app_context():
         # get the config of the file
@@ -346,7 +355,7 @@ def schedule_backup(filename):
 
         shutil.copy2(file_settings["path"], file_backup_path)
         # encrypt the backed up file
-        encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
+        encrypt_file(file_backup_path, ENCRYPTION_KEY)
         # after encrypting the copied file,
         # remove the copied file
         os.remove(file_backup_path)
