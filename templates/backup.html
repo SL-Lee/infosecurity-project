@@ -49,7 +49,7 @@
         </tbody>
       </table>
       <nav aria-label="pagination">
-        <ul class="pagination justify-content-center">
+        <ul class="pagination justify-content-center flex-wrap">
           <li class="page-item disabled" id="previous">
             <a class="page-link" href="#" tabindex="-1" onclick="previousPage()">Previous</a>
           </li>
@@ -80,5 +80,5 @@
 <script>
   let pages = {{ pages }};
 </script>
-<script src="/static/js/backup.js"></script>
+<script src="/static/js/pagination.js"></script>
 {% endblock %}
