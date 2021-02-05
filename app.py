@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import os
 
@@ -10,7 +11,7 @@ from flask_login import (
     logout_user,
 )
 from flask_wtf.csrf import CSRFProtect
-import datetime
+
 import constants
 import forms
 from blueprints import (
@@ -18,6 +19,7 @@ from blueprints import (
     api_blueprint,
     api_key_management_blueprint,
     backup_blueprint,
+    dashboard_blueprint,
     encryption_blueprint,
     encryption_key_management_blueprint,
     onboarding_blueprint,
@@ -25,16 +27,15 @@ from blueprints import (
     sensitive_fields_blueprint,
     user_management_blueprint,
     whitelist_blueprint,
-    dashboard_blueprint,
 )
 from client_models import client_db
 from helper_functions import is_safe_url
 from server_models import (
+    Alert,
+    Request,
     ServerPermission,
     ServerUser,
     server_db,
-    Alert,
-    Request,
 )
 
 app = Flask(__name__)

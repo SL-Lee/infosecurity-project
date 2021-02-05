@@ -1,8 +1,10 @@
-from flask import Blueprint, jsonify
-import datetime
 import calendar
-from server_models import Alert, Request
+import datetime
+
+from flask import Blueprint, jsonify
+
 from helper_functions import month_calculator
+from server_models import Alert, Request
 
 dashboard_blueprint = Blueprint("dashboard", __name__)
 

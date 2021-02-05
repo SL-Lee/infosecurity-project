@@ -2,9 +2,9 @@ from flask import Blueprint, redirect, render_template, request, url_for
 
 import forms
 from helper_functions import (
+    get_config_value,
     request_filter,
     required_permissions,
-    get_config_value,
     set_config_value,
 )
 from server_models import Alert

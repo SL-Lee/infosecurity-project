@@ -9,14 +9,13 @@ from urllib.parse import urljoin, urlparse
 
 from flask import abort, request
 from flask_login import current_user
-from flask_mail import Message
+from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 
 import constants
 from crypto_functions import encrypt_file
 from errors import InvalidAPIKeyError
 from server_models import Alert, BackupLog, Request, server_db
-from flask_mail import Mail
 
 
 def get_config_value(key, default_value=None, config_db_name="config"):
@@ -83,14 +82,17 @@ def month_calculator(month):
     }
     months = list()
     months_num = list()
+
     if month - 4 <= 0:
         # extra month is the number of months before Jan
         # start is the month that starts from the months before Jan
         extra_month = 1 - (month - 4)
         start = 13 - extra_month
+
         for i in range(start, 13):
             months.append(month_list[i])
             months_num.append(i)
+
         for i in range(1, month + 1):
             months.append(month_list[i])
             months_num.append(i)
@@ -100,12 +102,15 @@ def month_calculator(month):
         for i in range(month - 4, month + 1):
             months.append(month_list[i])
             months_num.append(i)
+
         year = "current"
+
     return months, months_num, year
 
 
 def request_filter(alerts, date, query, sort):
     alert_list = list()
+
     for i in alerts:
         if (
             date == str(i.request.datetime.date())
@@ -124,12 +129,13 @@ def request_filter(alerts, date, query, sort):
                     i.request.response,
                 )
                 query_count = re.findall(query, str(search_list))
+
                 if len(query_count) >= 1:
                     alert_list.append(i)
             else:
                 alert_list.append(i)
 
-    if sort == "Latest" or sort == "<sort>":
+    if sort in ("Latest", "<sort>"):
         alert_list.sort(key=lambda r: r.request.datetime, reverse=True)
     else:
         alert_list.sort(key=lambda r: r.request.datetime, reverse=False)
@@ -139,16 +145,22 @@ def request_filter(alerts, date, query, sort):
 
 def req_behaviour(url, ip):
     url_dict = get_config_value("url_dict")
+
     if url_dict is None:
         url_dict = dict()
         set_config_value("url_dict", url_dict)
+
     url_dict_count = get_config_value("url_dict_count")
+
     if url_dict_count is None:
         url_dict_count = dict()
+
     ip_access_url_count = dict()
+
     # Go through url dict to find any url matching inside the dictionary
     for i in url_dict:
-        url_found = re.findall(i, url)
+        _url_found = re.findall(i, url)
+
         if i == url:
             # If url first accessed
             if url not in url_dict_count:
@@ -164,6 +176,7 @@ def req_behaviour(url, ip):
                 # Existing ip access the url
                 else:
                     url_dict_count[url][ip] += 1
+
             # When ip address count reaches stated url count, trigger alert
             if url_dict_count[url][ip] >= url_dict[i][0]:
                 logged_request, logged_alert = log_request(
@@ -171,14 +184,17 @@ def req_behaviour(url, ip):
                     status="",
                     status_msg="Request Behaviour conditions met",
                     request_params="",
-                    response="URL Path - {}, has been accessed {} time(s) from ip address {}".format(
-                        url, url_dict_count[url][ip], ip
+                    response=(
+                        f"URL Path - {url}, has been accessed "
+                        f"{url_dict_count[url][ip]} time(s) from ip address "
+                        f"{ip}"
                     ),
                     ip_address=ip,
                 )
                 server_db.session.add(logged_request)
                 server_db.session.add(logged_alert)
                 server_db.session.commit()
+
     set_config_value("url_dict_count", url_dict_count)
     print(url_dict_count)
 

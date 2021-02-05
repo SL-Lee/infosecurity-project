@@ -13,10 +13,9 @@ from crypto_functions import decrypt, encrypt
 from helper_functions import (
     get_config_value,
     log_request,
+    req_behaviour,
     required_permissions,
     validate_api_key,
-    req_behaviour,
-    alertemail,
 )
 from server_models import Rule, server_db
 
@@ -328,7 +327,8 @@ class Database(Resource):
             sensitive_fields = Rule.query.all()
             whitelist = get_config_value("whitelist", [])
 
-            # If IP address not in whitelist, go through sensitive field validation
+            # If IP address not in whitelist, go through sensitive field
+            # validation
             if args.get("ip") not in whitelist:
                 print("NOT IN WHITELIST")
                 for i in sensitive_fields:

@@ -11,9 +11,9 @@ from crypto_functions import decrypt
 from errors import InvalidEncryptionKeyError
 from helper_functions import (
     get_config_value,
+    restart_req,
     schedule_backup,
     set_config_value,
-    restart_req,
 )
 from server_models import ServerUser
 
