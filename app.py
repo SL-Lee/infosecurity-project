@@ -65,6 +65,7 @@ app.register_blueprint(
     api_key_management_blueprint.api_key_management_blueprint
 )
 app.register_blueprint(backup_blueprint.backup_blueprint)
+app.register_blueprint(dashboard_blueprint.dashboard_blueprint)
 app.register_blueprint(encryption_blueprint.encryption_blueprint)
 app.register_blueprint(
     encryption_key_management_blueprint.encryption_key_management_blueprint
@@ -74,7 +75,6 @@ app.register_blueprint(requests_blueprint.requests_blueprint)
 app.register_blueprint(sensitive_fields_blueprint.sensitive_fields_blueprint)
 app.register_blueprint(user_management_blueprint.user_management_blueprint)
 app.register_blueprint(whitelist_blueprint.whitelist_blueprint)
-app.register_blueprint(dashboard_blueprint.dashboard_blueprint)
 
 csrf = CSRFProtect(app)
 csrf.exempt(api_blueprint.api_blueprint)
