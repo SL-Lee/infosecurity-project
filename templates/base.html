@@ -15,6 +15,9 @@
   <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css" />
   <link rel="stylesheet" type="text/css" href="/static/css/styles.css" />
   <link rel="icon" type="image/png" href="/static/images/favicon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+  <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+  <script src="/static/js/jquery-3.5.1.min.js"></script>
 </head>
 
 <body>
@@ -55,13 +58,16 @@
             "view_logged_requests", "manage_ip_whitelist", "manage_alerts") %}
             <div class="dropdown-divider"></div>
             {% endif %}
+            {% if "manage_request_behaviour" in current_user_permissions %}
+            <a class="dropdown-item" href="/requests/behaviour">Requests Behaviour</a>
+            {% endif %}
             {% if "manage_sensitive_fields" in current_user_permissions %}
             <a class="dropdown-item" href="/sensitive-fields">Sensitive Field
               Rules</a>
             {% endif %}
             {% if "view_logged_requests" in current_user_permissions %}
             <a class="dropdown-item"
-              href="/requests/None/<date>/<query>">Requests</a>
+              href="/requests/None/<date>/<query>/<sort>">Requests</a>
             {% endif %}
             {% if "manage_ip_whitelist" in current_user_permissions %}
             <a class="dropdown-item" href="/whitelist">Whitelist</a>

@@ -31,5 +31,5 @@ def alertview():
 
 @alert_blueprint.route("/alert/email/<request_id>", methods=["GET", "POST"])
 def sendalertemail(request_id):
-    alertemail(mail, request_id)
+    alertemail(request_id)
     return redirect(url_for(".alertview"))

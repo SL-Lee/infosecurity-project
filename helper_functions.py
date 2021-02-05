@@ -16,6 +16,7 @@ import constants
 from crypto_functions import encrypt_file
 from errors import InvalidAPIKeyError
 from server_models import Alert, BackupLog, Request, server_db
+from flask_mail import Mail
 
 
 def get_config_value(key, default_value=None):
@@ -65,7 +66,45 @@ def log_request(
     return logged_request, logged_alert
 
 
-def request_filter(alerts, date, query):
+def month_calculator(month):
+    month_list = {
+        1: "Jan",
+        2: "Feb",
+        3: "Mar",
+        4: "Apr",
+        5: "May",
+        6: "Jun",
+        7: "Jul",
+        8: "Aug",
+        9: "Sep",
+        10: "Oct",
+        11: "Nov",
+        12: "Dec",
+    }
+    months = list()
+    months_num = list()
+    if month - 4 <= 0:
+        # extra month is the number of months before Jan
+        # start is the month that starts from the months before Jan
+        extra_month = 1 - (month - 4)
+        start = 13 - extra_month
+        for i in range(start, 13):
+            months.append(month_list[i])
+            months_num.append(i)
+        for i in range(1, month + 1):
+            months.append(month_list[i])
+            months_num.append(i)
+        year = "previous"
+    else:
+        # Append the previous 4 months
+        for i in range(month - 4, month + 1):
+            months.append(month_list[i])
+            months_num.append(i)
+        year = "current"
+    return months, months_num, year
+
+
+def request_filter(alerts, date, query, sort):
     alert_list = list()
     for i in alerts:
         if (
@@ -89,7 +128,64 @@ def request_filter(alerts, date, query):
                     alert_list.append(i)
             else:
                 alert_list.append(i)
+
+    if sort == "Latest" or sort == "<sort>":
+        alert_list.sort(key=lambda r: r.request.datetime, reverse=True)
+    else:
+        alert_list.sort(key=lambda r: r.request.datetime, reverse=False)
+
     return alert_list
+
+
+def req_behaviour(url, ip):
+    url_dict = get_config_value("url_dict")
+    if url_dict is None:
+        url_dict = dict()
+        set_config_value("url_dict", url_dict)
+    url_dict_count = get_config_value("url_dict_count")
+    if url_dict_count is None:
+        url_dict_count = dict()
+    ip_access_url_count = dict()
+    # Go through url dict to find any url matching inside the dictionary
+    for i in url_dict:
+        url_found = re.findall(i, url)
+        if i == url:
+            # If url first accessed
+            if url not in url_dict_count:
+                ip_access_url_count[ip] = 1
+                url_dict_count[url] = ip_access_url_count
+            else:
+                # If a new ip access the url
+                if ip not in url_dict_count[url]:
+                    # Retrieve existing ip address : count
+                    ip_access_url_count = url_dict_count[url]
+                    ip_access_url_count[ip] = 1
+                    url_dict_count[url] = ip_access_url_count
+                # Existing ip access the url
+                else:
+                    url_dict_count[url][ip] += 1
+            # When ip address count reaches stated url count, trigger alert
+            if url_dict_count[url][ip] >= url_dict[i][0]:
+                logged_request, logged_alert = log_request(
+                    alert_level=url_dict[i][1],
+                    status="",
+                    status_msg="Request Behaviour conditions met",
+                    request_params="",
+                    response="URL Path - {}, has been accessed {} time(s) from ip address {}".format(
+                        url, url_dict_count[url][ip], ip
+                    ),
+                    ip_address=ip,
+                )
+                server_db.session.add(logged_request)
+                server_db.session.add(logged_alert)
+                server_db.session.commit()
+    set_config_value("url_dict_count", url_dict_count)
+    print(url_dict_count)
+
+
+def restart_req():
+    url_dict_count = dict()
+    set_config_value("url_dict_count", url_dict_count)
 
 
 def required_permissions(*required_permission_names):
@@ -271,7 +367,8 @@ def schedule_backup(filename):
         server_db.session.commit()
 
 
-def alertemail(mail, request_id):
+def alertemail(request_id):
+    mail = Mail()
     alerts = Alert.query.filter_by(request_id=request_id).all()
     print("Sent", alerts[0].__dict__)
     msg = Message(

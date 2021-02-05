@@ -123,6 +123,19 @@ class RequestFilter(FlaskForm):
     date = DateField(
         "Date", format="%Y-%m-%d", validators=(validators.Optional(),)
     )
+    sort = SelectField(
+        "Sort By", choices=[("Latest", "Latest"), ("Oldest", "Oldest")]
+    )
+
+
+class RequestBehaviourForm(FlaskForm):
+    url = StringField("URL", [InputRequired(), Length(min=1, max=100)])
+    count = IntegerField("URL Accessed Count in a min", [InputRequired()])
+    alert_level = SelectField(
+        "Alert Level",
+        [InputRequired()],
+        choices=[("High", "High"), ("Medium", "Medium"), ("Low", "Low")],
+    )
 
 
 class SensitiveFieldForm(FlaskForm):

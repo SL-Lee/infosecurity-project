@@ -10,7 +10,7 @@ from flask_login import (
     logout_user,
 )
 from flask_wtf.csrf import CSRFProtect
-
+import datetime
 import constants
 import forms
 from blueprints import (
@@ -25,10 +25,17 @@ from blueprints import (
     sensitive_fields_blueprint,
     user_management_blueprint,
     whitelist_blueprint,
+    dashboard_blueprint,
 )
 from client_models import client_db
 from helper_functions import is_safe_url
-from server_models import ServerPermission, ServerUser, server_db
+from server_models import (
+    ServerPermission,
+    ServerUser,
+    server_db,
+    Alert,
+    Request,
+)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
@@ -66,6 +73,7 @@ app.register_blueprint(requests_blueprint.requests_blueprint)
 app.register_blueprint(sensitive_fields_blueprint.sensitive_fields_blueprint)
 app.register_blueprint(user_management_blueprint.user_management_blueprint)
 app.register_blueprint(whitelist_blueprint.whitelist_blueprint)
+app.register_blueprint(dashboard_blueprint.dashboard_blueprint)
 
 csrf = CSRFProtect(app)
 csrf.exempt(api_blueprint.api_blueprint)
@@ -172,8 +180,35 @@ def index():
         else:
             flash("Invalid username and/or password.", "danger")
 
+    today = datetime.datetime.now()
+    today = datetime.datetime(today.year, today.month, today.day)
+    last_time = datetime.datetime(
+        today.year, today.month, today.day, 23, 59, 59, 999999
+    )
+    print(last_time)
+    # Get requests based on time
+    requests = Request.query.filter(
+        Request.datetime.between(today, last_time)
+    ).all()
+    print(requests)
+    alerts = list()
+    for client_request in requests:
+        alert = Alert.query.filter_by(request_id=client_request.id).first()
+        alerts.append(alert)
+    alert_list = [0, 0, 0]
+    for i in alerts:
+        if i.alert_level == "Low":
+            alert_list[0] += 1
+        elif i.alert_level == "Medium":
+            alert_list[1] += 1
+        else:
+            alert_list[2] += 1
+
     return render_template(
-        "index.html", form=login_form, next=request.args.get("next")
+        "index.html",
+        form=login_form,
+        next=request.args.get("next"),
+        alert_list=alert_list,
     )
 
 
