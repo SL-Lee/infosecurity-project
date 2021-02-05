@@ -19,8 +19,8 @@ from server_models import Alert, BackupLog, Request, server_db
 from flask_mail import Mail
 
 
-def get_config_value(key, default_value=None):
-    config_db = shelve.open("config")
+def get_config_value(key, default_value=None, config_db_name="config"):
+    config_db = shelve.open(config_db_name)
 
     try:
         return config_db["config"][key]
@@ -30,8 +30,8 @@ def get_config_value(key, default_value=None):
         config_db.close()
 
 
-def set_config_value(key, value):
-    config_db = shelve.open("config")
+def set_config_value(key, value, config_db_name="config"):
+    config_db = shelve.open(config_db_name)
     config = config_db.get("config", {})
     config[key] = value
     config_db["config"] = config

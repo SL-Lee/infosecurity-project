@@ -16,8 +16,8 @@ import forms
 from client_models import *
 from crypto_functions import decrypt_file, encrypt, encrypt_file
 from helper_functions import (
-    get_config_value,
     required_permissions,
+    get_config_value,
     set_config_value,
 )
 
@@ -131,6 +131,7 @@ def upload_field():
                 "Review": [],
                 "OrderProduct": [],
             },
+            config_db_name="encryption_config",
         )
         # User Class
         if model == "User":
@@ -255,7 +256,7 @@ def upload_field():
         else:
             flash("Not Found!", "danger")
 
-        set_config_value("encrypted-fields", encrypted_fields)
+        set_config_value("encrypted-fields", encrypted_fields, config_db_name="encryption_config")
         return redirect(url_for("index"))
 
     return render_template("encrypt-field.html", form=form)

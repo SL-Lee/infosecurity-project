@@ -326,7 +326,7 @@ class Database(Resource):
             query_results = schema.dump(query_results)
 
             sensitive_fields = Rule.query.all()
-            whitelist = get_config_value("whitelist")
+            whitelist = get_config_value("whitelist", [])
 
             # If IP address not in whitelist, go through sensitive field validation
             if args.get("ip") not in whitelist:
