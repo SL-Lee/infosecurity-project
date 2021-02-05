@@ -102,6 +102,9 @@ class Database(Resource):
 
     # Parser for DELETE requests
     delete_parser = base_parser.copy()
+    delete_parser.add_argument(
+        "ip", required=True, type=inputs.ipv4, location="form"
+    )
 
     @api.expect(post_parser)
     @api.response(200, "Success")
