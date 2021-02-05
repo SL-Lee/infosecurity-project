@@ -115,6 +115,7 @@ class Database(Resource):
         url = args["url"]
         ip = args["ip"]
         req_behaviour(url, ip)
+
         # Attempt to validate the received API key. If the API key is not found
         # or found to be invalid, then return a 401 UNAUTHORIZED response.
         try:
@@ -334,15 +335,16 @@ class Database(Resource):
             # validation
             if args.get("ip") not in whitelist:
                 print("NOT IN WHITELIST")
+
                 for i in sensitive_fields:
                     pattern = f"'{i.contents}',"
                     pattern_occurrence_count = re.findall(
                         pattern, str(query_results)
                     )
                     print(i.action)
-                    # If pattern occurs more than once, that means there is
-                    # more than 1 occurrence of sensitive data, so deny this
-                    # request and log it as a high alert
+
+                    # If the pattern occurrence count exceeds the configured
+                    # threshold, deny this request and log it as a high alert
                     if len(pattern_occurrence_count) > i.occurrence_threshold:
                         print("exceed")
 

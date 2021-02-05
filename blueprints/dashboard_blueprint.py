@@ -14,6 +14,7 @@ def data():
     today = datetime.datetime.now()
     day_no = datetime.datetime.weekday(today)
     mon_date = today
+
     # When today is not monday, get monday date
     if day_no != 0:
         mon_date = today - datetime.timedelta(days=today.weekday())
@@ -27,20 +28,25 @@ def data():
         Request.datetime.between(mon_date, sun_date)
     ).all()
     alerts = list()
+
     for request in requests:
         alert = Alert.query.filter_by(request_id=request.id).first()
         alerts.append(alert)
+
     low_date_list = [0, 0, 0, 0, 0, 0, 0]
     medium_date_list = [0, 0, 0, 0, 0, 0, 0]
     high_date_list = [0, 0, 0, 0, 0, 0, 0]
+
     for i in alerts:
         num = i.request.datetime.weekday()
+
         if i.alert_level == "Low":
             low_date_list[num] += 1
         elif i.alert_level == "Medium":
             medium_date_list[num] += 1
         else:
             high_date_list[num] += 1
+
     print(low_date_list)
     print(medium_date_list)
     print(high_date_list)
@@ -63,9 +69,11 @@ def month():
     medium_date_list = [0, 0, 0, 0, 0]
     high_date_list = [0, 0, 0, 0, 0]
     index = 0
+
     if year == "previous":
         for i in month_num_list:
             alerts = list()
+
             if i > 8:
                 last_day = calendar.monthrange(current_year - 1, i)[1]
                 start = datetime.datetime(current_year - 1, i, 1)
@@ -73,9 +81,11 @@ def month():
                 requests = Request.query.filter(
                     Request.datetime.between(start, end)
                 ).all()
+
                 for request in requests:
                     alert = Alert.query.filter_by(request_id=request.id).first()
                     alerts.append(alert)
+
                 for i in alerts:
                     if i.alert_level == "Low":
                         low_date_list[index] += 1
@@ -90,9 +100,11 @@ def month():
                 requests = Request.query.filter(
                     Request.datetime.between(start, end)
                 ).all()
+
                 for request in requests:
                     alert = Alert.query.filter_by(request_id=request.id).first()
                     alerts.append(alert)
+
                 for i in alerts:
                     if i.alert_level == "Low":
                         low_date_list[index] += 1
@@ -100,6 +112,7 @@ def month():
                         medium_date_list[index] += 1
                     else:
                         high_date_list[index] += 1
+
             index += 1
     else:
         for i in month_num_list:
@@ -110,9 +123,11 @@ def month():
             requests = Request.query.filter(
                 Request.datetime.between(start, end)
             ).all()
+
             for request in requests:
                 alert = Alert.query.filter_by(request_id=request.id).first()
                 alerts.append(alert)
+
             for i in alerts:
                 if i.alert_level == "Low":
                     low_date_list[index] += 1
@@ -120,6 +135,7 @@ def month():
                     medium_date_list[index] += 1
                 else:
                     high_date_list[index] += 1
+
             index += 1
 
     print(month_list)
@@ -146,6 +162,7 @@ def year():
     medium_date_list = [0, 0, 0]
     high_date_list = [0, 0, 0]
     index = 0
+
     for i in year:
         start = datetime.datetime(i, 1, 1)
         end = datetime.datetime(i, 12, 31)
@@ -153,6 +170,7 @@ def year():
             Request.datetime.between(start, end)
         ).all()
         alerts = list()
+
         for request in requests:
             alert = Alert.query.filter_by(request_id=request.id).first()
             alerts.append(alert)
@@ -164,7 +182,9 @@ def year():
                 medium_date_list[index] += 1
             else:
                 high_date_list[index] += 1
+
         index += 1
+
     print(low_date_list)
     print(medium_date_list)
     print(high_date_list)

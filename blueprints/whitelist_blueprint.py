@@ -14,6 +14,7 @@ whitelist_blueprint = Blueprint("whitelist", __name__)
 @required_permissions("manage_ip_whitelist")
 def get_whitelist():
     whitelist = get_config_value("whitelist")
+
     if whitelist is None:
         whitelist = list()
 
@@ -27,6 +28,7 @@ def whitelist():
 
     if request.method == "POST" and form.validate():
         whitelist = get_config_value("whitelist")
+
         if whitelist is None:
             whitelist = list()
 

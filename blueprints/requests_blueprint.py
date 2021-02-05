@@ -58,6 +58,7 @@ def request_behaviour():
     url_dict = get_config_value("url_dict")
     url_dict_count = get_config_value("url_dict_count")
     print(url_dict_count)
+
     if url_dict is None:
         url_dict = dict()
         set_config_value("url_dict", url_dict)
@@ -82,8 +83,10 @@ def request_behaviour_add():
 
     if request.method == "POST" and form.validate():
         url_dict = get_config_value("url_dict")
+
         if url_dict is None:
             url_dict = dict()
+
         url_dict[form.url.data] = (form.count.data, form.alert_level.data)
         set_config_value("url_dict", url_dict)
 
