@@ -120,7 +120,9 @@ def upload_field():
     field = form.field.data
 
     if request.method == "POST":
-        encrypted_fields = get_config_value("encrypted-fields", {}, config_db_name="encryption-config")
+        encrypted_fields = get_config_value(
+            "encrypted-fields", {}, config_db_name="encryption-config"
+        )
         client_class = client_db.session.query(eval(f"{model}"))
         for client in client_class:
             try:
