@@ -120,16 +120,16 @@ def upload_field():
     field = form.field.data
 
     if request.method == "POST":
-        client_class = client_db.session.query(eval(f'{model}'))
+        client_class = client_db.session.query(eval(f"{model}"))
         for client in client_class:
             try:
                 setattr(
-                        client,
-                        field,
-                        encrypt(
-                            str(getattr(client, field)), constants.ENCRYPTION_KEY
-                        ).hex(),
-                    )
+                    client,
+                    field,
+                    encrypt(
+                        str(getattr(client, field)), constants.ENCRYPTION_KEY
+                    ).hex(),
+                )
                 client_db.session.commit()
                 flash("Encrypted!", "success")
             except AttributeError:

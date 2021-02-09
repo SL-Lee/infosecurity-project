@@ -20,6 +20,7 @@ from blueprints import (
     api_key_management_blueprint,
     backup_blueprint,
     dashboard_blueprint,
+    documentation_blueprint,
     encryption_blueprint,
     encryption_key_management_blueprint,
     onboarding_blueprint,
@@ -66,6 +67,7 @@ app.register_blueprint(
 )
 app.register_blueprint(backup_blueprint.backup_blueprint)
 app.register_blueprint(dashboard_blueprint.dashboard_blueprint)
+app.register_blueprint(documentation_blueprint.documentation_blueprint)
 app.register_blueprint(encryption_blueprint.encryption_blueprint)
 app.register_blueprint(
     encryption_key_management_blueprint.encryption_key_management_blueprint

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}SecureDB Documentation{% endblock %}
+{% block content %}
+<h1>SecureDB Documentation</h1>
+<input id="doc-search-input" class="form-control mb-md-3" type="text"
+  placeholder="Search for documentation..." autocomplete="off" />
+<p class="text-muted">Showing <span id="visible-doc-links-count"></span> of
+  <span id="total-doc-links-count"></span> Documentation Links</p>
+<div class="row">
+  <div class="doc-link col-12 col-sm-6 mt-3 mt-md-0">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">SecureDB API</h5>
+        <p class="card-text text-secondary">Documentation for the SecureDB API</p>
+        <a href="/api/doc/" class="btn btn-primary stretched-link">View</a>
+      </div>
+    </div>
+  </div>
+  <div class="doc-link col-12 col-sm-6 mt-3 mt-md-0">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">SecureDB Client Side Program</h5>
+        <p class="card-text text-secondary">Documentation for the SecureDB Client Side Program</p>
+        <a href="/doc/secure-db-client-side-program"
+          class="btn btn-primary stretched-link">View</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/static/js/docSearch.js"></script>
+{% endblock %}
