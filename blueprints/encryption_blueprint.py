@@ -120,147 +120,19 @@ def upload_field():
     field = form.field.data
 
     if request.method == "POST":
-        encrypted_fields = get_config_value(
-            "encrypted-fields",
-            {
-                "User": [],
-                "Role": [],
-                "CreditCard": [],
-                "Address": [],
-                "Product": [],
-                "Review": [],
-                "OrderProduct": [],
-            },
-            config_db_name="encryption_config",
-        )
-        # User Class
-        if model == "User":
-            for user in User.query.all():
+        client_class = client_db.session.query(eval(f'{model}'))
+        for client in client_class:
+            try:
                 setattr(
-                    user,
-                    field,
-                    encrypt(
-                        str(getattr(user, field)), constants.ENCRYPTION_KEY
-                    ).hex(),
-                )
+                        client,
+                        field,
+                        encrypt(
+                            str(getattr(client, field)), constants.ENCRYPTION_KEY
+                        ).hex(),
+                    )
                 client_db.session.commit()
-
-                if field not in encrypted_fields["User"]:
-                    encrypted_fields["User"].append(field)
-                # print(encrypted_fields)
-
-            flash("Encrypted!", "success")
-        # Role Class
-        elif model == "Role":
-            for role in Role.query.all():
-                setattr(
-                    role,
-                    field,
-                    encrypt(
-                        str(getattr(role, field)), constants.ENCRYPTION_KEY
-                    ).hex(),
-                )
-                client_db.session.commit()
-
-                if field not in encrypted_fields["Role"]:
-                    encrypted_fields["Role"].append(field)
-                # print(encrypted_fields)
-
-            flash("Encrypted!", "success")
-        # Credit Card Class
-        elif model == "Credit Card":
-            for credit_card in CreditCard.query.all():
-                setattr(
-                    credit_card,
-                    field,
-                    encrypt(
-                        str(getattr(credit_card, field)),
-                        constants.ENCRYPTION_KEY,
-                    ).hex(),
-                )
-                client_db.session.commit()
-
-                if field not in encrypted_fields["CreditCard"]:
-                    encrypted_fields["CreditCard"].append(field)
-                # print(encrypted_fields)
-
-            flash("Encrypted!", "success")
-        # Address Class
-        elif model == "Address":
-            for address in Address.query.all():
-                setattr(
-                    address,
-                    field,
-                    encrypt(
-                        str(getattr(address, field)), constants.ENCRYPTION_KEY
-                    ).hex(),
-                )
-                client_db.session.commit()
-
-                if field not in encrypted_fields["Address"]:
-                    encrypted_fields["Address"].append(field)
-                # print(encrypted_fields)
-
-            flash("Encrypted!", "success")
-        # Product Class
-        elif model == "Product":
-            for product in Product.query.all():
-                setattr(
-                    product,
-                    field,
-                    encrypt(
-                        str(getattr(product, field)), constants.ENCRYPTION_KEY
-                    ).hex(),
-                )
-                client_db.session.commit()
-
-                if field not in encrypted_fields["Product"]:
-                    encrypted_fields["Product"].append(field)
-                # print(encrypted_fields)
-
-            flash("Encrypted!", "success")
-        # Review Class
-        elif model == "Review":
-            for review in Review.query.all():
-                setattr(
-                    review,
-                    field,
-                    encrypt(
-                        str(getattr(review, field)), constants.ENCRYPTION_KEY
-                    ).hex(),
-                )
-                client_db.session.commit()
-
-                if field not in encrypted_fields["Review"]:
-                    encrypted_fields["Review"].append(field)
-                # print(encrypted_fields)
-
-            flash("Encrypted!", "success")
-        # Order Class
-        elif model == "Order Product":
-            for order in OrderProduct.query.all():
-                setattr(
-                    order,
-                    field,
-                    encrypt(
-                        str(getattr(order, field)), constants.ENCRYPTION_KEY
-                    ).hex(),
-                )
-                client_db.session.commit()
-
-                if field not in encrypted_fields["OrderProduct"]:
-                    encrypted_fields["OrderProduct"].append(field)
-                # print(encrypted_fields)
-
-            flash("Encrypted!", "success")
-        else:
-            flash("Not Found!", "danger")
-
-        set_config_value(
-            "encrypted-fields",
-            encrypted_fields,
-            config_db_name="encryption_config",
-        )
-        return redirect(url_for("index"))
+                flash("Encrypted!", "success")
+            except AttributeError:
+                flash("Not found!", "danger")
 
     return render_template("encrypt-field.html", form=form)
