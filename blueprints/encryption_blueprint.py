@@ -120,6 +120,7 @@ def upload_field():
     field = form.field.data
 
     if request.method == "POST":
+        encrypted_fields = get_config_value("encrypted-fields", {}, config_db_name="encryption-config")
         client_class = client_db.session.query(eval(f"{model}"))
         for client in client_class:
             try:
@@ -131,8 +132,20 @@ def upload_field():
                     ).hex(),
                 )
                 client_db.session.commit()
+                if field in encrypted_fields:
+                    if model in encrypted_fields[model]:
+                        encrypted_fields[model].append(field)
+                        print(encrypted_fields[model])
+                    else:
+                        encrypted_fields[model] = [field]
+                        print(encrypted_fields)
+                else:
+                    encrypted_fields[model] = [field]
+                    print(encrypted_fields)
                 flash("Encrypted!", "success")
             except AttributeError:
                 flash("Not found!", "danger")
+        set_config_value("encrypted-fields", encrypted_fields)
+        # return redirect(url_for("index"))
 
     return render_template("encrypt-field.html", form=form)
