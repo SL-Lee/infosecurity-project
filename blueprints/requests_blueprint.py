@@ -66,8 +66,8 @@ def request_behaviour():
     url_converted_dict = dict()
 
     for i in url_dict:
-        x = i.replace("/", "|")
-        url_converted_dict[i] = x
+        converted_url = i.replace("/", "|")
+        url_converted_dict[i] = converted_url
 
     return render_template(
         "request-behaviour.html",
