@@ -147,7 +147,7 @@ def upload_field():
                 flash("Encrypted!", "success")
             except AttributeError:
                 flash("Not found!", "danger")
-        set_config_value("encrypted-fields", encrypted_fields)
+        set_config_value("encrypted-fields", encrypted_fields, config_db_name="encryption-config")
         # return redirect(url_for("index"))
 
     return render_template("encrypt-field.html", form=form)

@@ -207,17 +207,20 @@ def index():
             alert_list[1] += 1
         else:
             alert_list[2] += 1
-
-    backup_log = BackupLog.query.order_by(BackupLog.id.desc()).first()
-    print("THIS IS THE BACKUP DATE")
-    print(backup_log.date_created)
-
+    try:
+        backup_log = BackupLog.query.order_by(BackupLog.id.desc()).first()
+        print(backup_log)
+        print("THIS IS THE BACKUP DATE")
+        print(backup_log.date_created)
+        date = backup_log.date_created.strftime("%d %b %Y %H:%M:%S")
+    except:
+        date = "None"
     return render_template(
         "index.html",
         form=login_form,
         next=request.args.get("next"),
         alert_list=alert_list,
-        recent_backup=backup_log.date_created
+        recent_backup=date
     )
 
 
