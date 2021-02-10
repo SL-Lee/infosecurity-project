@@ -178,6 +178,11 @@ def backup_add():
         file_backup_path = os.path.join(
             backup_folder, os.path.basename(location) + ".enc"
         )
+        # then add the encryption config for future restore
+        shutil.copy2("encryption-config.bak", os.path.join(backup_folder, "encryption-config.bak"))
+        shutil.copy2("encryption-config.dat", os.path.join(backup_folder, "encryption-config.dat"))
+        shutil.copy2("encryption-config.dir", os.path.join(backup_folder, "encryption-config.dir"))
+
         # upload to drive
         file_upload = constants.DRIVE.CreateFile(
             {
@@ -187,6 +192,65 @@ def backup_add():
         )
         # set content is get file from filepath
         file_upload.SetContentFile(file_backup_path)
+        file_upload.Upload()  # Upload the file.
+
+        file_upload = constants.DRIVE.CreateFile(
+            {
+                "title": "encryption-config.bak",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.bak")
+        file_upload.Upload()  # Upload the file.
+
+        file_upload = constants.DRIVE.CreateFile(
+            {
+                "title": "encryption-config.dat",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.dat")
+        file_upload.Upload()  # Upload the file.
+
+        file_upload = constants.DRIVE.CreateFile(
+            {
+                "title": "encryption-config.dir",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.dir")
+        file_upload.Upload()  # Upload the file.
+
+        # then add the encryption config for future restore
+        shutil.copy2("encryption-config.bak", os.path.join(backup_folder, "encryption-config.bak"))
+        shutil.copy2("encryption-config.dat", os.path.join(backup_folder, "encryption-config.dat"))
+        shutil.copy2("encryption-config.dir", os.path.join(backup_folder, "encryption-config.dir"))
+
+        file_upload = constants.DRIVE.CreateFile(
+            {
+                "title": "encryption-config.bak",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.bak")
+        file_upload.Upload()  # Upload the file.
+
+        file_upload = constants.DRIVE.CreateFile(
+            {
+                "title": "encryption-config.dat",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.dat")
+        file_upload.Upload()  # Upload the file.
+
+        file_upload = constants.DRIVE.CreateFile(
+            {
+                "title": "encryption-config.dir",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.dir")
         file_upload.Upload()  # Upload the file.
 
         file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
@@ -414,6 +478,38 @@ def backup_update(file):
             file_upload.SetContentFile(file_backup_path)
             file_upload.Upload()  # Upload the file.
 
+            # then add the encryption config for future restore
+            shutil.copy2("encryption-config.bak", os.path.join(backup_folder, "encryption-config.bak"))
+            shutil.copy2("encryption-config.dat", os.path.join(backup_folder, "encryption-config.dat"))
+            shutil.copy2("encryption-config.dir", os.path.join(backup_folder, "encryption-config.dir"))
+
+            file_upload = constants.DRIVE.CreateFile(
+                {
+                    "title": "encryption-config.bak",
+                    "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+                }
+            )
+            file_upload.SetContentFile("encryption-config.bak")
+            file_upload.Upload()  # Upload the file.
+
+            file_upload = constants.DRIVE.CreateFile(
+                {
+                    "title": "encryption-config.dat",
+                    "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+                }
+            )
+            file_upload.SetContentFile("encryption-config.dat")
+            file_upload.Upload()  # Upload the file.
+
+            file_upload = constants.DRIVE.CreateFile(
+                {
+                    "title": "encryption-config.dir",
+                    "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+                }
+            )
+            file_upload.SetContentFile("encryption-config.dir")
+            file_upload.Upload()  # Upload the file.
+
             file_hash = hashlib.md5(
                 open(file_settings["path"], "rb").read()
             ).hexdigest()
@@ -584,6 +680,38 @@ def backup_update(file):
             file_upload.SetContentFile(file_backup_path)
             file_upload.Upload()  # Upload the file.
 
+            # then add the encryption config for future restore
+            shutil.copy2("encryption-config.bak", os.path.join(backup_folder, "encryption-config.bak"))
+            shutil.copy2("encryption-config.dat", os.path.join(backup_folder, "encryption-config.dat"))
+            shutil.copy2("encryption-config.dir", os.path.join(backup_folder, "encryption-config.dir"))
+
+            file_upload = constants.DRIVE.CreateFile(
+                {
+                    "title": "encryption-config.bak",
+                    "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+                }
+            )
+            file_upload.SetContentFile("encryption-config.bak")
+            file_upload.Upload()  # Upload the file.
+
+            file_upload = constants.DRIVE.CreateFile(
+                {
+                    "title": "encryption-config.dat",
+                    "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+                }
+            )
+            file_upload.SetContentFile("encryption-config.dat")
+            file_upload.Upload()  # Upload the file.
+
+            file_upload = constants.DRIVE.CreateFile(
+                {
+                    "title": "encryption-config.dir",
+                    "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+                }
+            )
+            file_upload.SetContentFile("encryption-config.dir")
+            file_upload.Upload()  # Upload the file.
+
             file_hash = hashlib.md5(
                 open(file_settings["path"], "rb").read()
             ).hexdigest()
@@ -658,6 +786,170 @@ def backup_restore(file, timestamp):
     print("backup files:", backup_config)
     file_settings = backup_config[file]
 
+    # backup before restoring
+    backup_datetime = datetime.datetime.now()
+
+    filename = os.path.join(constants.BACKUP_PATH, file)
+
+    if not os.path.exists(filename):
+        os.mkdir(filename)
+
+    file_list = constants.DRIVE.ListFile(
+        {
+            "q": "'%s' in parents and trashed=false"
+            % constants.DRIVE_BACKUP_ID
+        }
+    ).GetList()  # to list the files in the folder id
+    folder_names = []
+
+    for files in file_list:
+        folder_names.append(files["title"])
+
+    # if backup folder not created
+    if file not in folder_names:
+        folder = constants.DRIVE.CreateFile(
+            {
+                "title": file,
+                "mimeType": "application/vnd.google-apps.folder",
+                "parents": [
+                    {
+                        "kind": "drive#fileLink",
+                        "id": constants.DRIVE_BACKUP_ID,
+                    }
+                ],
+            }
+        )
+        folder.Upload()
+
+    file_list = constants.DRIVE.ListFile(
+        {
+            "q": "'%s' in parents and trashed=false"
+            % constants.DRIVE_BACKUP_ID
+        }
+    ).GetList()
+
+    # set drive id for backup
+    filename_id = None
+
+    for files in file_list:
+        if files["title"] == file:
+            filename_id = files["id"]
+
+    backup_timestamp = secure_filename(
+        backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
+    )
+    backup_folder = os.path.join(
+        filename,
+        backup_timestamp,
+    )
+
+    if not os.path.exists(backup_folder):
+        os.mkdir(backup_folder)
+
+    file_list = constants.DRIVE.ListFile(
+        {"q": "'%s' in parents and trashed=false" % filename_id}
+    ).GetList()  # to list the files in the folder id
+    folder_names = []
+
+    for files in file_list:
+        folder_names.append(files["title"])
+
+    # if backup folder not created
+    if backup_timestamp not in folder_names:
+        folder = constants.DRIVE.CreateFile(
+            {
+                "title": backup_timestamp,
+                "mimeType": "application/vnd.google-apps.folder",
+                "parents": [
+                    {"kind": "drive#fileLink", "id": filename_id}
+                ],
+            }
+        )
+        folder.Upload()
+
+    file_list = constants.DRIVE.ListFile(
+        {"q": "'%s' in parents and trashed=false" % filename_id}
+    ).GetList()
+
+    # set drive id for backup
+    timestamp_id = None
+
+    for files in file_list:
+        if files["title"] == backup_timestamp:
+            timestamp_id = files["id"]
+
+    file_backup_path = os.path.join(
+        backup_folder, os.path.basename(file_settings["path"])
+    )
+
+    shutil.copy2(file_settings["path"], file_backup_path)
+    # encrypt the backed up file
+    encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
+    # after encrypting the copied file,
+    # remove the copied file
+    os.remove(file_backup_path)
+    # set new path name for encrypted file
+    file_backup_path = os.path.join(
+        backup_folder, os.path.basename(file_settings["path"]) + ".enc"
+    )
+    # upload to drive
+    file_upload = constants.DRIVE.CreateFile(
+        {
+            "title": os.path.basename(file_backup_path),
+            "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+        }
+    )
+    # set content is get file from filepath
+    file_upload.SetContentFile(file_backup_path)
+    file_upload.Upload()  # Upload the file.
+
+    # then add the encryption config for future restore
+    shutil.copy2("encryption-config.bak", os.path.join(backup_folder, "encryption-config.bak"))
+    shutil.copy2("encryption-config.dat", os.path.join(backup_folder, "encryption-config.dat"))
+    shutil.copy2("encryption-config.dir", os.path.join(backup_folder, "encryption-config.dir"))
+
+    file_upload = constants.DRIVE.CreateFile(
+        {
+            "title": "encryption-config.bak",
+            "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+        }
+    )
+    file_upload.SetContentFile("encryption-config.bak")
+    file_upload.Upload()  # Upload the file.
+
+    file_upload = constants.DRIVE.CreateFile(
+        {
+            "title": "encryption-config.dat",
+            "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+        }
+    )
+    file_upload.SetContentFile("encryption-config.dat")
+    file_upload.Upload()  # Upload the file.
+
+    file_upload = constants.DRIVE.CreateFile(
+        {
+            "title": "encryption-config.dir",
+            "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+        }
+    )
+    file_upload.SetContentFile("encryption-config.dir")
+    file_upload.Upload()  # Upload the file.
+
+    file_hash = hashlib.md5(
+        open(file_settings["path"], "rb").read()
+    ).hexdigest()
+
+    backup_log = BackupLog(
+        filename=os.path.basename(file_settings["path"]),
+        date_created=backup_datetime,
+        method="Backup before Restore",
+        source_path=file_settings["path"],
+        backup_path=file_backup_path,
+        md5=file_hash,
+    )
+    server_db.session.add(backup_log)
+    server_db.session.commit()
+
     # path to file dir
     file_folder = os.path.join(constants.BACKUP_PATH, file)
 
@@ -668,6 +960,10 @@ def backup_restore(file, timestamp):
     encrypted = os.path.join(
         timestamp_folder, os.path.basename(file_settings["path"] + ".enc")
     )
+    # restore encryption config before decrypting
+    shutil.copy2(os.path.join(timestamp_folder, "encryption-config.bak"), "encryption-config.bak")
+    shutil.copy2(os.path.join(timestamp_folder, "encryption-config.dat"), "encryption-config.dat")
+    shutil.copy2(os.path.join(timestamp_folder, "encryption-config.dir"), "encryption-config.dir")
 
     # decrypt the encrypted file
     decrypt_file(encrypted, constants.ENCRYPTION_KEY)
