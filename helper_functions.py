@@ -61,7 +61,11 @@ def log_request(
         ip_address=ip_address,
     )
     logged_alert = Alert(request=logged_request, alert_level=alert_level)
-    return logged_request, logged_alert
+    server_db.session.add(logged_alert)
+    server_db.session.add(logged_request)
+    server_db.session.commit()
+
+
 
 
 def month_calculator(month):

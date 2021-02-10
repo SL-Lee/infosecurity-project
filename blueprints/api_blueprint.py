@@ -121,7 +121,7 @@ class Database(Resource):
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status="ERROR",
                 status_msg="Authentication Failed",
@@ -129,9 +129,7 @@ class Database(Resource):
                 response="",
                 ip_address=args["ip"],
             )
-            server_db.session.add(logged_alert)
-            server_db.session.add(logged_request)
-            server_db.session.commit()
+
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
@@ -181,7 +179,7 @@ class Database(Resource):
 
             serialized_created_object = schema.dump(created_object)
             status, status_msg, status_code = "OK", "OK", 200
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Low",
                 status=status,
                 status_msg=status_msg,
@@ -196,7 +194,7 @@ class Database(Resource):
                 "error while deserializing object",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -208,10 +206,10 @@ class Database(Resource):
             serialized_created_object = None
             status, status_msg, status_code = (
                 "ERROR",
-                "invalid request",
+                "Invalid request",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -226,7 +224,7 @@ class Database(Resource):
                 "database integrity error",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -238,10 +236,10 @@ class Database(Resource):
             serialized_created_object = None
             status, status_msg, status_code = (
                 "ERROR",
-                "an unknown error occurred",
+                "An unknown error occurred",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -250,9 +248,6 @@ class Database(Resource):
                 ip_address=args["ip"],
             )
 
-        server_db.session.add(logged_alert)
-        server_db.session.add(logged_request)
-        server_db.session.commit()
 
         return {
             "status": status,
@@ -276,7 +271,7 @@ class Database(Resource):
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status="ERROR",
                 status_msg="Authentication Failed",
@@ -284,9 +279,7 @@ class Database(Resource):
                 response="",
                 ip_address=args["ip"],
             )
-            server_db.session.add(logged_alert)
-            server_db.session.add(logged_request)
-            server_db.session.commit()
+
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
@@ -354,7 +347,7 @@ class Database(Resource):
                                 "Denied",
                                 403,
                             )
-                            logged_request, logged_alert = log_request(
+                            log_request(
                                 alert_level=i.alert_level,
                                 status=status,
                                 status_msg=status_msg,
@@ -365,9 +358,7 @@ class Database(Resource):
                                 response=str(query_results),
                                 ip_address=args["ip"],
                             )
-                            server_db.session.add(logged_alert)
-                            server_db.session.add(logged_request)
-                            server_db.session.commit()
+
                             return {
                                 "status": status,
                                 "status_msg": status_msg,
@@ -378,7 +369,7 @@ class Database(Resource):
                             "Sensitive Field Triggered - " + i.contents,
                             200,
                         )
-                        logged_request, logged_alert = log_request(
+                        log_request(
                             alert_level=i.alert_level,
                             status=status,
                             status_msg=status_msg,
@@ -389,9 +380,7 @@ class Database(Resource):
                             response=str(query_results),
                             ip_address=args["ip"],
                         )
-                        server_db.session.add(logged_alert)
-                        server_db.session.add(logged_request)
-                        server_db.session.commit()
+
                         # need a diff return statement as this is alert only,
                         # so request should still be allowed
                         return {
@@ -401,7 +390,7 @@ class Database(Resource):
                         }, status_code
 
             status, status_msg, status_code = "OK", "OK", 200
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Low",
                 status=status,
                 status_msg=status_msg,
@@ -420,10 +409,10 @@ class Database(Resource):
             query_results = None
             status, status_msg, status_code = (
                 "ERROR",
-                "invalid request",
+                "Invalid request",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -437,10 +426,10 @@ class Database(Resource):
             query_results = None
             status, status_msg, status_code = (
                 "ERROR",
-                "an unknown error occurred",
+                "An unknown error occurred",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -451,9 +440,7 @@ class Database(Resource):
                 ip_address=args["ip"],
             )
 
-        server_db.session.add(logged_request)
-        server_db.session.add(logged_alert)
-        server_db.session.commit()
+
 
         return {
             "status": status,
@@ -476,7 +463,7 @@ class Database(Resource):
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status="ERROR",
                 status_msg="Authentication Failed",
@@ -484,9 +471,7 @@ class Database(Resource):
                 response="",
                 ip_address=args["ip"],
             )
-            server_db.session.add(logged_alert)
-            server_db.session.add(logged_request)
-            server_db.session.commit()
+
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
@@ -528,7 +513,7 @@ class Database(Resource):
             ).update(args["values"])
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Low",
                 status=status,
                 status_msg=status_msg,
@@ -546,10 +531,10 @@ class Database(Resource):
         ):
             status, status_msg, status_code = (
                 "ERROR",
-                "invalid request",
+                "Invalid request",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -562,10 +547,10 @@ class Database(Resource):
         except:
             status, status_msg, status_code = (
                 "ERROR",
-                "an unknown error occurred",
+                "An unknown error occurred",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -575,10 +560,6 @@ class Database(Resource):
                 response=str(args["values"]),
                 ip_address=args["ip"],
             )
-
-        server_db.session.add(logged_alert)
-        server_db.session.add(logged_request)
-        server_db.session.commit()
 
         return {"status": status, "status_msg": status_msg}, status_code
 
@@ -594,7 +575,7 @@ class Database(Resource):
         try:
             validate_api_key(request.headers.get("X-API-KEY"))
         except:
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status="ERROR",
                 status_msg="Authentication Failed",
@@ -602,9 +583,7 @@ class Database(Resource):
                 response="",
                 ip_address=args["ip"],
             )
-            server_db.session.add(logged_alert)
-            server_db.session.add(logged_request)
-            server_db.session.commit()
+
             return {
                 "status": "ERROR",
                 "status_msg": "Authentication failed",
@@ -616,7 +595,7 @@ class Database(Resource):
             ).delete()
             client_db.session.commit()
             status, status_msg, status_code = "OK", "OK", 200
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Low",
                 status=status,
                 status_msg=status_msg,
@@ -629,10 +608,10 @@ class Database(Resource):
         except (NameError, sqlalchemy.exc.InvalidRequestError, SyntaxError):
             status, status_msg, status_code = (
                 "ERROR",
-                "invalid request",
+                "Invalid request",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -645,10 +624,10 @@ class Database(Resource):
         except:
             status, status_msg, status_code = (
                 "ERROR",
-                "an unknown error occurred",
+                "An unknown error occurred",
                 400,
             )
-            logged_request, logged_alert = log_request(
+            log_request(
                 alert_level="Medium",
                 status=status,
                 status_msg=status_msg,
@@ -659,7 +638,4 @@ class Database(Resource):
                 ip_address=args["ip"],
             )
 
-        server_db.session.add(logged_alert)
-        server_db.session.add(logged_request)
-        server_db.session.commit()
         return {"status": status, "status_msg": status_msg}, status_code
