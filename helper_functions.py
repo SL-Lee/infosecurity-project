@@ -147,42 +147,35 @@ def request_filter(alerts, date, query, sort):
 
 
 def req_behaviour(url, ip):
-    url_dict = get_config_value("url_dict")
-
-    if url_dict is None:
-        url_dict = dict()
-        set_config_value("url_dict", url_dict)
-
-    url_dict_count = get_config_value("url_dict_count")
-
-    if url_dict_count is None:
-        url_dict_count = dict()
-
+    # url_dict is dictionary of urls configured in Requests Behaviour
+    # url_dict_count is the current number of url being accessed
+    # url_dict_count[url][ip] gives number of time url accessed by ip
+    url_dict = get_config_value("url_dict", {})
+    url_dict_count = get_config_value("url_dict_count", {})
     ip_access_url_count = dict()
 
     # Go through url dict to find any url matching inside the dictionary
     for i in url_dict:
-        _url_found = re.findall(i, url)
-
         if i == url:
             # If url first accessed
             if url not in url_dict_count:
                 ip_access_url_count[ip] = 1
                 url_dict_count[url] = ip_access_url_count
+            # Existing url
             else:
                 # If a new ip access the url
                 if ip not in url_dict_count[url]:
-                    # Retrieve existing ip address : count
+                    # Add new ip address: count
                     ip_access_url_count = url_dict_count[url]
                     ip_access_url_count[ip] = 1
                     url_dict_count[url] = ip_access_url_count
-                # Existing ip access the url
+                # Retrieve existing ip access the url
                 else:
                     url_dict_count[url][ip] += 1
 
             # When ip address count reaches stated url count, trigger alert
             if url_dict_count[url][ip] >= url_dict[i][0]:
-                logged_request, logged_alert = log_request(
+                log_request(
                     alert_level=url_dict[i][1],
                     status="",
                     status_msg="Request Behaviour conditions met",
@@ -194,17 +187,13 @@ def req_behaviour(url, ip):
                     ),
                     ip_address=ip,
                 )
-                server_db.session.add(logged_request)
-                server_db.session.add(logged_alert)
-                server_db.session.commit()
 
     set_config_value("url_dict_count", url_dict_count)
     print(url_dict_count)
 
 
 def restart_req():
-    url_dict_count = dict()
-    set_config_value("url_dict_count", url_dict_count)
+    set_config_value("url_dict_count", {})
 
 
 def required_permissions(*required_permission_names):

@@ -150,6 +150,7 @@ class Database(Resource):
                     "Review": [],
                     "OrderProduct": [],
                 },
+                config_db_name="encryption-config"
             )
 
             if args["model"] in encrypted_fields:
@@ -303,6 +304,7 @@ class Database(Resource):
                     "Review": [],
                     "OrderProduct": [],
                 },
+                config_db_name="encryption-config"
             )
 
             if args["model"] in encrypted_fields:
@@ -499,6 +501,7 @@ class Database(Resource):
                     "Review": [],
                     "OrderProduct": [],
                 },
+                config_db_name="encryption-config"
             )
 
             if args["model"] in encrypted_fields:

@@ -55,15 +55,10 @@ def get_requests(query, alert_level, date, sort):
 @requests_blueprint.route("/requests/behaviour", methods=["GET"])
 @required_permissions("manage_request_behaviour")
 def request_behaviour():
-    url_dict = get_config_value("url_dict")
-    url_dict_count = get_config_value("url_dict_count")
+    url_dict = get_config_value("url_dict", {})
+    url_dict_count = get_config_value("url_dict_count", {})
     print(url_dict_count)
-
-    if url_dict is None:
-        url_dict = dict()
-        set_config_value("url_dict", url_dict)
-
-    url_converted_dict = dict()
+    url_converted_dict = {}
 
     for i in url_dict:
         converted_url = i.replace("/", "|")
@@ -82,10 +77,7 @@ def request_behaviour_add():
     form = forms.RequestBehaviourForm(request.form)
 
     if request.method == "POST" and form.validate():
-        url_dict = get_config_value("url_dict")
-
-        if url_dict is None:
-            url_dict = dict()
+        url_dict = get_config_value("url_dict", {})
 
         url_dict[form.url.data] = (form.count.data, form.alert_level.data)
         set_config_value("url_dict", url_dict)
@@ -101,8 +93,11 @@ def request_behaviour_add():
 @required_permissions("manage_sensitive_fields")
 def delete_request_behaviour(url):
     url = url.replace("|", "/")
-    url_dict = get_config_value("url_dict")
-    url_dict.pop(url)
-    set_config_value("url_dict", url_dict)
+    url_dict = get_config_value("url_dict", {})
+    try:
+        url_dict.pop(url)
+        set_config_value("url_dict", url_dict)
+    except:
+        print("URL does not exist")
 
     return redirect(url_for(".request_behaviour"))

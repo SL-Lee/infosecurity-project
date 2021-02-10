@@ -13,11 +13,7 @@ whitelist_blueprint = Blueprint("whitelist", __name__)
 @whitelist_blueprint.route("/whitelist", methods=["GET"])
 @required_permissions("manage_ip_whitelist")
 def get_whitelist():
-    whitelist = get_config_value("whitelist")
-
-    if whitelist is None:
-        whitelist = list()
-
+    whitelist = get_config_value("whitelist", [])
     return render_template("whitelist.html", whitelist=whitelist)
 
 
@@ -27,11 +23,7 @@ def whitelist():
     form = forms.WhitelistForm(request.form)
 
     if request.method == "POST" and form.validate():
-        whitelist = get_config_value("whitelist")
-
-        if whitelist is None:
-            whitelist = list()
-
+        whitelist = get_config_value("whitelist", [])
         whitelist.append(form.ip_address.data)
         set_config_value("whitelist", whitelist)
 
@@ -43,8 +35,11 @@ def whitelist():
 @whitelist_blueprint.route("/whitelist/delete/<field>", methods=["GET", "POST"])
 @required_permissions("manage_ip_whitelist")
 def delete_whitelist(field):
-    whitelist = get_config_value("whitelist")
-    whitelist.remove(field)
-    set_config_value("whitelist", whitelist)
+    whitelist = get_config_value("whitelist", [])
+    try:
+        whitelist.remove(field)
+        set_config_value("whitelist", whitelist)
+    except:
+        print("No such whitelist")
 
     return redirect(url_for(".get_whitelist"))
