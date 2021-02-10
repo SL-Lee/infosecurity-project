@@ -25,7 +25,7 @@ endif %}{% endblock %}
       <div class="border rounded m-1 p-2 h-100">
           <div class="ct-chart ct-golden-section"></div>
           <div class="text-center">
-            <button id="day" class="btn btn-primary btn-lg" style="width:32%;">Day</button>
+            <button id="day" class="btn btn-primary btn-lg" style="width:32%;">Week</button>
             <button id="month" class="btn btn-primary btn-lg" style="width:32%;">Month</button>
             <button id="year" class="btn btn-primary btn-lg" style="width:32%;">Year</button>
           </div>
@@ -33,20 +33,34 @@ endif %}{% endblock %}
     </div>
     <div class="col-sm-6">
       <div class="border rounded m-1 p-2 h-100">
-        <div class=" justify-content-center">
-          <h2>Today's Request</h2>
-          <div class="row">
-            <div class="col-sm-4">
-              <h3 class="bg-success text-white">Low: {{ alert_list[0] }}</h3>
-            </div>
-            <div class="col-sm-4">
-              <h3 class="bg-warning text-dark">Medium: {{ alert_list[1] }} </h3>
-            </div>
-            <div class="col-sm-4">
-              <h3 class="bg-danger text-white">High: {{ alert_list[2] }}</h3>
+
+        <div class="row">
+          <div class="col-sm-12">
+            <div class=" justify-content-center">
+              <h2>Today's Request</h2>
+              <div class="row">
+                <div class="col-sm-4">
+                  <h3 class="bg-success text-white">Low: {{ alert_list[0] }}</h3>
+                </div>
+                <div class="col-sm-4">
+                  <h3 class="bg-warning text-dark">Medium: {{ alert_list[1] }} </h3>
+                </div>
+                <div class="col-sm-4">
+                  <h3 class="bg-danger text-white">High: {{ alert_list[2] }}</h3>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        <div class="row">
+          <div class="col-sm-12">
+            <h2>Backups</h2>
+            <h3>Most recent backup: {{ recent_backup }}</h3>
+          </div>
+
+        </div>
+
       </div>
     </div>
   </div>

@@ -33,6 +33,7 @@ from client_models import client_db
 from helper_functions import is_safe_url
 from server_models import (
     Alert,
+    BackupLog,
     Request,
     ServerPermission,
     ServerUser,
@@ -207,11 +208,16 @@ def index():
         else:
             alert_list[2] += 1
 
+    backup_log = BackupLog.query.order_by(BackupLog.id.desc()).first()
+    print("THIS IS THE BACKUP DATE")
+    print(backup_log.date_created)
+
     return render_template(
         "index.html",
         form=login_form,
         next=request.args.get("next"),
         alert_list=alert_list,
+        recent_backup=backup_log.date_created
     )
 
 
