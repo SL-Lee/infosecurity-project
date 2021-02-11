@@ -375,9 +375,18 @@ def schedule_backup(filename):
         file_upload.Upload()  # Upload the file.
 
         # then add the encryption config for future restore
-        shutil.copy2("encryption-config.bak", os.path.join(timestamp_folder, "encryption-config.bak"))
-        shutil.copy2("encryption-config.dat", os.path.join(timestamp_folder, "encryption-config.dat"))
-        shutil.copy2("encryption-config.dir", os.path.join(timestamp_folder, "encryption-config.dir"))
+        shutil.copy2(
+            "encryption-config.bak",
+            os.path.join(timestamp_folder, "encryption-config.bak"),
+        )
+        shutil.copy2(
+            "encryption-config.dat",
+            os.path.join(timestamp_folder, "encryption-config.dat"),
+        )
+        shutil.copy2(
+            "encryption-config.dir",
+            os.path.join(timestamp_folder, "encryption-config.dir"),
+        )
 
         file_upload = DRIVE.CreateFile(
             {
