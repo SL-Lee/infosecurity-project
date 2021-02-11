@@ -36,6 +36,7 @@ def whitelist():
 @required_permissions("manage_ip_whitelist")
 def delete_whitelist(field):
     whitelist = get_config_value("whitelist", [])
+
     try:
         whitelist.remove(field)
         set_config_value("whitelist", whitelist)

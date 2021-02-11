@@ -351,14 +351,19 @@ def backup_add():
 @required_permissions("manage_backups")
 def backup_history(file):
     path = os.path.join(constants.BACKUP_PATH, file)
+
     # get all entries in the directory
     entries = []
+
     for file_name in os.listdir(path):
         entries.append(os.path.join(path, file_name))
+
     entries.sort(key=os.path.getctime, reverse=True)
     timestamp = []
+
     for i in entries:
         timestamp.append(os.path.basename(i))
+
     print(timestamp)
 
     return render_template(
@@ -551,7 +556,6 @@ def backup_update(file):
             )
             server_db.session.add(backup_log)
             server_db.session.commit()
-
         # will perform a update, and update the settings
         elif form.update.data:
             print("update settings")

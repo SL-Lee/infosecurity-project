@@ -66,8 +66,6 @@ def log_request(
     server_db.session.commit()
 
 
-
-
 def month_calculator(month):
     month_list = {
         1: "Jan",

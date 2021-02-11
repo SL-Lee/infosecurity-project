@@ -220,7 +220,7 @@ def index():
         form=login_form,
         next=request.args.get("next"),
         alert_list=alert_list,
-        recent_backup=date
+        recent_backup=date,
     )
 
 

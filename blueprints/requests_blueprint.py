@@ -94,6 +94,7 @@ def request_behaviour_add():
 def delete_request_behaviour(url):
     url = url.replace("|", "/")
     url_dict = get_config_value("url_dict", {})
+
     try:
         url_dict.pop(url)
         set_config_value("url_dict", url_dict)

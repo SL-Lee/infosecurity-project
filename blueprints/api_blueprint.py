@@ -150,7 +150,7 @@ class Database(Resource):
                     "Review": [],
                     "OrderProduct": [],
                 },
-                config_db_name="encryption-config"
+                config_db_name="encryption-config",
             )
 
             if args["model"] in encrypted_fields:
@@ -249,7 +249,6 @@ class Database(Resource):
                 ip_address=args["ip"],
             )
 
-
         return {
             "status": status,
             "status_msg": status_msg,
@@ -304,7 +303,7 @@ class Database(Resource):
                     "Review": [],
                     "OrderProduct": [],
                 },
-                config_db_name="encryption-config"
+                config_db_name="encryption-config",
             )
 
             if args["model"] in encrypted_fields:
@@ -442,8 +441,6 @@ class Database(Resource):
                 ip_address=args["ip"],
             )
 
-
-
         return {
             "status": status,
             "status_msg": status_msg,
@@ -501,7 +498,7 @@ class Database(Resource):
                     "Review": [],
                     "OrderProduct": [],
                 },
-                config_db_name="encryption-config"
+                config_db_name="encryption-config",
             )
 
             if args["model"] in encrypted_fields:

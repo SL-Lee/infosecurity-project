@@ -3,19 +3,7 @@
 endif %}{% endblock %}
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
-<style>
-  .ct-series-a .ct-bar {
-    stroke: #1de016;
-  }
-
-  .ct-series-b .ct-bar {
-    stroke: #faf32d;
-  }
-
-  .ct-series-c .ct-bar {
-    stroke: #d60909;
-  }
-</style>
+<link rel="stylesheet" type="text/css" href="/static/css/dashboard-styles.css" />
 <h1 class="display-3 text-center">SecureDB</h1>
 {% if current_user.is_authenticated %}
 <p class="lead text-center">Welcome to SecureDB.</p>
