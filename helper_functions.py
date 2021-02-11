@@ -367,6 +367,47 @@ def schedule_backup(filename):
         file_upload.SetContentFile(file_backup_path)
         file_upload.Upload()  # Upload the file.
 
+        # then add the encryption config for future restore
+        shutil.copy2(
+            "encryption-config.bak",
+            os.path.join(timestamp_folder, "encryption-config.bak"),
+        )
+        shutil.copy2(
+            "encryption-config.dat",
+            os.path.join(timestamp_folder, "encryption-config.dat"),
+        )
+        shutil.copy2(
+            "encryption-config.dir",
+            os.path.join(timestamp_folder, "encryption-config.dir"),
+        )
+
+        file_upload = DRIVE.CreateFile(
+            {
+                "title": "encryption-config.bak",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.bak")
+        file_upload.Upload()  # Upload the file.
+
+        file_upload = DRIVE.CreateFile(
+            {
+                "title": "encryption-config.dat",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.dat")
+        file_upload.Upload()  # Upload the file.
+
+        file_upload = DRIVE.CreateFile(
+            {
+                "title": "encryption-config.dir",
+                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
+            }
+        )
+        file_upload.SetContentFile("encryption-config.dir")
+        file_upload.Upload()  # Upload the file.
+
         file_hash = hashlib.md5(
             open(file_settings["path"], "rb").read()
         ).hexdigest()
