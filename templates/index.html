@@ -19,6 +19,7 @@ endif %}{% endblock %}
 <h1 class="display-3 text-center">SecureDB</h1>
 {% if current_user.is_authenticated %}
 <p class="lead text-center">Welcome to SecureDB.</p>
+{% if "view_logged_requests" in current_user_permissions %}
 <div class="container-fluid content text-center">
   <div class="row">
     <div class="col-sm-6">
@@ -64,7 +65,7 @@ endif %}{% endblock %}
     </div>
   </div>
 </div>
-
+{% endif %}
 
 <script src="/static/js/dashboard.js"></script>
 {% else %}
