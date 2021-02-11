@@ -121,41 +121,44 @@ def upload_field():
 
     if request.method == "POST":
         encrypted_fields = get_config_value(
-            "encrypted-fields", {}, config_db_name="encryption-config"
+            "encryption-config", {}, config_db_name="encryption-config"
         )
-        client_class = client_db.session.query(eval(f"{model}"))
+        try:
+            client_class = client_db.session.query(eval(f"{model}"))
 
-        for client in client_class:
-            try:
-                setattr(
-                    client,
-                    field,
-                    encrypt(
-                        str(getattr(client, field)), constants.ENCRYPTION_KEY
-                    ).hex(),
-                )
-                client_db.session.commit()
+            for client in client_class:
+                try:
+                    setattr(
+                        client,
+                        field,
+                        encrypt(
+                            str(getattr(client, field)), constants.ENCRYPTION_KEY
+                        ).hex(),
+                    )
+                    client_db.session.commit()
 
-                if field in encrypted_fields:
-                    if model in encrypted_fields[model]:
-                        encrypted_fields[model].append(field)
-                        print(encrypted_fields[model])
+                    if field in encrypted_fields:
+                        if model in encrypted_fields[model]:
+                            encrypted_fields[model].append(field)
+                            print(encrypted_fields[model])
+                        else:
+                            encrypted_fields[model] = [field]
+                            print(encrypted_fields)
                     else:
                         encrypted_fields[model] = [field]
                         print(encrypted_fields)
-                else:
-                    encrypted_fields[model] = [field]
-                    print(encrypted_fields)
 
-                flash("Encrypted!", "success")
-            except AttributeError:
-                flash("Not found!", "danger")
-
+                except AttributeError:
+                    flash("Not found!", "danger")
+            flash("Encrypted!", "success")
+        except NameError:
+            flash("Not found!", "danger")
+        '''
         set_config_value(
-            "encrypted-fields",
+            "encryption-config",
             encrypted_fields,
             config_db_name="encryption-config",
         )
         # return redirect(url_for("index"))
-
+        '''
     return render_template("encrypt-field.html", form=form)
