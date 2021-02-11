@@ -753,9 +753,7 @@ def backup_update(file):
             ).hexdigest()
 
             backup_log = BackupLog(
-                filename=os.path.splitext(
-                    os.path.basename(file_settings["path"])
-                )[0],
+                filename=os.path.basename(file_settings["path"]),
                 date_created=backup_datetime,
                 method="Manual Backup",
                 source_path=file_settings["path"],
@@ -763,9 +761,7 @@ def backup_update(file):
                 md5=file_hash,
             )
             update_log = BackupLog(
-                filename=os.path.splitext(
-                    os.path.basename(file_settings["path"])
-                )[0],
+                filename=os.path.basename(file_settings["path"]),
                 date_created=backup_datetime,
                 method="Update Settings",
                 source_path=file_settings["path"],
