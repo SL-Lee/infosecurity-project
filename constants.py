@@ -32,7 +32,10 @@ VALID_SERVER_PERMISSION_NAMES = [
     "manage_encryption_key",
 ]
 
-_ENCRYPTION_CONFIG = get_config_value("encryption-config")
+_ENCRYPTION_CONFIG = get_config_value(
+    "encryption-config",
+    config_db_name="encryption-config",
+)
 
 if _ENCRYPTION_CONFIG is not None:
     kek_passphrase = getpass.getpass("Encryption passphrase: ")

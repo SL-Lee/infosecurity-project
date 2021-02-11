@@ -129,7 +129,12 @@ def onboarding_database_config():
 )
 @required_permissions("manage_users")
 def onboarding_encryption_config():
-    if get_config_value("encryption-config") is not None:
+    if (
+        get_config_value(
+            "encryption-config", config_db_name="encryption-config"
+        )
+        is not None
+    ):
         return redirect(url_for(".onboarding_api_config"))
 
     if request.method == "POST":
@@ -165,7 +170,11 @@ def onboarding_encryption_config():
         encryption_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
         encryption_config["encrypted-dek"] = encrypt(dek, kek).hex()
 
-        set_config_value("encryption-config", encryption_config)
+        set_config_value(
+            "encryption-config",
+            encryption_config,
+            config_db_name="encryption-config",
+        )
         return redirect(url_for(".onboarding_api_config"))
 
     return render_template("onboarding-encryption-config.html")

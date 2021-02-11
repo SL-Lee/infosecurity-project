@@ -20,9 +20,10 @@ encryption_key_management_blueprint = Blueprint(
 @required_permissions("manage_encryption_key")
 def encryption_key_management():
     try:
-        encryption_key_timestamp = get_config_value("encryption-config").get(
-            "timestamp", None
-        )
+        encryption_key_timestamp = get_config_value(
+            "encryption-config",
+            config_db_name="encryption-config",
+        ).get("timestamp", None)
     except:
         encryption_key_timestamp = None
 
@@ -36,7 +37,12 @@ def encryption_key_management():
     "/encryption/key-management/generate", methods=["POST"]
 )
 def encryption_key_management_generate():
-    if get_config_value("encryption-config") is not None:
+    if (
+        get_config_value(
+            "encryption-config", config_db_name="encryption-config"
+        )
+        is not None
+    ):
         return redirect(url_for(".encryption_key_management"))
 
     encryption_passphrase = request.form.get("encryption-passphrase")
@@ -71,7 +77,11 @@ def encryption_key_management_generate():
     encryption_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
     encryption_config["encrypted-dek"] = encrypt(dek, kek).hex()
 
-    set_config_value("encryption-config", encryption_config)
+    set_config_value(
+        "encryption-config",
+        encryption_config,
+        config_db_name="encryption-config",
+    )
     return redirect(url_for(".encryption_key_management"))
 
 
@@ -79,7 +89,9 @@ def encryption_key_management_generate():
     "/encryption/key-management/reset-passphrase", methods=["POST"]
 )
 def encryption_reset_passphrase():
-    encryption_config = get_config_value("encryption-config")
+    encryption_config = get_config_value(
+        "encryption-config", config_db_name="encryption-config"
+    )
 
     if encryption_config is None:
         return redirect(url_for("onboarding.onboarding_encryption_config"))
@@ -153,6 +165,10 @@ def encryption_reset_passphrase():
     encryption_config["kek-hash"] = hashlib.sha3_512(new_kek).hexdigest()
     encryption_config["encrypted-dek"] = encrypt(dek, new_kek).hex()
 
-    set_config_value("encryption-config", encryption_config)
+    set_config_value(
+        "encryption-config",
+        encryption_config,
+        config_db_name="encryption-config",
+    )
     flash("Encryption passphrase resetted successfully.", "success")
     return redirect(url_for(".encryption_key_management"))
