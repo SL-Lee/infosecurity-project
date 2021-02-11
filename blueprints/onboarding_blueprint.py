@@ -119,19 +119,19 @@ def onboarding_database_config():
             )
             return redirect(url_for(".onboarding_database_config"))
 
-        return redirect(url_for(".onboarding_encryption_config"))
+        return redirect(url_for(".onboarding_encryption_key_config"))
 
     return render_template("onboarding-database-config.html")
 
 
 @onboarding_blueprint.route(
-    "/onboarding/encryption-config", methods=["GET", "POST"]
+    "/onboarding/encryption-key-config", methods=["GET", "POST"]
 )
 @required_permissions("manage_users")
-def onboarding_encryption_config():
+def onboarding_encryption_key_config():
     if (
         get_config_value(
-            "encryption-config", config_db_name="encryption-config"
+            "encryption-key-config", config_db_name="encryption-config"
         )
         is not None
     ):
@@ -148,7 +148,7 @@ def onboarding_encryption_config():
             )
             return redirect(url_for(".onboarding_encryption_config"))
 
-        encryption_config = {}
+        encryption_key_config = {}
 
         dek = os.urandom(32)
 
@@ -163,21 +163,21 @@ def onboarding_encryption_config():
             dklen=32,
         )
 
-        encryption_config["timestamp"] = datetime.datetime.now().strftime(
+        encryption_key_config["timestamp"] = datetime.datetime.now().strftime(
             "%Y-%m-%dT%H:%M:%S+08:00"
         )
-        encryption_config["kek-salt"] = kek_salt.hex()
-        encryption_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
-        encryption_config["encrypted-dek"] = encrypt(dek, kek).hex()
+        encryption_key_config["kek-salt"] = kek_salt.hex()
+        encryption_key_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
+        encryption_key_config["encrypted-dek"] = encrypt(dek, kek).hex()
 
         set_config_value(
-            "encryption-config",
-            encryption_config,
+            "encryption-key-config",
+            encryption_key_config,
             config_db_name="encryption-config",
         )
         return redirect(url_for(".onboarding_api_config"))
 
-    return render_template("onboarding-encryption-config.html")
+    return render_template("onboarding-encryption-key-config.html")
 
 
 @onboarding_blueprint.route("/onboarding/api-config")

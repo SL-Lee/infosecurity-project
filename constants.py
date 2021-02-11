@@ -32,16 +32,16 @@ VALID_SERVER_PERMISSION_NAMES = [
     "manage_encryption_key",
 ]
 
-_ENCRYPTION_CONFIG = get_config_value(
-    "encryption-config",
+_ENCRYPTION_KEY_CONFIG = get_config_value(
+    "encryption-key-config",
     config_db_name="encryption-config",
 )
 
-if _ENCRYPTION_CONFIG is not None:
+if _ENCRYPTION_KEY_CONFIG is not None:
     kek_passphrase = getpass.getpass("Encryption passphrase: ")
     kek = hashlib.scrypt(
         kek_passphrase.encode("UTF-8"),
-        salt=bytes.fromhex(_ENCRYPTION_CONFIG["kek-salt"]),
+        salt=bytes.fromhex(_ENCRYPTION_KEY_CONFIG["kek-salt"]),
         n=32768,
         r=8,
         p=1,
@@ -49,9 +49,9 @@ if _ENCRYPTION_CONFIG is not None:
         dklen=32,
     )
 
-    if hashlib.sha3_512(kek).hexdigest() == _ENCRYPTION_CONFIG["kek-hash"]:
+    if hashlib.sha3_512(kek).hexdigest() == _ENCRYPTION_KEY_CONFIG["kek-hash"]:
         ENCRYPTION_KEY = decrypt(
-            bytes.fromhex(_ENCRYPTION_CONFIG["encrypted-dek"]),
+            bytes.fromhex(_ENCRYPTION_KEY_CONFIG["encrypted-dek"]),
             kek,
         )
     else:

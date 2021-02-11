@@ -2,8 +2,8 @@
 {% block title %}Onboarding — Encryption Configuration{% endblock %}
 {% block onboarding_content %}
 <h4 class="mt-4">Encryption Configuration</h4>
-<form method="POST" action="/onboarding/encryption-config"
-  id="encryption-config-form">
+<form method="POST" action="/onboarding/encryption-key-config"
+  id="encryption-key-config-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
   <div class="form-group">
     <label for="encryption-passphrase-input">Encryption passphrase</label>
@@ -15,7 +15,7 @@
 <hr class="my-4" />
 <div class="d-flex">
   <a class="btn btn-primary float-right ml-auto"
-    onclick="document.getElementById('encryption-config-form').requestSubmit()"
+    onclick="document.getElementById('encryption-key-config-form').requestSubmit()"
     role="button">Continue →</a>
 </div>
 {% endblock %}

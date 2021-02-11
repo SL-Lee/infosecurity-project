@@ -21,7 +21,7 @@ encryption_key_management_blueprint = Blueprint(
 def encryption_key_management():
     try:
         encryption_key_timestamp = get_config_value(
-            "encryption-config",
+            "encryption-key-config",
             config_db_name="encryption-config",
         ).get("timestamp", None)
     except:
@@ -39,7 +39,7 @@ def encryption_key_management():
 def encryption_key_management_generate():
     if (
         get_config_value(
-            "encryption-config", config_db_name="encryption-config"
+            "encryption-key-config", config_db_name="encryption-config"
         )
         is not None
     ):
@@ -55,7 +55,7 @@ def encryption_key_management_generate():
         )
         return redirect(url_for(".encryption_key_management_generate"))
 
-    encryption_config = {}
+    encryption_key_config = {}
 
     dek = os.urandom(32)
 
@@ -70,16 +70,16 @@ def encryption_key_management_generate():
         dklen=32,
     )
 
-    encryption_config["timestamp"] = datetime.datetime.now().strftime(
+    encryption_key_config["timestamp"] = datetime.datetime.now().strftime(
         "%Y-%m-%dT%H:%M:%S+08:00"
     )
-    encryption_config["kek-salt"] = kek_salt.hex()
-    encryption_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
-    encryption_config["encrypted-dek"] = encrypt(dek, kek).hex()
+    encryption_key_config["kek-salt"] = kek_salt.hex()
+    encryption_key_config["kek-hash"] = hashlib.sha3_512(kek).hexdigest()
+    encryption_key_config["encrypted-dek"] = encrypt(dek, kek).hex()
 
     set_config_value(
-        "encryption-config",
-        encryption_config,
+        "encryption-key-config",
+        encryption_key_config,
         config_db_name="encryption-config",
     )
     return redirect(url_for(".encryption_key_management"))
@@ -89,12 +89,12 @@ def encryption_key_management_generate():
     "/encryption/key-management/reset-passphrase", methods=["POST"]
 )
 def encryption_reset_passphrase():
-    encryption_config = get_config_value(
-        "encryption-config", config_db_name="encryption-config"
+    encryption_key_config = get_config_value(
+        "encryption-key-config", config_db_name="encryption-config"
     )
 
-    if encryption_config is None:
-        return redirect(url_for("onboarding.onboarding_encryption_config"))
+    if encryption_key_config is None:
+        return redirect(url_for("onboarding.onboarding_encryption_key_config"))
 
     old_encryption_passphrase = request.form.get("old-encryption-passphrase")
     new_encryption_passphrase = request.form.get("new-encryption-passphrase")
@@ -120,7 +120,7 @@ def encryption_reset_passphrase():
 
     old_kek = hashlib.scrypt(
         old_encryption_passphrase.encode("UTF-8"),
-        salt=bytes.fromhex(encryption_config["kek-salt"]),
+        salt=bytes.fromhex(encryption_key_config["kek-salt"]),
         n=32768,
         r=8,
         p=1,
@@ -129,7 +129,10 @@ def encryption_reset_passphrase():
     )
 
     # Return an error if the old kek is wrong
-    if hashlib.sha3_512(old_kek).hexdigest() != encryption_config["kek-hash"]:
+    if (
+        hashlib.sha3_512(old_kek).hexdigest()
+        != encryption_key_config["kek-hash"]
+    ):
         flash(
             "There was an error while resetting the encryption passphase. "
             "Please try again.",
@@ -156,18 +159,20 @@ def encryption_reset_passphrase():
         dklen=32,
     )
 
-    dek = decrypt(bytes.fromhex(encryption_config["encrypted-dek"]), old_kek)
+    dek = decrypt(
+        bytes.fromhex(encryption_key_config["encrypted-dek"]), old_kek
+    )
 
-    encryption_config["timestamp"] = datetime.datetime.now().strftime(
+    encryption_key_config["timestamp"] = datetime.datetime.now().strftime(
         "%Y-%m-%dT%H:%M:%S+08:00"
     )
-    encryption_config["kek-salt"] = new_kek_salt.hex()
-    encryption_config["kek-hash"] = hashlib.sha3_512(new_kek).hexdigest()
-    encryption_config["encrypted-dek"] = encrypt(dek, new_kek).hex()
+    encryption_key_config["kek-salt"] = new_kek_salt.hex()
+    encryption_key_config["kek-hash"] = hashlib.sha3_512(new_kek).hexdigest()
+    encryption_key_config["encrypted-dek"] = encrypt(dek, new_kek).hex()
 
     set_config_value(
-        "encryption-config",
-        encryption_config,
+        "encryption-key-config",
+        encryption_key_config,
         config_db_name="encryption-config",
     )
     flash("Encryption passphrase resetted successfully.", "success")

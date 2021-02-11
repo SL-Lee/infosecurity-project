@@ -112,17 +112,15 @@ def return_files_tut2(filename):
 @encryption_blueprint.route("/encrypt-field", methods=["GET", "POST"])
 @required_permissions("manage_encrypted_fields")
 def upload_field():
-    # pylint: disable=pointless-string-statement
-    # pylint: disable=unused-variable
-
     form = forms.ChoiceForm()
     model = form.model.data
     field = form.field.data
 
     if request.method == "POST":
         encrypted_fields = get_config_value(
-            "encryption-config", {}, config_db_name="encryption-config"
+            "encrypted-fields", {}, config_db_name="encryption-config"
         )
+
         try:
             client_class = client_db.session.query(eval(f"{model}"))
 
@@ -132,7 +130,8 @@ def upload_field():
                         client,
                         field,
                         encrypt(
-                            str(getattr(client, field)), constants.ENCRYPTION_KEY
+                            str(getattr(client, field)),
+                            constants.ENCRYPTION_KEY,
                         ).hex(),
                     )
                     client_db.session.commit()
@@ -147,14 +146,15 @@ def upload_field():
                     else:
                         encrypted_fields[model] = [field]
                         print(encrypted_fields)
-
                 except AttributeError:
                     flash("Not found!", "danger")
+
             flash("Encrypted!", "success")
         except NameError:
             flash("Not found!", "danger")
+
         set_config_value(
-            "encryption-config",
+            "encrypted-fields",
             encrypted_fields,
             config_db_name="encryption-config",
         )
