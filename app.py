@@ -196,10 +196,13 @@ def index():
     ).all()
     print(requests)
     alerts = list()
+
     for client_request in requests:
         alert = Alert.query.filter_by(request_id=client_request.id).first()
         alerts.append(alert)
+
     alert_list = [0, 0, 0]
+
     for i in alerts:
         if i.alert_level == "Low":
             alert_list[0] += 1
@@ -207,6 +210,7 @@ def index():
             alert_list[1] += 1
         else:
             alert_list[2] += 1
+
     try:
         backup_log = BackupLog.query.order_by(BackupLog.id.desc()).first()
         print(backup_log)
@@ -215,6 +219,7 @@ def index():
         date = backup_log.date_created.strftime("%d %b %Y %H:%M:%S")
     except:
         date = "None"
+
     return render_template(
         "index.html",
         form=login_form,
