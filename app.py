@@ -212,7 +212,7 @@ def index():
             alert_list[2] += 1
 
     try:
-        backup_log = BackupLog.query.order_by(BackupLog.id.desc()).first()
+        backup_log = BackupLog.query.filter_by(filename="client_db.sqlite3").order_by(BackupLog.id.desc()).first()
         print(backup_log)
         print("THIS IS THE BACKUP DATE")
         print(backup_log.date_created)
@@ -220,13 +220,17 @@ def index():
     except:
         date = "None"
 
+    backup_job = constants.SCHEDULER.get_job(job_id="client_db.sqlite3")
+    next_backup = backup_job.next_run_time.strftime("%d %b %Y %H:%M:%S")
     return render_template(
         "index.html",
         form=login_form,
         next=request.args.get("next"),
         alert_list=alert_list,
         recent_backup=date,
+        next_backup=next_backup
     )
+
 
 
 @app.route("/logout", methods=["POST"])
