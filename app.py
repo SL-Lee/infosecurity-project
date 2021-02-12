@@ -212,7 +212,11 @@ def index():
             alert_list[2] += 1
 
     try:
-        backup_log = BackupLog.query.filter_by(filename="client_db.sqlite3").order_by(BackupLog.id.desc()).first()
+        backup_log = (
+            BackupLog.query.filter_by(filename="client_db.sqlite3")
+            .order_by(BackupLog.id.desc())
+            .first()
+        )
         print(backup_log)
         print("THIS IS THE BACKUP DATE")
         print(backup_log.date_created)
@@ -228,9 +232,8 @@ def index():
         next=request.args.get("next"),
         alert_list=alert_list,
         recent_backup=date,
-        next_backup=next_backup
+        next_backup=next_backup,
     )
-
 
 
 @app.route("/logout", methods=["POST"])
