@@ -3,7 +3,7 @@ import hashlib
 import os
 import shutil
 
-from flask import Blueprint, redirect, render_template, request, url_for, flash
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
 
 import constants
@@ -365,13 +365,15 @@ def backup_add():
                 return redirect(url_for("index"))
             else:
                 flash(
-                    "There is already a backup for the filename, please rename the file or update the settings for the filename.",
+                    "There is already a backup for the filename, please rename "
+                    "the file or update the settings for the filename.",
                     "danger",
                 )
                 return redirect(url_for(".backup_add"))
         else:
             flash(
-                "The file path entered is invalid, please try again with a valid file path.",
+                "The file path entered is invalid, please try again with a "
+                "valid file path.",
                 "danger",
             )
             return redirect(url_for(".backup_add"))
@@ -603,7 +605,8 @@ def backup_update(file):
                         file_settings["path"] = form.source.data
                 else:
                     flash(
-                        "The file path entered is invalid, please try again with a valid file path.",
+                        "The file path entered is invalid, please try again "
+                        "with a valid file path.",
                         "danger",
                     )
                     return redirect(url_for(".manage_backups"))
