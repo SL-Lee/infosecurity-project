@@ -3,7 +3,7 @@ import hashlib
 import os
 import shutil
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, redirect, render_template, request, url_for, flash
 from werkzeug.utils import secure_filename
 
 import constants
@@ -61,288 +61,320 @@ def backup_add():
     form = forms.BackupFirstForm(request.form)
 
     if request.method == "POST" and form.validate():
-        location = form.source.data
-        backup_datetime = datetime.datetime.now()
+        backup_config = get_config_value("backup")
 
-        filename = os.path.basename(location)
-        filename_folder = os.path.join(constants.BACKUP_PATH, filename)
+        if os.path.isfile(form.source.data):
+            if backup_config[os.path.basename(form.source.data)] is None:
+                location = form.source.data
+                backup_datetime = datetime.datetime.now()
 
-        # check if the folder with the name exists,
-        # else make a folder for it
-        if not os.path.exists(filename_folder):
-            os.mkdir(filename_folder)
+                filename = os.path.basename(location)
+                filename_folder = os.path.join(constants.BACKUP_PATH, filename)
 
-        file_list = constants.DRIVE.ListFile(
-            {
-                "q": "'%s' in parents and trashed=false"
-                % constants.DRIVE_BACKUP_ID
-            }
-        ).GetList()  # to list the files in the folder id
-        folder_names = []
+                # check if the folder with the name exists,
+                # else make a folder for it
+                if not os.path.exists(filename_folder):
+                    os.mkdir(filename_folder)
 
-        for file in file_list:
-            folder_names.append(file["title"])
+                file_list = constants.DRIVE.ListFile(
+                    {
+                        "q": "'%s' in parents and trashed=false"
+                        % constants.DRIVE_BACKUP_ID
+                    }
+                ).GetList()  # to list the files in the folder id
+                folder_names = []
 
-        # if backup folder not created
-        if filename not in folder_names:
-            folder = constants.DRIVE.CreateFile(
-                {
-                    "title": filename,
-                    "mimeType": "application/vnd.google-apps.folder",
-                    "parents": [
+                for file in file_list:
+                    folder_names.append(file["title"])
+
+                # if backup folder not created
+                if filename not in folder_names:
+                    folder = constants.DRIVE.CreateFile(
                         {
-                            "kind": "drive#fileLink",
-                            "id": constants.DRIVE_BACKUP_ID,
+                            "title": filename,
+                            "mimeType": "application/vnd.google-apps.folder",
+                            "parents": [
+                                {
+                                    "kind": "drive#fileLink",
+                                    "id": constants.DRIVE_BACKUP_ID,
+                                }
+                            ],
                         }
-                    ],
+                    )
+                    folder.Upload()
+
+                file_list = constants.DRIVE.ListFile(
+                    {
+                        "q": "'%s' in parents and trashed=false"
+                        % constants.DRIVE_BACKUP_ID
+                    }
+                ).GetList()
+
+                # set drive id for backup
+                filename_id = None
+
+                for file in file_list:
+                    if file["title"] == filename:
+                        filename_id = file["id"]
+
+                timestamp = secure_filename(
+                    backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
+                )
+                # backup folder is timestamp of backup
+                backup_folder = os.path.join(
+                    filename_folder,
+                    timestamp,
+                )
+
+                # check if there is a timestamp for the backup
+                if not os.path.exists(backup_folder):
+                    os.mkdir(backup_folder)
+
+                file_list = constants.DRIVE.ListFile(
+                    {"q": "'%s' in parents and trashed=false" % filename_id}
+                ).GetList()  # to list the files in the folder id
+                folder_names = []
+
+                for file in file_list:
+                    folder_names.append(file["title"])
+
+                # if backup folder not created
+                if timestamp not in folder_names:
+                    folder = constants.DRIVE.CreateFile(
+                        {
+                            "title": timestamp,
+                            "mimeType": "application/vnd.google-apps.folder",
+                            "parents": [
+                                {"kind": "drive#fileLink", "id": filename_id}
+                            ],
+                        }
+                    )
+                    folder.Upload()
+
+                file_list = constants.DRIVE.ListFile(
+                    {"q": "'%s' in parents and trashed=false" % filename_id}
+                ).GetList()
+
+                # set drive id for backup
+                timestamp_id = None
+
+                for file in file_list:
+                    if file["title"] == timestamp:
+                        timestamp_id = file["id"]
+
+                file_backup_path = os.path.join(
+                    backup_folder, os.path.basename(location)
+                )
+
+                backup_config[filename] = {
+                    "path": location,
+                    "interval": form.interval.data,
+                    "interval_type": form.interval_type.data,
                 }
+                print(backup_config)
+                set_config_value("backup", backup_config)
+                # copy from original location to timestamp
+                shutil.copy2(location, file_backup_path)
+                # encrypt the backed up file
+                encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
+                # after encrypting the copied file,
+                # remove the copied file
+                os.remove(file_backup_path)
+                # set new path name for encrypted file
+                file_backup_path = os.path.join(
+                    backup_folder, os.path.basename(location) + ".enc"
+                )
+                # then add the encryption config for future restore
+                shutil.copy2(
+                    "encryption-config.bak",
+                    os.path.join(backup_folder, "encryption-config.bak"),
+                )
+                shutil.copy2(
+                    "encryption-config.dat",
+                    os.path.join(backup_folder, "encryption-config.dat"),
+                )
+                shutil.copy2(
+                    "encryption-config.dir",
+                    os.path.join(backup_folder, "encryption-config.dir"),
+                )
+
+                # upload to drive
+                file_upload = constants.DRIVE.CreateFile(
+                    {
+                        "title": os.path.basename(file_backup_path),
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": timestamp_id}
+                        ],
+                    }
+                )
+                # set content is get file from filepath
+                file_upload.SetContentFile(file_backup_path)
+                file_upload.Upload()  # Upload the file.
+
+                file_upload = constants.DRIVE.CreateFile(
+                    {
+                        "title": "encryption-config.bak",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": timestamp_id}
+                        ],
+                    }
+                )
+                file_upload.SetContentFile("encryption-config.bak")
+                file_upload.Upload()  # Upload the file.
+
+                file_upload = constants.DRIVE.CreateFile(
+                    {
+                        "title": "encryption-config.dat",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": timestamp_id}
+                        ],
+                    }
+                )
+                file_upload.SetContentFile("encryption-config.dat")
+                file_upload.Upload()  # Upload the file.
+
+                file_upload = constants.DRIVE.CreateFile(
+                    {
+                        "title": "encryption-config.dir",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": timestamp_id}
+                        ],
+                    }
+                )
+                file_upload.SetContentFile("encryption-config.dir")
+                file_upload.Upload()  # Upload the file.
+
+                # then add the encryption config for future restore
+                shutil.copy2(
+                    "encryption-config.bak",
+                    os.path.join(backup_folder, "encryption-config.bak"),
+                )
+                shutil.copy2(
+                    "encryption-config.dat",
+                    os.path.join(backup_folder, "encryption-config.dat"),
+                )
+                shutil.copy2(
+                    "encryption-config.dir",
+                    os.path.join(backup_folder, "encryption-config.dir"),
+                )
+
+                file_upload = constants.DRIVE.CreateFile(
+                    {
+                        "title": "encryption-config.bak",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": timestamp_id}
+                        ],
+                    }
+                )
+                file_upload.SetContentFile("encryption-config.bak")
+                file_upload.Upload()  # Upload the file.
+
+                file_upload = constants.DRIVE.CreateFile(
+                    {
+                        "title": "encryption-config.dat",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": timestamp_id}
+                        ],
+                    }
+                )
+                file_upload.SetContentFile("encryption-config.dat")
+                file_upload.Upload()  # Upload the file.
+
+                file_upload = constants.DRIVE.CreateFile(
+                    {
+                        "title": "encryption-config.dir",
+                        "parents": [
+                            {"kind": "drive#fileLink", "id": timestamp_id}
+                        ],
+                    }
+                )
+                file_upload.SetContentFile("encryption-config.dir")
+                file_upload.Upload()  # Upload the file.
+
+                file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
+
+                backup_log = BackupLog(
+                    filename=filename,
+                    date_created=backup_datetime,
+                    method="Manual Backup",
+                    source_path=location,
+                    backup_path=file_backup_path,
+                    md5=file_hash,
+                )
+                update_log = BackupLog(
+                    filename=filename,
+                    date_created=backup_datetime,
+                    method="Update Settings",
+                    source_path=location,
+                    backup_path=file_backup_path,
+                    md5=file_hash,
+                )
+                server_db.session.add(update_log)
+                server_db.session.add(backup_log)
+                server_db.session.commit()
+
+                if form.interval_type.data == "min":
+                    constants.SCHEDULER.add_job(
+                        schedule_backup,
+                        args=[filename],
+                        trigger="interval",
+                        minutes=form.interval.data,
+                        id=filename,
+                        replace_existing=True,
+                    )
+                elif form.interval_type.data == "hr":
+                    constants.SCHEDULER.add_job(
+                        schedule_backup,
+                        args=[filename],
+                        trigger="interval",
+                        hours=form.interval.data,
+                        id=filename,
+                        replace_existing=True,
+                    )
+                elif form.interval_type.data == "d":
+                    constants.SCHEDULER.add_job(
+                        schedule_backup,
+                        args=[filename],
+                        trigger="interval",
+                        days=form.interval.data,
+                        id=filename,
+                        replace_existing=True,
+                    )
+                elif form.interval_type.data == "wk":
+                    constants.SCHEDULER.add_job(
+                        schedule_backup,
+                        args=[filename],
+                        trigger="interval",
+                        weeks=form.interval.data,
+                        id=filename,
+                        replace_existing=True,
+                    )
+                elif form.interval_type.data == "mth":
+                    months = 31 * form.interval.data
+                    constants.SCHEDULER.add_job(
+                        schedule_backup,
+                        args=[filename],
+                        trigger="interval",
+                        days=months,
+                        id=filename,
+                        replace_existing=True,
+                    )
+
+                constants.SCHEDULER.print_jobs()
+
+                return redirect(url_for("index"))
+            else:
+                flash(
+                    "There is already a backup for the filename, please rename the file or update the settings for the filename.",
+                    "danger",
+                )
+                return redirect(url_for(".backup_add"))
+        else:
+            flash(
+                "The file path entered is invalid, please try again with a valid file path.",
+                "danger",
             )
-            folder.Upload()
-
-        file_list = constants.DRIVE.ListFile(
-            {
-                "q": "'%s' in parents and trashed=false"
-                % constants.DRIVE_BACKUP_ID
-            }
-        ).GetList()
-
-        # set drive id for backup
-        filename_id = None
-
-        for file in file_list:
-            if file["title"] == filename:
-                filename_id = file["id"]
-
-        timestamp = secure_filename(
-            backup_datetime.strftime("%d-%m-%Y %H:%M:%S")
-        )
-        # backup folder is timestamp of backup
-        backup_folder = os.path.join(
-            filename_folder,
-            timestamp,
-        )
-
-        # check if there is a timestamp for the backup
-        if not os.path.exists(backup_folder):
-            os.mkdir(backup_folder)
-
-        file_list = constants.DRIVE.ListFile(
-            {"q": "'%s' in parents and trashed=false" % filename_id}
-        ).GetList()  # to list the files in the folder id
-        folder_names = []
-
-        for file in file_list:
-            folder_names.append(file["title"])
-
-        # if backup folder not created
-        if timestamp not in folder_names:
-            folder = constants.DRIVE.CreateFile(
-                {
-                    "title": timestamp,
-                    "mimeType": "application/vnd.google-apps.folder",
-                    "parents": [{"kind": "drive#fileLink", "id": filename_id}],
-                }
-            )
-            folder.Upload()
-
-        file_list = constants.DRIVE.ListFile(
-            {"q": "'%s' in parents and trashed=false" % filename_id}
-        ).GetList()
-
-        # set drive id for backup
-        timestamp_id = None
-
-        for file in file_list:
-            if file["title"] == timestamp:
-                timestamp_id = file["id"]
-
-        file_backup_path = os.path.join(
-            backup_folder, os.path.basename(location)
-        )
-
-        backup_config[filename] = {
-            "path": location,
-            "interval": form.interval.data,
-            "interval_type": form.interval_type.data,
-        }
-        print(backup_config)
-        set_config_value("backup", backup_config)
-        # copy from original location to timestamp
-        shutil.copy2(location, file_backup_path)
-        # encrypt the backed up file
-        encrypt_file(file_backup_path, constants.ENCRYPTION_KEY)
-        # after encrypting the copied file,
-        # remove the copied file
-        os.remove(file_backup_path)
-        # set new path name for encrypted file
-        file_backup_path = os.path.join(
-            backup_folder, os.path.basename(location) + ".enc"
-        )
-        # then add the encryption config for future restore
-        shutil.copy2(
-            "encryption-config.bak",
-            os.path.join(backup_folder, "encryption-config.bak"),
-        )
-        shutil.copy2(
-            "encryption-config.dat",
-            os.path.join(backup_folder, "encryption-config.dat"),
-        )
-        shutil.copy2(
-            "encryption-config.dir",
-            os.path.join(backup_folder, "encryption-config.dir"),
-        )
-
-        # upload to drive
-        file_upload = constants.DRIVE.CreateFile(
-            {
-                "title": os.path.basename(file_backup_path),
-                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
-            }
-        )
-        # set content is get file from filepath
-        file_upload.SetContentFile(file_backup_path)
-        file_upload.Upload()  # Upload the file.
-
-        file_upload = constants.DRIVE.CreateFile(
-            {
-                "title": "encryption-config.bak",
-                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
-            }
-        )
-        file_upload.SetContentFile("encryption-config.bak")
-        file_upload.Upload()  # Upload the file.
-
-        file_upload = constants.DRIVE.CreateFile(
-            {
-                "title": "encryption-config.dat",
-                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
-            }
-        )
-        file_upload.SetContentFile("encryption-config.dat")
-        file_upload.Upload()  # Upload the file.
-
-        file_upload = constants.DRIVE.CreateFile(
-            {
-                "title": "encryption-config.dir",
-                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
-            }
-        )
-        file_upload.SetContentFile("encryption-config.dir")
-        file_upload.Upload()  # Upload the file.
-
-        # then add the encryption config for future restore
-        shutil.copy2(
-            "encryption-config.bak",
-            os.path.join(backup_folder, "encryption-config.bak"),
-        )
-        shutil.copy2(
-            "encryption-config.dat",
-            os.path.join(backup_folder, "encryption-config.dat"),
-        )
-        shutil.copy2(
-            "encryption-config.dir",
-            os.path.join(backup_folder, "encryption-config.dir"),
-        )
-
-        file_upload = constants.DRIVE.CreateFile(
-            {
-                "title": "encryption-config.bak",
-                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
-            }
-        )
-        file_upload.SetContentFile("encryption-config.bak")
-        file_upload.Upload()  # Upload the file.
-
-        file_upload = constants.DRIVE.CreateFile(
-            {
-                "title": "encryption-config.dat",
-                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
-            }
-        )
-        file_upload.SetContentFile("encryption-config.dat")
-        file_upload.Upload()  # Upload the file.
-
-        file_upload = constants.DRIVE.CreateFile(
-            {
-                "title": "encryption-config.dir",
-                "parents": [{"kind": "drive#fileLink", "id": timestamp_id}],
-            }
-        )
-        file_upload.SetContentFile("encryption-config.dir")
-        file_upload.Upload()  # Upload the file.
-
-        file_hash = hashlib.md5(open(location, "rb").read()).hexdigest()
-
-        backup_log = BackupLog(
-            filename=filename,
-            date_created=backup_datetime,
-            method="Manual Backup",
-            source_path=location,
-            backup_path=file_backup_path,
-            md5=file_hash,
-        )
-        update_log = BackupLog(
-            filename=filename,
-            date_created=backup_datetime,
-            method="Update Settings",
-            source_path=location,
-            backup_path=file_backup_path,
-            md5=file_hash,
-        )
-        server_db.session.add(update_log)
-        server_db.session.add(backup_log)
-        server_db.session.commit()
-
-        if form.interval_type.data == "min":
-            constants.SCHEDULER.add_job(
-                schedule_backup,
-                args=[filename],
-                trigger="interval",
-                minutes=form.interval.data,
-                id=filename,
-                replace_existing=True,
-            )
-        elif form.interval_type.data == "hr":
-            constants.SCHEDULER.add_job(
-                schedule_backup,
-                args=[filename],
-                trigger="interval",
-                hours=form.interval.data,
-                id=filename,
-                replace_existing=True,
-            )
-        elif form.interval_type.data == "d":
-            constants.SCHEDULER.add_job(
-                schedule_backup,
-                args=[filename],
-                trigger="interval",
-                days=form.interval.data,
-                id=filename,
-                replace_existing=True,
-            )
-        elif form.interval_type.data == "wk":
-            constants.SCHEDULER.add_job(
-                schedule_backup,
-                args=[filename],
-                trigger="interval",
-                weeks=form.interval.data,
-                id=filename,
-                replace_existing=True,
-            )
-        elif form.interval_type.data == "mth":
-            months = 31 * form.interval.data
-            constants.SCHEDULER.add_job(
-                schedule_backup,
-                args=[filename],
-                trigger="interval",
-                days=months,
-                id=filename,
-                replace_existing=True,
-            )
-
-        constants.SCHEDULER.print_jobs()
-
-        return redirect(url_for("index"))
+            return redirect(url_for(".backup_add"))
 
     return render_template("backup-form.html", form1=form)
 
@@ -563,12 +595,18 @@ def backup_update(file):
             # if field different from settings and the file is valid and not
             # empty
             if form.source.data is not None:
-                if (
-                    form.source.data != file_settings["path"]
-                    and os.path.isfile(form.source.data)
-                    and form.source.data != ""
-                ):
-                    file_settings["path"] = form.source.data
+                if os.path.isfile(form.source.data):
+                    if (
+                        form.source.data != file_settings["path"]
+                        and form.source.data != ""
+                    ):
+                        file_settings["path"] = form.source.data
+                else:
+                    flash(
+                        "The file path entered is invalid, please try again with a valid file path.",
+                        "danger",
+                    )
+                    return redirect(url_for(".manage_backups"))
 
             # if field different from settings and not empty
             if form.interval_type.data is not None:

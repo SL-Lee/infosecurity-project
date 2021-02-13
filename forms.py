@@ -53,8 +53,7 @@ class BackupFirstForm(FlaskForm):
         [Length(max=260), InputRequired()],
         render_kw={
             "placeholder": (
-                "Please enter your database file location (including file "
-                "extension)"
+                "Please enter file location (including file extension)"
             )
         },
     )
