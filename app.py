@@ -223,9 +223,12 @@ def index():
         date = backup_log.date_created.strftime("%d %b %Y %H:%M:%S")
     except:
         date = "None"
-
-    backup_job = constants.SCHEDULER.get_job(job_id="client_db.sqlite3")
-    next_backup = backup_job.next_run_time.strftime("%d %b %Y %H:%M:%S")
+    try:
+        backup_job = constants.SCHEDULER.get_job(job_id="client_db.sqlite3")
+        next_backup = backup_job.next_run_time.strftime("%d %b %Y %H:%M:%S")
+    except:
+        next_backup = "None"
+        
     return render_template(
         "index.html",
         form=login_form,
