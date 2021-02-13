@@ -1,11 +1,12 @@
 from flask import Blueprint, redirect, render_template, request, url_for
-
+import constants
 import forms
 from helper_functions import (
     get_config_value,
     request_filter,
     required_permissions,
     set_config_value,
+    restart_req,
 )
 from server_models import Alert
 
@@ -80,7 +81,39 @@ def request_behaviour_add():
 
         url_dict[form.url.data] = [form.count.data, form.alert_level.data, form.refresh_time.data, form.refresh_unit.data]
         set_config_value("url_dict", url_dict)
-
+        if form.refresh_unit.data == "Sec":
+            constants.SCHEDULER.add_job(
+                restart_req,
+                args=[form.url.data],
+                trigger="interval",
+                seconds=form.refresh_time.data,
+                id=form.url.data,
+            )
+        elif form.refresh_unit.data == "Min":
+            constants.SCHEDULER.add_job(
+                restart_req,
+                args=[form.url.data],
+                trigger="interval",
+                minutes=form.refresh_time.data,
+                id=form.url.data,
+            )
+        elif form.refresh_unit.data == "Hour":
+            constants.SCHEDULER.add_job(
+                restart_req,
+                args=[form.url.data],
+                trigger="interval",
+                hours=form.refresh_time.data,
+                id=form.url.data,
+            )
+        elif form.refresh_unit.data == "Day":
+            constants.SCHEDULER.add_job(
+                restart_req,
+                args=[form.url.data],
+                trigger="interval",
+                days=form.refresh_time.data,
+                id=form.url.data,
+            )
+        print(constants.SCHEDULER.get_jobs())
         return redirect(url_for(".request_behaviour"))
 
     return render_template("request-behaviour-add.html", form=form, title="Add Request Behaviour")

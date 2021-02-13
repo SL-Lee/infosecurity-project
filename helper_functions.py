@@ -190,8 +190,12 @@ def req_behaviour(url, ip):
     print(url_dict_count)
 
 
-def restart_req():
-    set_config_value("url_dict_count", {})
+def restart_req(url):
+    url_dict_count = get_config_value("url_dict_count", {})
+    if url in url_dict_count:
+        url_dict_count.pop(url)
+        print(url, "dict reset")
+        set_config_value("url_dict_count", url_dict_count)
 
 
 def required_permissions(*required_permission_names):

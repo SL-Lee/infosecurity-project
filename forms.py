@@ -139,7 +139,7 @@ class RequestBehaviourForm(FlaskForm):
     refresh_unit = SelectField(
         "Unit Interval",
         [InputRequired()],
-        choices=[("s", "s"), ("Min", "Min"),  ("Hour", "Hour"), ("Day", "Day")],
+        choices=[("Sec", "Sec"), ("Min", "Min"),  ("Hour", "Hour"), ("Day", "Day")],
     )
 
 

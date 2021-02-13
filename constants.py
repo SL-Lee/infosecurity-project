@@ -182,9 +182,3 @@ with app.app_context():
                     id=filename,
                     replace_existing=True,
                 )
-        SCHEDULER.add_job(
-            restart_req,
-            trigger="interval",
-            minutes=1,
-            id="restart_requests",
-        )
