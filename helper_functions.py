@@ -192,6 +192,7 @@ def req_behaviour(url, ip):
 
 def restart_req(url):
     url_dict_count = get_config_value("url_dict_count", {})
+
     if url in url_dict_count:
         url_dict_count.pop(url)
         print(url, "dict reset")
