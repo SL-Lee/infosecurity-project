@@ -58,7 +58,7 @@ def update_sensitive_fields(field):
     form.sensitive_field.data = rule.contents
     form.action.data = rule.action
     form.occurrence_threshold.data = rule.occurrence_threshold
-
+    form.alert_level.data = rule.alert_level
     return render_template("sensitive-fields-update.html", form=form, rule=rule)
 
 

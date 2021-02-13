@@ -129,11 +129,22 @@ class RequestFilter(FlaskForm):
 
 class RequestBehaviourForm(FlaskForm):
     url = StringField("URL", [InputRequired(), Length(min=1, max=100)])
-    count = IntegerField("URL Accessed Count in a min", [InputRequired()])
+    count = IntegerField("URL Accessed Count", [InputRequired()])
     alert_level = SelectField(
         "Alert Level",
         [InputRequired()],
         choices=[("High", "High"), ("Medium", "Medium"), ("Low", "Low")],
+    )
+    refresh_time = IntegerField("URL Count refresh time", [InputRequired()])
+    refresh_unit = SelectField(
+        "Unit Interval",
+        [InputRequired()],
+        choices=[
+            ("Sec", "Sec"),
+            ("Min", "Min"),
+            ("Hour", "Hour"),
+            ("Day", "Day"),
+        ],
     )
 
 

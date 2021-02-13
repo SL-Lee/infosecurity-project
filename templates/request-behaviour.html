@@ -13,7 +13,9 @@
           <tr>
             <th scope="col">URL</th>
             <th scope="col">Alert Level</th>
-            <th scope="col">URL Accessed Count in a min</th>
+            <th scope="col">URL Accessed Count</th>
+            <th scope="col">Refresh Time</th>
+            <th scope="col">Update</th>
             <th scope="col">Delete</th>
           </tr>
         </thead>
@@ -23,6 +25,11 @@
             <td>{{ i }}</td>
             <td>{{ urls[i][1] }}</td>
             <td>{{ urls[i][0] }}</td>
+            <td>{{ urls[i][2] }} {{ urls[i][3] }}</td>
+            <td>
+              <button class="btn btn-warning"
+                onclick="location.href='/requests/behaviour/update/{{ url_converted_dict[i] }}'">Update</button>
+            </td>
             <td>
               <button class="btn btn-danger"
                 onclick="location.href='/requests/behaviour/delete/{{ url_converted_dict[i] }}'">Delete</button>

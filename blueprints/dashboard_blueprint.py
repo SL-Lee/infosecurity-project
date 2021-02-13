@@ -47,10 +47,6 @@ def data():
         else:
             high_date_list[num] += 1
 
-    print(low_date_list)
-    print(medium_date_list)
-    print(high_date_list)
-
     return jsonify(
         {
             "low": low_date_list,
@@ -138,11 +134,6 @@ def month():
 
             index += 1
 
-    print(month_list)
-    print(low_date_list)
-    print(medium_date_list)
-    print(high_date_list)
-    print("/month is being sent")
     return jsonify(
         {
             "low": low_date_list,
@@ -185,10 +176,6 @@ def year():
 
         index += 1
 
-    print(low_date_list)
-    print(medium_date_list)
-    print(high_date_list)
-    print("/year is being sent")
     return jsonify(
         {
             "low": low_date_list,

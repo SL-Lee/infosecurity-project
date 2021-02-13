@@ -189,12 +189,12 @@ def index():
     last_time = datetime.datetime(
         today.year, today.month, today.day, 23, 59, 59, 999999
     )
-    print(last_time)
+
     # Get requests based on time
     requests = Request.query.filter(
         Request.datetime.between(today, last_time)
     ).all()
-    print(requests)
+
     alerts = list()
 
     for client_request in requests:
@@ -217,15 +217,16 @@ def index():
             .order_by(BackupLog.id.desc())
             .first()
         )
-        print(backup_log)
-        print("THIS IS THE BACKUP DATE")
-        print(backup_log.date_created)
+
         date = backup_log.date_created.strftime("%d %b %Y %H:%M:%S")
     except:
         date = "None"
+    try:
+        backup_job = constants.SCHEDULER.get_job(job_id="client_db.sqlite3")
+        next_backup = backup_job.next_run_time.strftime("%d %b %Y %H:%M:%S")
+    except:
+        next_backup = "None"
 
-    backup_job = constants.SCHEDULER.get_job(job_id="client_db.sqlite3")
-    next_backup = backup_job.next_run_time.strftime("%d %b %Y %H:%M:%S")
     return render_template(
         "index.html",
         form=login_form,
