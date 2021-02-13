@@ -139,9 +139,13 @@ class RequestBehaviourForm(FlaskForm):
     refresh_unit = SelectField(
         "Unit Interval",
         [InputRequired()],
-        choices=[("Sec", "Sec"), ("Min", "Min"),  ("Hour", "Hour"), ("Day", "Day")],
+        choices=[
+            ("Sec", "Sec"),
+            ("Min", "Min"),
+            ("Hour", "Hour"),
+            ("Day", "Day"),
+        ],
     )
-
 
 
 class SensitiveFieldForm(FlaskForm):

@@ -79,7 +79,12 @@ def request_behaviour_add():
     if request.method == "POST" and form.validate():
         url_dict = get_config_value("url_dict", {})
 
-        url_dict[form.url.data] = [form.count.data, form.alert_level.data, form.refresh_time.data, form.refresh_unit.data]
+        url_dict[form.url.data] = [
+            form.count.data,
+            form.alert_level.data,
+            form.refresh_time.data,
+            form.refresh_unit.data,
+        ]
         set_config_value("url_dict", url_dict)
         if form.refresh_unit.data == "Sec":
             constants.SCHEDULER.add_job(
@@ -88,6 +93,7 @@ def request_behaviour_add():
                 trigger="interval",
                 seconds=form.refresh_time.data,
                 id=form.url.data,
+                name=form.url.data,
             )
         elif form.refresh_unit.data == "Min":
             constants.SCHEDULER.add_job(
@@ -96,6 +102,7 @@ def request_behaviour_add():
                 trigger="interval",
                 minutes=form.refresh_time.data,
                 id=form.url.data,
+                name=form.url.data,
             )
         elif form.refresh_unit.data == "Hour":
             constants.SCHEDULER.add_job(
@@ -104,6 +111,7 @@ def request_behaviour_add():
                 trigger="interval",
                 hours=form.refresh_time.data,
                 id=form.url.data,
+                name=form.url.data,
             )
         elif form.refresh_unit.data == "Day":
             constants.SCHEDULER.add_job(
@@ -112,27 +120,59 @@ def request_behaviour_add():
                 trigger="interval",
                 days=form.refresh_time.data,
                 id=form.url.data,
+                name=form.url.data,
             )
-        print(constants.SCHEDULER.get_jobs())
+        print(constants.SCHEDULER.get_job(job_id=form.url.data))
         return redirect(url_for(".request_behaviour"))
 
-    return render_template("request-behaviour-add.html", form=form, title="Add Request Behaviour")
+    return render_template(
+        "request-behaviour-add.html", form=form, title="Add Request Behaviour"
+    )
 
 
-@requests_blueprint.route("/requests/behaviour/update/<url>", methods=["GET", "POST"])
+@requests_blueprint.route(
+    "/requests/behaviour/update/<url>", methods=["GET", "POST"]
+)
 @required_permissions("manage_request_behaviour")
 def request_behaviour_update(url):
     form = forms.RequestBehaviourForm(request.form)
     url_dict = get_config_value("url_dict", {})
     if request.method == "POST" and form.validate():
 
-        print(form.url.data, form.count)
-        form_data = [form.count.data, form.alert_level.data, form.refresh_time.data, form.refresh_unit.data]
-        print(form_data)
+        form_data = [
+            form.count.data,
+            form.alert_level.data,
+            form.refresh_time.data,
+            form.refresh_unit.data,
+        ]
         url_dict[form.url.data] = form_data
-        print(url_dict[form.url.data])
         set_config_value("url_dict", url_dict)
 
+        if form.refresh_unit.data == "Sec":
+            constants.SCHEDULER.reschedule_job(
+                form.url.data,
+                trigger="interval",
+                seconds=form.refresh_time.data,
+            )
+        elif form.refresh_unit.data == "Min":
+            constants.SCHEDULER.reschedule_job(
+                form.url.data,
+                trigger="interval",
+                minutes=form.refresh_time.data,
+            )
+        elif form.refresh_unit.data == "Hour":
+            constants.SCHEDULER.reschedule_job(
+                form.url.data,
+                trigger="interval",
+                hours=form.refresh_time.data,
+            )
+        elif form.refresh_unit.data == "Day":
+            constants.SCHEDULER.reschedule_job(
+                form.url.data,
+                trigger="interval",
+                days=form.refresh_time.data,
+            )
+        print(constants.SCHEDULER.get_job(job_id=form.url.data))
         return redirect(url_for(".request_behaviour"))
 
     url = url.replace("|", "/")
@@ -142,7 +182,11 @@ def request_behaviour_update(url):
     form.refresh_time.data = url_dict[url][2]
     form.refresh_unit.data = url_dict[url][3]
 
-    return render_template("request-behaviour-add.html", form=form, title="Update Request Behaviour")
+    return render_template(
+        "request-behaviour-add.html",
+        form=form,
+        title="Update Request Behaviour",
+    )
 
 
 @requests_blueprint.route(
@@ -156,6 +200,8 @@ def delete_request_behaviour(url):
     try:
         url_dict.pop(url)
         set_config_value("url_dict", url_dict)
+        constants.SCHEDULER.remove_job(job_id=url)
+        print(constants.SCHEDULER.get_jobs())
     except:
         print("URL does not exist")
 

@@ -12,9 +12,15 @@
     <div class="col-sm-8">
       <form class="form" method="POST">
         {{ form.csrf_token }}
-        <div class="form-group">
-          {{ render_field(form.url, class="form-control") }}
-        </div>
+        {% if title == "Add Request Behaviour" %}
+          <div class="form-group">
+            {{ render_field(form.url, class="form-control") }}
+          </div>
+        {% else %}
+          <div class="form-group">
+            {{ form.url.data }}
+          </div>
+        {% endif %}
         <div class="form-group">
           {{ render_field(form.alert_level, class="form-control") }}
         </div>
