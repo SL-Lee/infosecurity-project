@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Add Request Behaviour{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 {% from "includes/_form_helper.html" import render_field %}
 {% block content %}
 <div class="container-fluid content">
@@ -20,6 +20,18 @@
         </div>
         <div class="form-group">
           {{ render_field(form.count, class="form-control") }}
+        </div>
+        <div class="row">
+          <div class="col-sm-6">
+            <div class="form-group">
+              {{ render_field(form.refresh_time, class="form-control") }}
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              {{ render_field(form.refresh_unit, class="form-control") }}
+            </div>
+          </div>
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
       </form>

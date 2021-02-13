@@ -75,16 +75,41 @@ def request_behaviour():
 @required_permissions("manage_request_behaviour")
 def request_behaviour_add():
     form = forms.RequestBehaviourForm(request.form)
-
     if request.method == "POST" and form.validate():
         url_dict = get_config_value("url_dict", {})
 
-        url_dict[form.url.data] = (form.count.data, form.alert_level.data)
+        url_dict[form.url.data] = [form.count.data, form.alert_level.data, form.refresh_time.data, form.refresh_unit.data]
         set_config_value("url_dict", url_dict)
 
         return redirect(url_for(".request_behaviour"))
 
-    return render_template("request-behaviour-add.html", form=form)
+    return render_template("request-behaviour-add.html", form=form, title="Add Request Behaviour")
+
+
+@requests_blueprint.route("/requests/behaviour/update/<url>", methods=["GET", "POST"])
+@required_permissions("manage_request_behaviour")
+def request_behaviour_update(url):
+    form = forms.RequestBehaviourForm(request.form)
+    url_dict = get_config_value("url_dict", {})
+    if request.method == "POST" and form.validate():
+
+        print(form.url.data, form.count)
+        form_data = [form.count.data, form.alert_level.data, form.refresh_time.data, form.refresh_unit.data]
+        print(form_data)
+        url_dict[form.url.data] = form_data
+        print(url_dict[form.url.data])
+        set_config_value("url_dict", url_dict)
+
+        return redirect(url_for(".request_behaviour"))
+
+    url = url.replace("|", "/")
+    form.url.data = url
+    form.count.data = url_dict[url][0]
+    form.alert_level.data = url_dict[url][1]
+    form.refresh_time.data = url_dict[url][2]
+    form.refresh_unit.data = url_dict[url][3]
+
+    return render_template("request-behaviour-add.html", form=form, title="Update Request Behaviour")
 
 
 @requests_blueprint.route(
