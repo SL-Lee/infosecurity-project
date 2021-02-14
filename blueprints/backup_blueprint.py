@@ -61,10 +61,8 @@ def backup_add():
     form = forms.BackupFirstForm(request.form)
 
     if request.method == "POST" and form.validate():
-        backup_config = get_config_value("backup")
-
         if os.path.isfile(form.source.data):
-            if backup_config[os.path.basename(form.source.data)] is None:
+            if os.path.basename(form.source.data) not in backup_config:
                 location = form.source.data
                 backup_datetime = datetime.datetime.now()
 
@@ -597,19 +595,19 @@ def backup_update(file):
             # if field different from settings and the file is valid and not
             # empty
             if form.source.data is not None:
-                if os.path.isfile(form.source.data):
-                    if (
-                        form.source.data != file_settings["path"]
-                        and form.source.data != ""
-                    ):
+                if (
+                    form.source.data != file_settings["path"]
+                    and form.source.data != ""
+                ):
+                    if os.path.isfile(form.source.data):
                         file_settings["path"] = form.source.data
-                else:
-                    flash(
-                        "The file path entered is invalid, please try again "
-                        "with a valid file path.",
-                        "danger",
-                    )
-                    return redirect(url_for(".manage_backups"))
+                    else:
+                        flash(
+                            "The file path entered is invalid, please try again "
+                            "with a valid file path.",
+                            "danger",
+                        )
+                        return redirect(url_for(".backup_update", file=file))
 
             # if field different from settings and not empty
             if form.interval_type.data is not None:

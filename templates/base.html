@@ -17,14 +17,14 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-sm navbar-dark bg-dark sticky-top">
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark sticky-top">
     {% if current_user.is_authenticated %}
     <a class="navbar-brand" href="/">SecureDB</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse"
       data-target="#navbar-links">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div id="navbar-links" class="collapse navbar-collapse">
+    <div id="navbar-links" class="collapse navbar-collapse navbar-nav-scroll" style="max-height: 50vh;">
       <ul class="navbar-nav mr-auto">
         <li class="nav-item">
           <a class="nav-link" href="/">Home</a>

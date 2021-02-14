@@ -1,12 +1,13 @@
 from flask import Blueprint, redirect, render_template, request, url_for
+
 import constants
 import forms
 from helper_functions import (
     get_config_value,
     request_filter,
     required_permissions,
-    set_config_value,
     restart_req,
+    set_config_value,
 )
 from server_models import Alert
 
@@ -137,6 +138,7 @@ def request_behaviour_add():
 def request_behaviour_update(url):
     form = forms.RequestBehaviourForm(request.form)
     url_dict = get_config_value("url_dict", {})
+
     if request.method == "POST" and form.validate():
 
         form_data = [
@@ -172,6 +174,7 @@ def request_behaviour_update(url):
                 trigger="interval",
                 days=form.refresh_time.data,
             )
+
         print(constants.SCHEDULER.get_job(job_id=form.url.data))
         return redirect(url_for(".request_behaviour"))
 

@@ -22,43 +22,35 @@ endif %}{% endblock %}
         </div>
       </div>
       {% endif %}
-      {% if "view_logged_requests" in current_user_permissions %}
-      <div class="col-sm-6">
-      {% else %}
-      <div class="col-sm-12">
-      {% endif %}
+      <div class="col-sm-{% if 'view_logged_requests' in current_user_permissions %}6 mt-3 mt-sm-0{% else %}12{% endif %}">
         {% if "view_logged_requests" in current_user_permissions %}
-        <div class="border rounded m-1 p-2 h-50">
-          <div class="row">
-            <div class="col-sm-12">
-              <div class=" justify-content-center">
-                <h2>Today's Request</h2>
-                <div class="row">
-                  <div class="col-sm-4">
-                    <h3 class="bg-success text-white">Low: {{ alert_list[0] }}</h3>
-                  </div>
-                  <div class="col-sm-4">
-                    <h3 class="bg-warning text-dark">Medium: {{ alert_list[1] }} </h3>
-                  </div>
-                  <div class="col-sm-4">
-                    <h3 class="bg-danger text-white">High: {{ alert_list[2] }}</h3>
-                  </div>
-                </div>
+        <div class="border rounded m-1 p-2 {% if 'manage_backups' in current_user_permissions %}h-sm-50{% else %}h-100{% endif %}">
+          <div class=" justify-content-center">
+            <h2>Request Statistics for Today</h2>
+            <div class="row m-0">
+              <div class="col-sm-4 bg-success">
+                <h5 class="mt-2 text-white">Low: {{ alert_list[0] }}</h5>
+              </div>
+              <div class="col-sm-4 bg-warning">
+                <h5 class="mt-2 text-dark">Medium: {{ alert_list[1] }} </h5>
+              </div>
+              <div class="col-sm-4 bg-danger">
+                <h5 class="mt-2 text-white">High: {{ alert_list[2] }}</h5>
               </div>
             </div>
           </div>
         </div>
         {% endif %}
         {% if "manage_backups" in current_user_permissions %}
-        <div class="border rounded m-1 p-2 h-50">
+        <div class="border rounded m-1 p-2 {% if 'view_logged_requests' in current_user_permissions %}h-50 mt-3 mt-sm-0{% else %}h-100{% endif %}" style="font-size: 1.4rem;">
           <div class="row">
             <div class="col-sm-12">
-              <h3>Most recent backup: {{ recent_backup }}</h3>
+              <p>Most recent backup: <b>{{ recent_backup }}</b></p>
             </div>
           </div>
           <div class="row">
             <div class="col-sm-12">
-              <h3>Next scheduled backup: {{ next_backup }}</h3>
+              <p class="mb-0">Next scheduled backup: <b>{{ next_backup }}</b></p>
             </div>
           </div>
         </div>
