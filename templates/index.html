@@ -24,7 +24,7 @@ endif %}{% endblock %}
       {% endif %}
       <div class="col-sm-{% if 'view_logged_requests' in current_user_permissions %}6 mt-3 mt-sm-0{% else %}12{% endif %}">
         {% if "view_logged_requests" in current_user_permissions %}
-        <div class="border rounded m-1 p-2 {% if 'manage_backups' in current_user_permissions %}h-sm-50{% else %}h-100{% endif %}">
+        <div class="border rounded m-1 p-2 {% if 'manage_backups' not in current_user_permissions %}h-100{% endif %}" style="min-height: 50%;">
           <div class=" justify-content-center">
             <h2>Request Statistics for Today</h2>
             <div class="row m-0">
