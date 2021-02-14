@@ -328,20 +328,14 @@ class Database(Resource):
             # If IP address not in whitelist, go through sensitive field
             # validation
             if args.get("ip") not in whitelist:
-                print("NOT IN WHITELIST")
-
                 for i in sensitive_fields:
                     pattern = f"'{i.contents}',"
                     pattern_occurrence_count = re.findall(
                         pattern, str(query_results)
                     )
-                    print(i.action)
-
                     # If the pattern occurrence count exceeds the configured
                     # threshold, deny this request and log it as a high alert
                     if len(pattern_occurrence_count) > i.occurrence_threshold:
-                        print("exceed")
-
                         if i.action == "deny_and_alert":
                             status, status_msg, status_code = (
                                 "ERROR",

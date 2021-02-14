@@ -64,6 +64,9 @@ def log_request(
     server_db.session.add(logged_alert)
     server_db.session.add(logged_request)
     server_db.session.commit()
+    # if alert level is high, send email
+    if logged_alert.alert_level == "High":
+        alertemail(logged_alert.request_id)
 
 
 def month_calculator(month):
@@ -431,7 +434,6 @@ def schedule_backup(filename):
 def alertemail(request_id):
     mail = Mail()
     alerts = Alert.query.filter_by(request_id=request_id).all()
-    print("Sent", alerts[0].__dict__)
     msg = Message(
         "SecureDB Report on Suspicious Requests.",
         sender="asecured@gmail.com",
