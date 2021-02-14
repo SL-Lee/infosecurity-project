@@ -8,11 +8,11 @@
       <form method="POST">
         {{ form.csrf_token}}
         <div class="form-group">
-          <label for="email">Class:</label>
+          <label for="email">Class:   <i>(For example: User)</i></label>
           {{ form.model(class="form-control") }}
         </div>
         <div class="form-group">
-          <label for="email">Field:</label>
+          <label for="email">Field:   <i>(For example: email)</i></label>
           {{ form.field(class="form-control")}}
         </div>
         <input type="submit" class="btn btn-primary btn-lg" onclick="confirmUpload()" />
