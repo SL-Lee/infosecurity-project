@@ -17,7 +17,7 @@ from helper_functions import (
     required_permissions,
     validate_api_key,
 )
-from server_models import Rule, server_db
+from server_models import Rule
 
 api_blueprint = Blueprint("api", __name__, url_prefix="/api")
 api_authorizations = {
@@ -333,6 +333,7 @@ class Database(Resource):
                     pattern_occurrence_count = re.findall(
                         pattern, str(query_results)
                     )
+
                     # If the pattern occurrence count exceeds the configured
                     # threshold, deny this request and log it as a high alert
                     if len(pattern_occurrence_count) > i.occurrence_threshold:

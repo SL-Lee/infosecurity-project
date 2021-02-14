@@ -64,6 +64,7 @@ def log_request(
     server_db.session.add(logged_alert)
     server_db.session.add(logged_request)
     server_db.session.commit()
+
     # if alert level is high, send email
     if logged_alert.alert_level == "High":
         alertemail(logged_alert.request_id)
