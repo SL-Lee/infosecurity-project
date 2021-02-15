@@ -29,28 +29,6 @@ def backup():
     return render_template("backup.html", files=files)
 
 
-@backup_blueprint.route("/temp-backup-set-default")
-@required_permissions("manage_backups")
-def backup_set_default():
-    path = ".\\client_db.sqlite3"
-    keyname = os.path.basename(path)
-    interval = 1
-    interval_type = "wk"
-    client_db_config = {
-        keyname: {
-            "path": path,
-            "interval": interval,
-            "interval_type": interval_type,
-        }
-    }
-    set_config_value("backup", client_db_config)
-    backup_config = get_config_value("backup")
-    print("backup files:", backup_config)
-    print(backup_config[keyname]["path"])
-    print(os.path.isfile(backup_config[keyname]["path"]))
-    return redirect(url_for(".backup"))
-
-
 @backup_blueprint.route("/backup/add", methods=["GET", "POST"])
 @required_permissions("manage_backups")
 def backup_add():
