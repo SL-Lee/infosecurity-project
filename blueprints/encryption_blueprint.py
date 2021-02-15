@@ -123,9 +123,8 @@ def upload_field():
 
         try:
             client_class = client_db.session.query(eval(f"{model}"))
-
-            for client in client_class:
-                try:
+            try:
+                for client in client_class:
                     setattr(
                         client,
                         field,
@@ -146,10 +145,12 @@ def upload_field():
                     else:
                         encrypted_fields[model] = [field]
                         print(encrypted_fields)
-                except AttributeError:
-                    flash("Not found!", "danger")
+                flash("Encrypted!", "success")
+            except AttributeError:
+                flash("Not found!", "danger")
+            except IntegrityError:
+                flash("Not found!", "danger")
 
-            flash("Encrypted!", "success")
         except NameError:
             flash("Not found!", "danger")
 
