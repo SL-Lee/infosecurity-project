@@ -147,6 +147,7 @@ def month():
 @dashboard_blueprint.route("/year")
 def year():
     today = datetime.datetime.now()
+    today = datetime.datetime(today.year, today.month, today.day)
     current_year = today.year
     year = [current_year - 2, current_year - 1, current_year]
     low_date_list = [0, 0, 0]
